@@ -72,7 +72,7 @@ async function sendTestEmail() {
 
     const from =
         process.env.RESEND_FROM_EMAIL?.trim() ??
-        "Wedding site <onboarding@resend.dev>";
+        "Yurii Mariia <onboarding@resend.dev>";
 
     const resend = new Resend(apiKey);
     const {data, error} = await resend.emails.send({
