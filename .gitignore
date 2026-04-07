@@ -1,0 +1,15 @@
+# IDE
+.idea/
+
+# Build outputs
+/build
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Ignore all env files
+.env*
+
+# Node.js modules
+node_modules/
