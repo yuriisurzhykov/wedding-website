@@ -1,3 +1,6 @@
 .env
+.env.local
+.env.example
+.env*
 .idea
 node_modules/
