@@ -2,15 +2,19 @@ import {NextResponse} from "next/server";
 import {Resend} from "resend";
 
 /**
- * Sends one test email to ADMIN_EMAIL. Guarded by ADMIN_SECRET (same as planned /admin).
- * GET /api/health/resend?secret=<ADMIN_SECRET>
+ * Sends one test email to ADMIN_EMAIL. Auth: header only (never put ADMIN_SECRET in the URL).
+ *
+ * GET or POST /api/health/resend
+ * Header: Authorization: Bearer <ADMIN_SECRET>
+ *
+ * Example (PowerShell): $h = @{ Authorization = "Bearer <paste ADMIN_SECRET from .env.local>" }; Invoke-RestMethod -Uri http://localhost:3000/api/health/resend -Headers $h
  *
  * RESEND_FROM_EMAIL — optional; default uses Resend sandbox sender (works for quick tests).
  */
-export async function GET(request: Request) {
-    const {searchParams} = new URL(request.url);
-    const secret = searchParams.get("secret");
-    const expected = process.env.ADMIN_SECRET;
+function assertBearerAdminSecret(request: Request): NextResponse | null {
+    const auth = request.headers.get("authorization");
+    const token = auth?.match(/^Bearer\s+(.+)$/i)?.[1]?.trim() ?? "";
+    const expected = process.env.ADMIN_SECRET?.trim() ?? "";
 
     if (!expected) {
         return NextResponse.json(
@@ -18,10 +22,26 @@ export async function GET(request: Request) {
             {status: 500},
         );
     }
-    if (secret !== expected) {
-        return NextResponse.json({ok: false, error: "Unauthorized"}, {status: 401});
+    if (!token) {
+        return NextResponse.json(
+            {
+                ok: false,
+                error: "Missing credential",
+                hint: 'Send header: Authorization: Bearer <ADMIN_SECRET> (do not use query params)',
+            },
+            {status: 401},
+        );
     }
+    if (token !== expected) {
+        return NextResponse.json(
+            {ok: false, error: "Invalid secret"},
+            {status: 401},
+        );
+    }
+    return null;
+}
 
+async function sendTestEmail() {
     const apiKey = process.env.RESEND_API_KEY;
     const to = process.env.ADMIN_EMAIL;
 
@@ -62,4 +82,20 @@ export async function GET(request: Request) {
         id: data?.id,
         ts: new Date().toISOString(),
     });
+}
+
+export async function GET(request: Request) {
+    const authError = assertBearerAdminSecret(request);
+    if (authError) {
+        return authError;
+    }
+    return sendTestEmail();
+}
+
+export async function POST(request: Request) {
+    const authError = assertBearerAdminSecret(request);
+    if (authError) {
+        return authError;
+    }
+    return sendTestEmail();
 }
