@@ -4,6 +4,7 @@ export default function Home() {
             <h1 className="text-3xl font-semibold tracking-tight">Wedding</h1>
             <p className="text-center text-neutral-600">
                 Site scaffold — deploy on Vercel should succeed.
+                Added few new lines to the project.
             </p>
         </main>
     );
