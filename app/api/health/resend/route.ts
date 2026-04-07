@@ -11,9 +11,21 @@ import {Resend} from "resend";
  *
  * RESEND_FROM_EMAIL — optional; default uses Resend sandbox sender (works for quick tests).
  */
+/** Value after "Bearer " (case-insensitive), trimmed. No end-of-string anchor — avoids edge cases with proxies/clients. */
+function parseBearerToken(auth: string | null): string {
+    if (!auth) {
+        return "";
+    }
+    const t = auth.trim();
+    if (!/^Bearer\s+/i.test(t)) {
+        return "";
+    }
+    return t.replace(/^Bearer\s+/i, "").trim();
+}
+
 function assertBearerAdminSecret(request: Request): NextResponse | null {
     const auth = request.headers.get("authorization");
-    const token = auth?.match(/^Bearer\s+(.+)$/i)?.[1]?.trim() ?? "";
+    const token = parseBearerToken(auth);
     const expected = process.env.ADMIN_SECRET?.trim() ?? "";
 
     if (!expected) {
@@ -27,7 +39,7 @@ function assertBearerAdminSecret(request: Request): NextResponse | null {
             {
                 ok: false,
                 error: "Missing credential",
-                hint: 'Send header: Authorization: Bearer <ADMIN_SECRET> (do not use query params)',
+                hint: "Set header Authorization: Bearer <ADMIN_SECRET>. In Postman: Auth → Type Bearer Token → Token = only the secret (no word Bearer). Or Headers: Key Authorization, Value Bearer <secret>",
             },
             {status: 401},
         );
