@@ -22,7 +22,7 @@ function parseGuestCount(value: unknown): number | null {
 }
 
 /**
- * Maps a camelCase RSVP form payload to a row shape for Supabase `insert`.
+ * Maps a camelCase RSVP form payload to a row shape for Supabase `rsvp` insert/update.
  *
  * **Normalization**
  * - Trims text fields; empty optional strings become `null`.
@@ -31,7 +31,7 @@ function parseGuestCount(value: unknown): number | null {
  * - If `attending` is true and `guestCount` is missing or invalid, uses an internal default.
  *
  * @param input — Typically JSON body or `FormValues` after client submit.
- * @returns Payload ready for `from('rsvp').insert(...)`.
+ * @returns Payload ready for `persistRsvpRow` / `from('rsvp').upsert`-style persistence.
  */
 export function mapRsvpFormToRow(input: RsvpFormInput): RsvpRowInsert {
     const name = String(input.name ?? '').trim()

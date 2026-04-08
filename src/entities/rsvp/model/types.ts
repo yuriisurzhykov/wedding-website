@@ -15,7 +15,7 @@ export interface RsvpRow {
 }
 
 /**
- * Fields required for `insert` into `rsvp` (server-generated `id` / `created_at` omitted).
+ * Writable columns for `rsvp` (server-generated `id` / `created_at` omitted). Used for insert/update upsert.
  */
 export type RsvpRowInsert = Pick<
     RsvpRow,

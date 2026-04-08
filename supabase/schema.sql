@@ -64,3 +64,7 @@ CREATE INDEX idx_photos_uploaded_at ON photos (uploaded_at DESC);
 CREATE INDEX idx_wishes_created_at ON wishes (created_at DESC);
 CREATE INDEX idx_rsvp_created_at ON rsvp (created_at DESC);
 CREATE INDEX idx_rsvp_attending ON rsvp (attending);
+
+-- One RSVP row per guest contact (NULLs allowed multiple times).
+CREATE UNIQUE INDEX rsvp_email_unique ON rsvp (email) WHERE email IS NOT NULL;
+CREATE UNIQUE INDEX rsvp_phone_unique ON rsvp (phone) WHERE phone IS NOT NULL;

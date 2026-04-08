@@ -13,11 +13,11 @@ import {buildAdminRsvpEmail} from "./email/build-admin-rsvp-email";
 /**
  * Sends a multipart (HTML + plain text) transactional email to the admin inbox with the stored RSVP row.
  *
- * **Required after a successful insert:** Missing `RESEND_API_KEY` or `ADMIN_EMAIL`, or a Resend API error,
+ * **Required after a successful save:** Missing `RESEND_API_KEY` or `ADMIN_EMAIL`, or a Resend API error,
  * throws so the caller can fail the request before any guest confirmation is sent.
  *
- * @param row — Insert payload that was persisted (same shape as DB row minus id/timestamps).
- * @param id — New row UUID from Supabase.
+ * @param row — Payload that was persisted (same shape as DB row minus id/timestamps).
+ * @param id — Row UUID from Supabase after insert or update.
  * @see {@link buildAdminRsvpEmail} for the `{ subject, html, text }` contract.
  */
 export async function notifyAdminOfNewRsvp(

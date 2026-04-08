@@ -1,6 +1,6 @@
 # Feature: `rsvp-submit`
 
-Server-only flow: accept JSON from the guest → validate → insert into Supabase (`rsvp`) → **await** admin email → **await** guest confirmation only when `email` is set and admin send succeeded. If mail fails after insert, the API returns **502** so the UI can toast; the row still exists in the database.
+Server-only flow: accept JSON from the guest → validate → upsert into Supabase (`rsvp` via `lib/persist-rsvp-row.ts`; unique non-null `email` and `phone`) → **await** admin email → **await** guest confirmation only when `email` is set and admin send succeeded. If mail fails after save, the API returns **502** so the UI can toast; the row still exists in the database.
 
 ## Why this slice exists
 
@@ -14,7 +14,7 @@ Server-only flow: accept JSON from the guest → validate → insert into Supaba
 | `submitRsvp` | Main entry; see JSDoc on `api/submit-rsvp.ts` and `index.ts`. |
 | `SubmitRsvpResult` | Discriminated union for routing and tests. |
 
-Internal modules (`lib/validate-payload`, `lib/notify-admin`, `lib/notify-guest-rsvp-confirmation`, `lib/email/*`) are not re-exported; extend them inside this feature.
+Internal modules (`lib/validate-payload`, `lib/persist-rsvp-row`, `lib/notify-admin`, `lib/notify-guest-rsvp-confirmation`, `lib/email/*`) are not re-exported; extend them inside this feature.
 
 ## `submitRsvp` → HTTP mapping (for `POST /api/rsvp`)
 
@@ -28,7 +28,7 @@ Internal modules (`lib/validate-payload`, `lib/notify-admin`, `lib/notify-guest-
 
 ## Admin email (sequential, blocking)
 
-After a **successful insert**, `submitRsvp` **awaits** `notifyAdminOfNewRsvp`. Content is built by `lib/email/build-admin-rsvp-email.ts` as **multipart** `{ subject, html, text }` for Resend. Missing `RESEND_API_KEY` / `ADMIN_EMAIL` or a Resend error yields `kind: 'notification'`, `step: 'admin'`.
+After a **successful save** (insert or update), `submitRsvp` **awaits** `notifyAdminOfNewRsvp`. Content is built by `lib/email/build-admin-rsvp-email.ts` as **multipart** `{ subject, html, text }` for Resend. Missing `RESEND_API_KEY` / `ADMIN_EMAIL` or a Resend error yields `kind: 'notification'`, `step: 'admin'`.
 
 ## Guest confirmation email (after admin only)
 
@@ -61,5 +61,5 @@ User-controlled strings in HTML go through `escapeHtml` from `@shared/lib/html-e
 ## Observability
 
 - **Vercel logs:** `[rsvp-submit]` prefix for admin/guest notification skips and failures (admin vs guest distinguished in the message text).
-- **Supabase:** `rsvp` table rows and API errors from `insert`.
+- **Supabase:** `rsvp` table rows and API errors from `persistRsvpRow` (select / insert / update).
 - **Resend:** dashboard for delivered/bounced mail when configured.

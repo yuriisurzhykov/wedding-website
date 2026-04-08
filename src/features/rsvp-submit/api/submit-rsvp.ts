@@ -5,6 +5,7 @@ import {mapRsvpFormToRow} from "@entities/rsvp";
 
 import {notifyAdminOfNewRsvp} from "../lib/notify-admin";
 import {notifyGuestRsvpConfirmation} from "../lib/notify-guest-rsvp-confirmation";
+import {persistRsvpRow} from "../lib/persist-rsvp-row";
 import {parseRsvpPayload} from "../lib/validate-payload";
 
 /**
@@ -12,8 +13,8 @@ import {parseRsvpPayload} from "../lib/validate-payload";
  *
  * - **`validation`** — Body failed Zod checks; safe to return **400** with `fieldErrors` / `formErrors`.
  * - **`config`** — Server env for Supabase is missing; treat as **500** (misconfiguration).
- * - **`database`** — Supabase insert failed; treat as **500** (log `message`, generic body to client).
- * - **`notification`** — Row was inserted, but admin or guest email failed; treat as **502** (RSVP is saved; client should toast and avoid implying the full mail pipeline succeeded).
+ * - **`database`** — Supabase persist failed; treat as **500** (log `message`, generic body to client).
+ * - **`notification`** — Row was saved (insert or update), but admin or guest email failed; treat as **502** (RSVP is saved; client should toast and avoid implying the full mail pipeline succeeded).
  */
 export type SubmitRsvpResult =
     | {ok: true; id: string}
@@ -34,9 +35,9 @@ export type SubmitRsvpResult =
       };
 
 /**
- * Validates the payload, inserts into `rsvp`, then sends mail **in order**: admin first, guest only after
- * admin succeeds (guest only if `row.email` is non-empty). Any mail failure after insert yields
- * `{ ok: false, kind: 'notification', … }` while the row remains in the database.
+ * Validates the payload, upserts into `rsvp` (unique non-null `email` / `phone`), then sends mail **in order**:
+ * admin first, guest only after admin succeeds (guest only if `row.email` is non-empty). Any mail failure after
+ * save yields `{ ok: false, kind: 'notification', … }` while the row remains in the database.
  *
  * @param rawBody — Parsed JSON from the client (unknown shape until validated).
  * @returns {@link SubmitRsvpResult} — never throws; callers translate `kind` to HTTP.
@@ -63,24 +64,13 @@ export async function submitRsvp(rawBody: unknown): Promise<SubmitRsvpResult> {
 
     const row = mapRsvpFormToRow(parsed.data);
     const locale = parsed.locale;
-    const {data, error} = await supabase
-        .from("rsvp")
-        .insert(row)
-        .select("id")
-        .single();
+    const saved = await persistRsvpRow(supabase, row);
 
-    if (error) {
-        return {ok: false, kind: "database", message: error.message};
+    if (!saved.ok) {
+        return {ok: false, kind: "database", message: saved.message};
     }
 
-    const id = data?.id;
-    if (!id) {
-        return {
-            ok: false,
-            kind: "database",
-            message: "Insert succeeded but no id was returned",
-        };
-    }
+    const id = saved.id;
 
     try {
         await notifyAdminOfNewRsvp(row, id);

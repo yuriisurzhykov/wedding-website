@@ -1,7 +1,7 @@
 import "server-only";
 
 /**
- * RSVP submission use-case: validate → Supabase insert → fire-and-forget admin email.
+ * RSVP submission use-case: validate → Supabase upsert (`persistRsvpRow`) → ordered email notifications.
  *
  * **Public API** for this slice — import from `@features/rsvp-submit` only these symbols
  * unless you are extending the slice.
