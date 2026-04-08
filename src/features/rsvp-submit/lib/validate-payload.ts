@@ -4,6 +4,8 @@ import {z} from "zod";
 
 import type {RsvpFormInput} from "@entities/rsvp";
 
+import type {GuestEmailLocale} from "./email/guest-confirmation-copy";
+
 function emptyToUndefined(v: unknown): unknown {
     if (v === null || v === undefined) return undefined;
     if (typeof v === "string" && v.trim() === "") return undefined;
@@ -41,6 +43,7 @@ export const rsvpPayloadSchema = z
             z.string().trim().max(1000).optional(),
         ),
         attending: z.boolean(),
+        locale: z.enum(["ru", "en"]).optional(),
     })
     .strict()
     .superRefine((data, ctx) => {
@@ -62,31 +65,37 @@ export const rsvpPayloadSchema = z
         }
     })
     .transform(
-        (data): RsvpFormInput => ({
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            guestCount: data.guestCount as RsvpFormInput["guestCount"],
-            dietary: data.dietary,
-            message: data.message,
-            attending: data.attending,
-        }),
+        (data): {form: RsvpFormInput; locale: GuestEmailLocale} => {
+            const {locale, ...rest} = data;
+            return {
+                form: {
+                    name: rest.name,
+                    email: rest.email,
+                    phone: rest.phone,
+                    guestCount: rest.guestCount as RsvpFormInput["guestCount"],
+                    dietary: rest.dietary,
+                    message: rest.message,
+                    attending: rest.attending,
+                },
+                locale: locale ?? "en",
+            };
+        },
     );
 
 export type RsvpPayloadParseResult =
-    | {ok: true; data: RsvpFormInput}
+    | {ok: true; data: RsvpFormInput; locale: GuestEmailLocale}
     | {ok: false; error: z.ZodError};
 
 /**
  * Parses and validates an RSVP JSON body.
  *
  * @param raw — Typically `await request.json()`; must be a plain object with expected keys.
- * @returns Discriminated union: success carries {@link RsvpFormInput}; failure carries `ZodError` (use `.flatten()` for HTTP 400).
+ * @returns Discriminated union: success carries {@link RsvpFormInput} and email locale; failure carries `ZodError` (use `.flatten()` for HTTP 400).
  */
 export function parseRsvpPayload(raw: unknown): RsvpPayloadParseResult {
     const result = rsvpPayloadSchema.safeParse(raw);
     if (!result.success) {
         return {ok: false, error: result.error};
     }
-    return {ok: true, data: result.data};
+    return {ok: true, data: result.data.form, locale: result.data.locale};
 }
