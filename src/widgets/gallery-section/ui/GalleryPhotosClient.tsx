@@ -1,52 +1,84 @@
 'use client'
 
-import Image from 'next/image'
 import {useCallback, useEffect, useRef, useState} from 'react'
-import {useTranslations} from 'next-intl'
 
 import type {GalleryPhotoView} from '@entities/photo'
-import {cn} from '@shared/lib/cn'
 import {PhotoUploader} from '@shared/ui'
 
+import {fetchGalleryPhotosPage} from '../lib/fetch-gallery-page'
+import {
+    galleryListLimitForPresentation,
+    type GalleryPresentation,
+} from '../lib/gallery-presentation'
+import {GalleryEmptyState} from './GalleryEmptyState'
 import {GalleryLightbox} from './GalleryLightbox'
+import {GalleryLoadMore} from './GalleryLoadMore'
+import {GalleryPhotoGrid} from './GalleryPhotoGrid'
+
+export type GalleryPhotosClientSlots = {
+    uploader?: string
+    grid?: string
+    loadMore?: string
+    empty?: string
+}
 
 type GalleryPhotosClientProps = {
     initialPhotos: GalleryPhotoView[]
-}
-
-async function fetchGalleryPhotos(): Promise<GalleryPhotoView[] | null> {
-    const res = await fetch('/api/gallery/photos', {cache: 'no-store'})
-    if (!res.ok) {
-        return null
-    }
-    const data = (await res.json()) as {photos?: GalleryPhotoView[]}
-    return data.photos ?? null
+    /** From SSR `listGalleryPhotos`; used for “load more” in `full` presentation. */
+    initialHasMore: boolean
+    presentation: GalleryPresentation
+    slots?: GalleryPhotosClientSlots
 }
 
 /**
  * Client island: upload, refetch list from API after success, thumbnails + lightbox.
  */
-export function GalleryPhotosClient({initialPhotos}: GalleryPhotosClientProps) {
-    const t = useTranslations('gallery')
-    const serverSigRef = useRef(initialPhotos.map((p) => p.id).join(','))
+export function GalleryPhotosClient({
+    initialPhotos,
+    initialHasMore,
+    presentation,
+    slots,
+}: GalleryPhotosClientProps) {
+    const pageSize = galleryListLimitForPresentation(presentation)
+    const serverSigRef = useRef(
+        `${initialPhotos.map((p) => p.id).join(',')}:${initialHasMore}`,
+    )
     const [photos, setPhotos] = useState<GalleryPhotoView[]>(initialPhotos)
+    const [hasMore, setHasMore] = useState(initialHasMore)
+    const [loadingMore, setLoadingMore] = useState(false)
     const [openIndex, setOpenIndex] = useState<number | null>(null)
 
     useEffect(() => {
-        const nextSig = initialPhotos.map((p) => p.id).join(',')
+        const nextSig = `${initialPhotos.map((p) => p.id).join(',')}:${initialHasMore}`
         if (nextSig !== serverSigRef.current) {
             serverSigRef.current = nextSig
             setPhotos(initialPhotos)
+            setHasMore(initialHasMore)
         }
-    }, [initialPhotos])
+    }, [initialPhotos, initialHasMore])
 
     const refetchPhotos = useCallback(async () => {
-        const next = await fetchGalleryPhotos()
+        const next = await fetchGalleryPhotosPage(0, pageSize)
         if (next) {
-            setPhotos(next)
-            serverSigRef.current = next.map((p) => p.id).join(',')
+            setPhotos(next.photos)
+            setHasMore(next.hasMore)
+            serverSigRef.current = `${next.photos.map((p) => p.id).join(',')}:${next.hasMore}`
         }
-    }, [])
+    }, [pageSize])
+
+    const loadMore = useCallback(async () => {
+        if (!hasMore || loadingMore || presentation !== 'full') {
+            return
+        }
+        setLoadingMore(true)
+        const next = await fetchGalleryPhotosPage(photos.length, pageSize)
+        setLoadingMore(false)
+        if (!next) {
+            return
+        }
+        setPhotos((prev) => [...prev, ...next.photos])
+        setHasMore(next.hasMore)
+    }, [hasMore, loadingMore, pageSize, photos.length, presentation])
 
     const goPrev = useCallback(() => {
         setOpenIndex((i) => {
@@ -79,49 +111,34 @@ export function GalleryPhotosClient({initialPhotos}: GalleryPhotosClientProps) {
         setOpenIndex(null)
     }, [])
 
+    const uploader = (
+        <PhotoUploader onUploadSuccess={refetchPhotos}/>
+    )
+
     return (
         <>
-            <PhotoUploader onUploadSuccess={refetchPhotos}/>
-            {photos.length === 0 ? (
-                <p className="mt-10 text-center text-body text-text-secondary">
-                    {t('empty')}
-                </p>
+            {slots?.uploader ? (
+                <div className={slots.uploader}>{uploader}</div>
             ) : (
-                <ul
-                    className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 md:gap-4"
-                    aria-label={t('gridLabel')}
-                >
-                    {photos.map((p, i) => (
-                        <li
-                            key={p.id}
-                            className="min-h-px [contain-intrinsic-size:12rem_12rem] [content-visibility:auto]"
-                        >
-                            <button
-                                type="button"
-                                className={cn(
-                                    'group relative aspect-square w-full overflow-hidden rounded-card bg-bg-section shadow-card',
-                                    'ring-offset-2 transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
-                                )}
-                                onClick={() => setOpenIndex(i)}
-                                aria-label={t('openPhotoAria', {
-                                    current: i + 1,
-                                    total: photos.length,
-                                })}
-                            >
-                                <Image
-                                    src={p.publicUrl}
-                                    alt=""
-                                    fill
-                                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 34vw, 25vw"
-                                    className="object-cover transition-transform duration-fast motion-reduce:transition-none group-hover:scale-[1.02] motion-reduce:group-hover:scale-100"
-                                    priority={i < 6}
-                                    quality={75}
-                                />
-                            </button>
-                        </li>
-                    ))}
-                </ul>
+                uploader
             )}
+            {photos.length === 0 ? (
+                <GalleryEmptyState className={slots?.empty}/>
+            ) : (
+                <GalleryPhotoGrid
+                    photos={photos}
+                    onOpenPhoto={setOpenIndex}
+                    className={slots?.grid}
+                />
+            )}
+            {presentation === 'full' && photos.length > 0 ? (
+                <GalleryLoadMore
+                    hasMore={hasMore}
+                    loading={loadingMore}
+                    onLoadMore={loadMore}
+                    className={slots?.loadMore}
+                />
+            ) : null}
             <GalleryLightbox
                 photos={photos}
                 openIndex={openIndex}

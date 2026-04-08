@@ -1,19 +1,29 @@
 import "server-only";
 
 import {createServerClient} from "@shared/api/supabase/server";
-import {mapPhotoRowToGalleryView, type GalleryPhotoView, type PhotoDbRow} from "@entities/photo";
+import {type GalleryPhotoView, mapPhotoRowToGalleryView, type PhotoDbRow} from "@entities/photo";
+
+export type ListGalleryPhotosOptions = {
+    /** Page size (max rows returned). */
+    limit?: number;
+    /** Zero-based offset in the `uploaded_at` desc ordering. */
+    offset?: number;
+};
 
 export type ListGalleryPhotosResult =
-    | {ok: true; photos: GalleryPhotoView[]}
-    | {ok: false; kind: "config"; message: string}
-    | {ok: false; kind: "database"; message: string};
+    | { ok: true; photos: GalleryPhotoView[]; hasMore: boolean }
+    | { ok: false; kind: "config"; message: string }
+    | { ok: false; kind: "database"; message: string };
 
 /**
- * Loads recent public photos for the home gallery (service-role read).
+ * Loads public photos (service-role read). Fetches `limit + 1` rows to set `hasMore` without a separate count.
  */
 export async function listGalleryPhotos(
-    limit = 48,
+    options?: ListGalleryPhotosOptions,
 ): Promise<ListGalleryPhotosResult> {
+    const limit = options?.limit ?? 48;
+    const offset = options?.offset ?? 0;
+
     let supabase;
     try {
         supabase = createServerClient();
@@ -26,15 +36,18 @@ export async function listGalleryPhotos(
         .from("photos")
         .select("*")
         .order("uploaded_at", {ascending: false})
-        .limit(limit);
+        .range(offset, offset + limit);
 
     if (error) {
         return {ok: false, kind: "database", message: error.message};
     }
 
     const rows = (data ?? []) as PhotoDbRow[];
+    const hasMore = rows.length > limit;
+    const pageRows = rows.slice(0, limit);
     return {
         ok: true,
-        photos: rows.map(mapPhotoRowToGalleryView),
+        photos: pageRows.map(mapPhotoRowToGalleryView),
+        hasMore,
     };
 }

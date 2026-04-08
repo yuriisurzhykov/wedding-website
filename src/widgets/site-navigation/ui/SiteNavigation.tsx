@@ -3,9 +3,12 @@
 import {type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useId, useRef, useState,} from 'react'
 import {useTranslations} from 'next-intl'
 
-import {NAV_ITEMS} from '@entities/site-nav'
+import {usePathname} from '@/i18n/navigation'
+import {SITE_NAV_REGISTRY} from '@entities/site-nav'
 import {cn} from '@shared/lib/cn'
 import {LanguageSwitcher} from '@shared/ui'
+
+import {SiteNavRegistryEntryControl} from './SiteNavRegistryEntryControl'
 
 function MenuIcon({className}: { className?: string }) {
     return (
@@ -51,6 +54,8 @@ function CloseIcon({className}: { className?: string }) {
 
 export function SiteNavigation() {
     const translator = useTranslations('nav')
+    const pathname = usePathname()
+    const onHome = pathname === '/'
     const [open, setOpen] = useState(false)
     const menuId = useId()
     const menuButtonRef = useRef<HTMLButtonElement>(null)
@@ -61,9 +66,11 @@ export function SiteNavigation() {
         queueMicrotask(() => menuButtonRef.current?.focus())
     }, [])
 
-    const scrollTo = useCallback(
-        (href: string) => {
-            document.querySelector(href)?.scrollIntoView({behavior: 'smooth'})
+    const scrollToSectionId = useCallback(
+        (sectionId: string) => {
+            document
+                .querySelector(`#${sectionId}`)
+                ?.scrollIntoView({behavior: 'smooth'})
             close()
         },
         [close],
@@ -73,6 +80,24 @@ export function SiteNavigation() {
         window.scrollTo({top: 0, behavior: 'smooth'})
         close()
     }, [close])
+
+    useEffect(() => {
+        if (pathname !== '/') {
+            return
+        }
+        const raw = typeof window !== 'undefined' ? window.location.hash.slice(1) : ''
+        if (!raw) {
+            return
+        }
+        const el = document.getElementById(raw)
+        if (!el) {
+            return
+        }
+        const id = requestAnimationFrame(() => {
+            el.scrollIntoView({behavior: 'smooth'})
+        })
+        return () => cancelAnimationFrame(id)
+    }, [pathname])
 
     useEffect(() => {
         if (!open) {
@@ -86,8 +111,10 @@ export function SiteNavigation() {
             }
         }
         document.addEventListener('keydown', onKeyDown)
-        const firstLink = drawerRef.current?.querySelector('button')
-        ;(firstLink as HTMLButtonElement | undefined)?.focus()
+        const firstFocusable = drawerRef.current?.querySelector<HTMLElement>(
+            'button:not([disabled]), a[href]',
+        )
+        firstFocusable?.focus()
         return () => {
             document.body.style.overflow = prevOverflow
             document.removeEventListener('keydown', onKeyDown)
@@ -99,7 +126,11 @@ export function SiteNavigation() {
             return
         }
         const root = drawerRef.current
-        const nodes = [...root.querySelectorAll<HTMLElement>('button:not([disabled])')]
+        const nodes = [
+            ...root.querySelectorAll<HTMLElement>(
+                'button:not([disabled]), a[href]',
+            ),
+        ]
         if (nodes.length === 0) {
             return
         }
@@ -137,15 +168,16 @@ export function SiteNavigation() {
                     </button>
 
                     <div className="hidden md:flex items-center gap-6">
-                        {NAV_ITEMS.map((item) => (
-                            <button
-                                key={item.key}
-                                type="button"
-                                onClick={() => scrollTo(item.href)}
-                                className="text-small text-text-secondary hover:text-text-primary transition-colors duration-fast"
-                            >
-                                {translator(item.key)}
-                            </button>
+                        {SITE_NAV_REGISTRY.map((item) => (
+                            <SiteNavRegistryEntryControl
+                                key={item.navKey}
+                                item={item}
+                                layout="bar"
+                                onHome={onHome}
+                                label={translator(item.navKey)}
+                                scrollToSectionId={scrollToSectionId}
+                                closeDrawer={close}
+                            />
                         ))}
                     </div>
 
@@ -199,19 +231,16 @@ export function SiteNavigation() {
                     )}
                 >
                     <ul className="flex flex-1 flex-col gap-1 overflow-y-auto p-4">
-                        {NAV_ITEMS.map((item) => (
-                            <li key={item.key}>
-                                <button
-                                    type="button"
-                                    onClick={() => scrollTo(item.href)}
-                                    className={cn(
-                                        'w-full rounded-md px-3 py-3 text-left text-body text-text-secondary',
-                                        'hover:bg-bg-section hover:text-text-primary transition-colors duration-fast',
-                                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus',
-                                    )}
-                                >
-                                    {translator(item.key)}
-                                </button>
+                        {SITE_NAV_REGISTRY.map((item) => (
+                            <li key={item.navKey}>
+                                <SiteNavRegistryEntryControl
+                                    item={item}
+                                    layout="drawer"
+                                    onHome={onHome}
+                                    label={translator(item.navKey)}
+                                    scrollToSectionId={scrollToSectionId}
+                                    closeDrawer={close}
+                                />
                             </li>
                         ))}
                     </ul>

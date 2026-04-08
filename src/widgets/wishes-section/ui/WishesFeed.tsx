@@ -1,14 +1,22 @@
-import Image from "next/image";
+'use client'
 
-import type {WishView} from "@entities/wish";
+import Image from 'next/image'
 
-export function WishesFeed({wishes}: {wishes: WishView[]}) {
+import type {WishView} from '@entities/wish'
+import {cn} from '@shared/lib/cn'
+
+type WishesFeedProps = {
+    wishes: WishView[]
+    className?: string
+}
+
+export function WishesFeed({wishes, className}: WishesFeedProps) {
     if (wishes.length === 0) {
-        return null;
+        return null
     }
 
     return (
-        <ul className="mt-10 flex flex-col gap-6">
+        <ul className={cn('mt-10 flex flex-col gap-6', className)}>
             {wishes.map((w) => (
                 <li
                     key={w.id}
@@ -45,5 +53,5 @@ export function WishesFeed({wishes}: {wishes: WishView[]}) {
                 </li>
             ))}
         </ul>
-    );
+    )
 }

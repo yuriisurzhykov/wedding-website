@@ -134,7 +134,9 @@
     "lightboxNext": "Следующее фото",
     "lightboxAlt": "Фото гостя",
     "lightboxAltWithName": "Фото от {name}",
-    "lightboxCounter": "{current} из {total}"
+    "lightboxCounter": "{current} из {total}",
+    "loadMore": "Загрузить ещё",
+    "loadMoreLoading": "Загрузка…"
   },
   "wishes": {
     "title": "Пожелания",
@@ -148,7 +150,9 @@
     "submitting": "Отправляем…",
     "success": "Спасибо! Пожелание опубликовано 💌",
     "error": "Не получилось отправить. Попробуйте ещё раз.",
-    "empty": "Пожеланий пока нет. Напишите первым!"
+    "empty": "Пожеланий пока нет. Напишите первым!",
+    "loadMore": "Загрузить ещё",
+    "loadMoreLoading": "Загрузка…"
   },
   "donate": {
     "title": "Подарить молодожёнам",

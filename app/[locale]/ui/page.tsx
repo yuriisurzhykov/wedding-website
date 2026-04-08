@@ -25,7 +25,7 @@ export default async function UIBookPage({params}: Props) {
     const sizes = ['sm', 'md', 'lg'] as const
 
     return (
-        <main className="min-h-dvh bg-bg-base pb-24 pt-8">
+        <div className="min-h-dvh bg-bg-base pb-24 pt-8">
             <div
                 className="mx-auto px-4 sm:px-8"
                 style={{maxWidth: 'var(--max-width)'}}
@@ -256,6 +256,6 @@ export default async function UIBookPage({params}: Props) {
                     </Section>
                 </div>
             </div>
-        </main>
+        </div>
     )
 }

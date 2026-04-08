@@ -1,17 +1,18 @@
 'use client'
 
-import {useRouter} from "next/navigation";
+import {useRouter} from '@/i18n/navigation'
 import {useRef, useState} from "react";
 import {useTranslations} from "next-intl";
 import {toast} from "sonner";
 
+import {cn} from "@shared/lib/cn";
 import {Button} from "@shared/ui/Button";
 import {Input} from "@shared/ui/Input";
 import {TextArea} from "@shared/ui/TextArea";
 
 import {uploadWishAttachment} from "../lib/upload-wish-attachment";
 
-export function WishesSectionForm() {
+export function WishesSectionForm({className}: {className?: string}) {
     const t = useTranslations("wishes");
     const router = useRouter();
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -74,7 +75,10 @@ export function WishesSectionForm() {
     return (
         <form
             onSubmit={handleSubmit}
-            className="mx-auto mt-10 flex w-full max-w-xl flex-col gap-4"
+            className={cn(
+                "mx-auto mt-10 flex w-full max-w-xl flex-col gap-4",
+                className,
+            )}
         >
             <div className="flex flex-col gap-2">
                 <label htmlFor="wish-name" className="text-small font-medium text-text-primary">

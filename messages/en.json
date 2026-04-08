@@ -134,7 +134,9 @@
     "lightboxNext": "Next photo",
     "lightboxAlt": "Guest photo",
     "lightboxAltWithName": "Photo from {name}",
-    "lightboxCounter": "{current} of {total}"
+    "lightboxCounter": "{current} of {total}",
+    "loadMore": "Load more",
+    "loadMoreLoading": "Loading…"
   },
   "wishes": {
     "title": "Wishes",
@@ -148,7 +150,9 @@
     "submitting": "Sending…",
     "success": "Thank you! Your wish was posted 💌",
     "error": "Something went wrong. Please try again.",
-    "empty": "No wishes yet. Be the first!"
+    "empty": "No wishes yet. Be the first!",
+    "loadMore": "Load more",
+    "loadMoreLoading": "Loading…"
   },
   "donate": {
     "title": "Gift the couple",
