@@ -128,6 +128,20 @@
     "done": "Photos uploaded! Thank you 🎉",
     "empty": "No photos yet. Be the first!"
   },
+  "wishes": {
+    "title": "Wishes",
+    "subtitle": "Warm words and photos for the couple",
+    "nameLabel": "Your name",
+    "namePlaceholder": "Jane Doe",
+    "messageLabel": "Your wish",
+    "messagePlaceholder": "Write your message…",
+    "photoLabel": "Optional photo",
+    "submit": "Send wish",
+    "submitting": "Sending…",
+    "success": "Thank you! Your wish was posted 💌",
+    "error": "Something went wrong. Please try again.",
+    "empty": "No wishes yet. Be the first!"
+  },
   "donate": {
     "title": "Gift the couple",
     "subtitle": "Your presence is the best gift. If you'd like to contribute materially, we'd be very grateful 🤍",

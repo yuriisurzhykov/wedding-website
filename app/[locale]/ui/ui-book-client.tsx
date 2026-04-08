@@ -5,7 +5,6 @@ import {useTranslations} from 'next-intl'
 import type {FormField} from '@shared/ui'
 import {
     Countdown,
-    DeepLinkButton,
     DynamicForm,
     LanguageSwitcher,
     mockPhotoUploadAdapter,
@@ -13,7 +12,7 @@ import {
 } from '@shared/ui'
 import {SiteNavigation} from '@widgets/site-navigation'
 import {cn} from '@shared/lib/cn'
-import {PAYMENT_SERVICES} from '@entities/payments'
+import {DeepLinkButton, PAYMENT_SERVICES} from '@entities/payments'
 
 const futureTarget = new Date(Date.now() + 86400000 * 120)
 const pastTarget = new Date('2000-01-01T12:00:00')

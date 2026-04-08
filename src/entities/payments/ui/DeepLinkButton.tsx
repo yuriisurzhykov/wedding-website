@@ -3,9 +3,10 @@
 import {useCallback, useState} from 'react'
 import {useTranslations} from 'next-intl'
 
-import type {PaymentConfig} from '@/src/entities/payments'
-import {ZELLE_PHONE_NUMBER} from '@/src/entities/payments'
 import {cn} from '@shared/lib/cn'
+
+import type {PaymentConfig} from '../model/payments'
+import {ZELLE_PHONE_NUMBER} from '../model/payments'
 
 export function DeepLinkButton({service}: { service: PaymentConfig }) {
     const translator = useTranslations('donate')

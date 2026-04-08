@@ -6,11 +6,12 @@ Configuration for future or current “donate / gift” payment buttons: service
 
 - `PAYMENT_SERVICES` — array of `PaymentConfig` (Venmo, Cash App, PayPal, Zelle).
 - `ZELLE_PHONE_NUMBER` — display value for Zelle when configured.
+- `DeepLinkButton` — client button wired to `donate` i18n and Zelle clipboard behavior.
 - Types: `PaymentService`, `PaymentConfig`.
 
 ## When to use
 
-- **UI:** `DeepLinkButton`, donate section, or UI book demos — import configs from here, not from ad-hoc constants.
+- **UI:** `@widgets/donate-section`, UI book — import `DeepLinkButton` and configs from `@entities/payments`, not ad-hoc constants.
 
 ## Environment
 
