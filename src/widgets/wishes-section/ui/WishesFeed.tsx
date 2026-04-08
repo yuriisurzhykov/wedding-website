@@ -17,14 +17,26 @@ export function WishesFeed({wishes}: {wishes: WishView[]}) {
                         {w.message}
                     </p>
                     {w.photoUrl ? (
-                        <div className="mt-4 overflow-hidden rounded-card">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <div className="relative mt-4 overflow-hidden rounded-card">
+                            {/* eslint-disable-next-line @next/next/no-img-element -- same URL as foreground; browser cache */}
                             <img
                                 src={w.photoUrl}
                                 alt=""
+                                aria-hidden
                                 loading="lazy"
-                                className="max-h-64 w-full object-cover"
+                                decoding="async"
+                                className="pointer-events-none absolute inset-0 z-0 h-full w-full origin-center scale-110 object-cover blur-3xl brightness-90 saturate-150"
                             />
+                            <div className="relative z-10 flex justify-center p-2 sm:p-3">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={w.photoUrl}
+                                    alt=""
+                                    loading="lazy"
+                                    decoding="async"
+                                    className="relative h-auto max-h-72 w-auto max-w-full object-contain sm:max-h-96"
+                                />
+                            </div>
                         </div>
                     ) : null}
                 </li>

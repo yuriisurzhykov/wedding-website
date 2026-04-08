@@ -74,7 +74,7 @@ export function WishesSectionForm() {
     return (
         <form
             onSubmit={handleSubmit}
-            className="mt-10 flex max-w-xl flex-col gap-4"
+            className="mx-auto mt-10 flex w-full max-w-xl flex-col gap-4"
         >
             <div className="flex flex-col gap-2">
                 <label htmlFor="wish-name" className="text-small font-medium text-text-primary">

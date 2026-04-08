@@ -1,28 +1,18 @@
 # R2 (S3 API)
 
-Server-only helpers for Cloudflare R2: presigned PUT uploads. Env: `R2_ACCOUNT_ID` or `R2_ACCOUNT_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL`. Used by `@features/gallery-upload`; do not import from client code.
+Server-only helpers for Cloudflare R2: presigned PUT and `PutObject`. Env: `R2_ACCOUNT_ID` or `R2_ACCOUNT_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL`. Used by `@features/gallery-upload`; do not import from client code.
 
-## Browser uploads and CORS
+## CORS (required for default guest uploads)
 
-Presigned URLs authenticate the request, but the **R2 bucket still needs a CORS policy** or the browser blocks the cross-origin `PUT` (failed preflight: no `Access-Control-Allow-Origin`).
+Presigned uploads use a **browser `PUT`** to `*.r2.cloudflarestorage.com`. Configure the bucket CORS policy once:
 
-In **Cloudflare Dashboard → R2 → your bucket → Settings → CORS policy**, add a rule (JSON tab). Include every origin you use (scheme + host + port, no path), for example:
+- **JSON to paste:** `docs/r2-cors-dashboard.json` (repository root)
+- **Instructions:** `docs/r2-cors.md`
 
-```json
-[
-  {
-    "AllowedOrigins": [
-      "http://localhost:3000",
-      "https://yuriimariia.wedding"
-    ],
-    "AllowedMethods": ["PUT", "GET", "HEAD"],
-    "AllowedHeaders": ["Content-Type", "Content-Length"],
-    "ExposeHeaders": ["ETag"],
-    "MaxAgeSeconds": 3600
-  }
-]
-```
+Adjust **`AllowedOrigins`** for localhost port, production domain, and any Vercel preview host you use.
 
-Adjust origins for your local port and production domain. If the browser preflight lists extra headers (e.g. `x-amz-*`), add them to `AllowedHeaders` or widen the list per [Cloudflare R2 CORS](https://developers.cloudflare.com/r2/buckets/cors/). Changes can take up to ~30s to apply.
+The S3 client sets `requestChecksumCalculation: "WHEN_REQUIRED"` to keep presigned URLs small.
 
-The S3 client sets `requestChecksumCalculation: "WHEN_REQUIRED"` so presigned PUT URLs stay minimal; uploads still send `Content-Type` from the app.
+## Without R2 CORS
+
+Set `NEXT_PUBLIC_GALLERY_SERVER_UPLOAD=true` so the UI uses `POST /api/upload/server` (Next.js → R2). No guest browser traffic to the R2 endpoint.

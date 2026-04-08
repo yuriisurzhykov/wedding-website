@@ -126,7 +126,15 @@
     "dropzone": "Drag photos here or click to choose",
     "maxSize": "Up to 5 MB per file",
     "done": "Photos uploaded! Thank you 🎉",
-    "empty": "No photos yet. Be the first!"
+    "empty": "No photos yet. Be the first!",
+    "gridLabel": "Uploaded photos",
+    "openPhotoAria": "Enlarge photo {current} of {total}",
+    "lightboxClose": "Close",
+    "lightboxPrev": "Previous photo",
+    "lightboxNext": "Next photo",
+    "lightboxAlt": "Guest photo",
+    "lightboxAltWithName": "Photo from {name}",
+    "lightboxCounter": "{current} of {total}"
   },
   "wishes": {
     "title": "Wishes",

@@ -126,7 +126,15 @@
     "dropzone": "Перетащите фото сюда или нажмите для выбора",
     "maxSize": "Максимум 5 МБ на файл",
     "done": "Фото загружены! Спасибо 🎉",
-    "empty": "Фотографий пока нет. Будьте первым!"
+    "empty": "Фотографий пока нет. Будьте первым!",
+    "gridLabel": "Загруженные фото",
+    "openPhotoAria": "Открыть фото {current} из {total}",
+    "lightboxClose": "Закрыть",
+    "lightboxPrev": "Предыдущее фото",
+    "lightboxNext": "Следующее фото",
+    "lightboxAlt": "Фото гостя",
+    "lightboxAltWithName": "Фото от {name}",
+    "lightboxCounter": "{current} из {total}"
   },
   "wishes": {
     "title": "Пожелания",

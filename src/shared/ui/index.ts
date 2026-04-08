@@ -10,6 +10,8 @@ export {
     PhotoUploader,
     defaultPhotoUploadAdapter,
     mockPhotoUploadAdapter,
+    presignedPhotoUploadAdapter,
+    serverPhotoUploadAdapter,
 } from './PhotoUploader'
 export type {PhotoUploadAdapter} from './PhotoUploader'
 export {Section} from './Section'

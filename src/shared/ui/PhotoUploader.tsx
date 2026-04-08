@@ -2,8 +2,11 @@
 
 import React, {useCallback, useRef, useState} from 'react'
 import {useTranslations} from 'next-intl'
+import {toast} from 'sonner'
 
 import {cn} from '@shared/lib/cn'
+import {GALLERY_USE_SERVER_MULTIPART_UPLOAD} from '@shared/lib/gallery-upload-mode'
+import {postMultipartGalleryPhoto} from '@shared/lib/gallery-client-upload'
 
 import {Button} from './Button'
 import {Input} from './Input'
@@ -32,8 +35,10 @@ export type PhotoUploadAdapter = (
     onProgress: (p: number) => void,
 ) => Promise<void>
 
-/** Real uploads: presign → R2 PUT → confirm (requires working API + R2). */
-export async function defaultPhotoUploadAdapter(
+/**
+ * Direct browser→R2 (presign → PUT → confirm). Requires CORS on the R2 bucket (`docs/r2-cors.md`).
+ */
+export async function presignedPhotoUploadAdapter(
     file: File,
     uploaderName: string,
     onProgress: (p: number) => void,
@@ -64,6 +69,21 @@ export async function defaultPhotoUploadAdapter(
     onProgress(100)
 }
 
+/** Same-origin upload through Next.js (no R2 CORS). Enable with `NEXT_PUBLIC_GALLERY_SERVER_UPLOAD=true`. */
+export async function serverPhotoUploadAdapter(
+    file: File,
+    uploaderName: string,
+    onProgress: (p: number) => void,
+): Promise<void> {
+    await postMultipartGalleryPhoto(file, uploaderName, onProgress)
+}
+
+/** Default: presigned R2; server multipart if `NEXT_PUBLIC_GALLERY_SERVER_UPLOAD=true`. */
+export const defaultPhotoUploadAdapter: PhotoUploadAdapter =
+    GALLERY_USE_SERVER_MULTIPART_UPLOAD
+        ? serverPhotoUploadAdapter
+        : presignedPhotoUploadAdapter
+
 /** Simulated progress for demos / component book when API is unavailable. */
 export async function mockPhotoUploadAdapter(
     _file: File,
@@ -80,15 +100,17 @@ export async function mockPhotoUploadAdapter(
 
 export function PhotoUploader({
     uploadAdapter = defaultPhotoUploadAdapter,
+    onUploadSuccess,
 }: {
     uploadAdapter?: PhotoUploadAdapter
+    /** Called after at least one file uploaded successfully (e.g. refetch gallery list). */
+    onUploadSuccess?: () => void | Promise<void>
 }) {
     const t = useTranslations('gallery')
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [files, setFiles] = useState<UploadFile[]>([])
     const [name, setName] = useState('')
     const [isDragging, setDragging] = useState(false)
-    const [allDone, setAllDone] = useState(false)
 
     const addFiles = useCallback((newFiles: File[]) => {
         const valid = newFiles.filter(
@@ -127,23 +149,31 @@ export function PhotoUploader({
             .map((f, i) => ({...f, index: i}))
             .filter((f) => f.status === 'pending')
 
+        let successCount = 0
+
         for (let i = 0; i < pending.length; i += MAX_PARALLEL) {
             const batch = pending.slice(i, i + MAX_PARALLEL)
             await Promise.all(
                 batch.map(({file, index}) => {
                     updateFile(index, {status: 'uploading'})
                     return uploadAdapter(file, name, (p) => updateFile(index, {progress: p}))
-                        .then(() => updateFile(index, {status: 'done', progress: 100}))
+                        .then(() => {
+                            updateFile(index, {status: 'done', progress: 100})
+                            successCount += 1
+                        })
                         .catch(() => updateFile(index, {status: 'error'}))
                 }),
             )
         }
 
-        setAllDone(true)
-    }
-
-    if (allDone) {
-        return <p className="py-8 text-center text-text-secondary">{t('done')}</p>
+        if (successCount > 0) {
+            await onUploadSuccess?.()
+            setFiles([])
+            if (fileInputRef.current) {
+                fileInputRef.current.value = ''
+            }
+            toast.success(t('done'))
+        }
     }
 
     return (

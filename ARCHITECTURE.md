@@ -2451,6 +2451,8 @@ Guest browser
            └─► INSERT INTO photos
 ```
 
+**CORS on the R2 bucket** is required for this flow (browser `PUT` to `*.r2.cloudflarestorage.com`). Apply the JSON in **`docs/r2-cors-dashboard.json`** following **`docs/r2-cors.md`**. If you cannot configure CORS (or hit platform body-size limits), use **`POST /api/upload/server`** and set **`NEXT_PUBLIC_GALLERY_SERVER_UPLOAD=true`** (`@features/gallery-upload`).
+
 ### `lib/r2.ts`
 
 ```typescript
