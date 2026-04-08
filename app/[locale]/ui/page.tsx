@@ -5,7 +5,7 @@ import {Input} from '@/components/ui/Input'
 import {Section} from '@/components/ui/Section'
 import {SectionHeader} from '@/components/ui/SectionHeader'
 import {Select} from '@/components/ui/Select'
-import {Textarea} from '@/components/ui/Textarea'
+import {TextArea} from '@/components/ui/TextArea'
 import {UIBookClientSections} from './ui-book-client'
 
 const longPlaceholder =
@@ -39,7 +39,7 @@ export default async function UIBookPage({params}: Props) {
                     <h1 className="font-display text-hero text-text-primary mb-2">
                         Component book
                     </h1>
-                    <p className="text-body text-text-secondary max-w-[var(--content-width)]">
+                    <p className="text-body text-text-secondary max-w-(--content-width)">
                         Internal catalog of UI primitives and main states. Not linked from
                         public navigation.
                     </p>
@@ -90,7 +90,7 @@ export default async function UIBookPage({params}: Props) {
                 </header>
 
                 <div className="flex flex-col gap-4">
-                    <Section id="button" theme="base" className="!py-10 scroll-mt-24">
+                    <Section id="button" theme="base" className="py-10! scroll-mt-24">
                         <SectionHeader
                             title="Button"
                             subtitle="Variant × size matrix, plus disabled row."
@@ -123,7 +123,7 @@ export default async function UIBookPage({params}: Props) {
                         </div>
                     </Section>
 
-                    <Section id="input" theme="alt" className="!py-10 scroll-mt-24">
+                    <Section id="input" theme="alt" className="py-10! scroll-mt-24">
                         <SectionHeader
                             title="Input"
                             subtitle="Default, disabled, long placeholder, invalid."
@@ -152,29 +152,29 @@ export default async function UIBookPage({params}: Props) {
                         </div>
                     </Section>
 
-                    <Section id="textarea" theme="base" className="!py-10 scroll-mt-24">
+                    <Section id="textarea" theme="base" className="py-10! scroll-mt-24">
                         <SectionHeader
                             title="Textarea"
                             subtitle="Default, disabled, long placeholder, invalid."
                         />
                         <div className="grid max-w-xl gap-6">
-                            <Textarea
+                            <TextArea
                                 aria-label="Example textarea"
                                 placeholder="Message"
                                 rows={4}
                             />
-                            <Textarea
+                            <TextArea
                                 aria-label="Disabled textarea"
                                 placeholder="Disabled"
                                 rows={3}
                                 disabled
                             />
-                            <Textarea
+                            <TextArea
                                 aria-label="Long placeholder textarea"
                                 placeholder={longPlaceholder}
                                 rows={3}
                             />
-                            <Textarea
+                            <TextArea
                                 aria-label="Invalid textarea"
                                 placeholder="Invalid"
                                 rows={3}
@@ -184,7 +184,7 @@ export default async function UIBookPage({params}: Props) {
                         </div>
                     </Section>
 
-                    <Section id="select" theme="alt" className="!py-10 scroll-mt-24">
+                    <Section id="select" theme="alt" className="py-10! scroll-mt-24">
                         <SectionHeader
                             title="Select"
                             subtitle="Default, disabled, long first option, invalid."
@@ -221,7 +221,7 @@ export default async function UIBookPage({params}: Props) {
                             subtitle="Themes: base, alt, and dark (data-theme)."
                             className="pt-4"
                         />
-                        <Section theme="base" className="!py-10 rounded-lg">
+                        <Section theme="base" className="py-10! rounded-lg">
                             <SectionHeader
                                 title="Base section"
                                 subtitle="Background bg-bg-base via Section."
@@ -230,7 +230,7 @@ export default async function UIBookPage({params}: Props) {
                                 Sample body copy on the default surface.
                             </p>
                         </Section>
-                        <Section theme="alt" className="!py-10 rounded-lg">
+                        <Section theme="alt" className="py-10! rounded-lg">
                             <SectionHeader
                                 title="Alt section"
                                 subtitle="Muted band for contrast."
@@ -239,7 +239,7 @@ export default async function UIBookPage({params}: Props) {
                                 Sample body copy on the alternate surface.
                             </p>
                         </Section>
-                        <Section theme="dark" className="!py-10 rounded-lg">
+                        <Section theme="dark" className="py-10! rounded-lg">
                             <SectionHeader
                                 title="Dark section"
                                 subtitle="Inverted palette via data-theme."
@@ -250,7 +250,7 @@ export default async function UIBookPage({params}: Props) {
                         </Section>
                     </div>
 
-                    <Section theme="base" className="!py-10 scroll-mt-24">
+                    <Section theme="base" className="py-10! scroll-mt-24">
                         <SectionHeader
                             title="Client widgets"
                             subtitle="These use next-intl on the client; the [locale] layout supplies NextIntlClientProvider."

@@ -7,7 +7,7 @@ import {ZELLE_PHONE_NUMBER} from '@/lib/config/payments'
 import {cn} from '@/lib/utils'
 
 export function DeepLinkButton({service}: { service: PaymentConfig }) {
-    const t = useTranslations('donate')
+    const translator = useTranslations('donate')
     const [feedback, setFeedback] = useState<string | null>(null)
 
     const clearFeedbackLater = useCallback(() => {
@@ -18,9 +18,9 @@ export function DeepLinkButton({service}: { service: PaymentConfig }) {
         if (!service.deepLink) {
             try {
                 await navigator.clipboard.writeText(ZELLE_PHONE_NUMBER)
-                setFeedback(t('zelleCopied'))
+                setFeedback(translator('zelleCopied'))
             } catch {
-                setFeedback(`${t('zelleCopyFailed')} ${ZELLE_PHONE_NUMBER}`)
+                setFeedback(`${translator('zelleCopyFailed')} ${ZELLE_PHONE_NUMBER}`)
             }
             clearFeedbackLater()
             return

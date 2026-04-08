@@ -5,7 +5,7 @@ import {useTranslations} from 'next-intl'
 import {Button} from './Button'
 import {Input} from './Input'
 import {Select} from './Select'
-import {Textarea} from './Textarea'
+import {TextArea} from './TextArea'
 import {cn} from '@/lib/utils'
 import type {FormField, FormValues} from '@/lib/config/rsvp'
 
@@ -71,7 +71,7 @@ function FieldRenderer(
             </label>
 
             {field.type === 'textarea' ? (
-                <Textarea
+                <TextArea
                     id={field.key}
                     name={field.key}
                     required={field.required}

@@ -8,7 +8,9 @@
     "wishes": "Wishes",
     "donate": "Gift",
     "coupleNames": "Yurii & Mariia",
-    "mainNav": "Main navigation"
+    "mainNav": "Main navigation",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
   },
   "hero": {
     "names": "Yurii & Mariia",
@@ -50,6 +52,7 @@
   "dresscode": {
     "title": "Dress code",
     "subtitle": "Soft pastels and natural tones — please avoid pure white or black.",
+    "allowed": "Recommended",
     "notAllowed": "Please avoid",
     "yourColor": "This color fits our palette",
     "notYourColor": "We would prefer a different shade",
