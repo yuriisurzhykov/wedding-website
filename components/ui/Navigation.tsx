@@ -75,6 +75,11 @@ export function Navigation() {
         [close],
     )
 
+    const scrollToTop = useCallback(() => {
+        window.scrollTo({top: 0, behavior: 'smooth'})
+        close()
+    }, [close])
+
     useEffect(() => {
         if (!open) {
             return
@@ -124,9 +129,18 @@ export function Navigation() {
                 aria-label={translator('mainNav')}
             >
                 <div className="max-w-(--max-width) mx-auto px-4 h-16 flex items-center justify-between gap-3 min-w-0">
-                    <span className="font-accent text-xl text-primary truncate min-w-0">
+                    <button
+                        type="button"
+                        onClick={scrollToTop}
+                        aria-label={translator('scrollToTop')}
+                        className={cn(
+                            'font-accent text-xl text-primary truncate min-w-0 text-left',
+                            'rounded-md transition-opacity duration-fast hover:opacity-90',
+                            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-border-focus focus-visible:ring-offset-2',
+                        )}
+                    >
                         {translator('coupleNames')}
-                    </span>
+                    </button>
 
                     <div className="hidden md:flex items-center gap-6">
                         {NAV_ITEMS.map((item) => (
