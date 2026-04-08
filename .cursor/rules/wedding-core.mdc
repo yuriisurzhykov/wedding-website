@@ -9,10 +9,10 @@ The single source of truth for product and stack is **ARCHITECTURE.md** at the r
 
 ## Order for adding features (summary)
 
-1. Data and config → `lib/config/*.ts` (or `entities` / `shared` when already split per FSD).
+1. Data and config → `src/entities/<slice>/` (optional thin re-export in `lib/config/*.ts`); see **ARCHITECTURE.md** §3.3.
 2. UI strings → **both** `messages/ru.json` and `messages/en.json` **in the same change**.
-3. New page section → `components/sections/` or a widget under `src/widgets/`, wire in `app/[locale]/page.tsx`, add an entry in `lib/config/nav.ts`.
-4. New UI primitive → `components/ui/`, design-system classes only (Tailwind tokens / theme variables), no inline colors.
+3. New page section → `src/widgets/<name>/`, wire in `app/[locale]/page.tsx`, register in `@entities/site-nav` (or `lib/config/nav.ts` re-export).
+4. New UI primitive → `src/shared/ui/` only (`components/` is deprecated). Design-system classes only (Tailwind tokens / theme variables), no inline colors.
 
 ## Do not hardcode
 

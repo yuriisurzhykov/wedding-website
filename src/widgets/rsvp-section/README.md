@@ -17,13 +17,13 @@ Internal pieces (`RsvpSectionForm`, `submitRsvpFetch`) are not re-exported; exte
 
 ## Data flow
 
-1. **Subtitle** — `formatRsvpDeadlineLine(locale)` from `@/lib/wedding-calendar` is passed into `t('subtitle', { deadline })` (messages: `rsvp.subtitle`).
+1. **Subtitle** — `formatRsvpDeadlineLine(locale)` from `@shared/lib/wedding-calendar` is passed into `t('subtitle', { deadline })` (messages: `rsvp.subtitle`).
 2. **Submit** — `RsvpSectionForm` calls `submitRsvpFetch` with the object `DynamicForm` builds (`attending`, field keys). That posts JSON to `/api/rsvp` (same-origin, not under `[locale]`).
 3. **Errors** — Non-OK responses throw; `DynamicForm` shows the generic `rsvp.error` string. Validation details from the API are not surfaced in the UI yet.
 
 ## Adding a field
 
-Follow the same order as `@features/rsvp-submit` README: `lib/config/rsvp` + messages → Zod → entity map → DB/email. This widget only depends on `RSVP_FIELDS` and the API contract staying aligned.
+Follow the same order as `@features/rsvp-submit` README: `@entities/rsvp` (`RSVP_FIELDS`) + messages → Zod → entity map → DB/email. This widget only depends on `RSVP_FIELDS` and the API contract staying aligned.
 
 ## Observability
 

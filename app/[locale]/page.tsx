@@ -1,6 +1,10 @@
-import {DressCode, Hero, OurStory, Schedule, Welcome} from "@/components/sections";
-import {Navigation} from "@/components/ui/Navigation";
+import {DressCodeSection} from "@widgets/dresscode-section";
+import {HeroSection} from "@widgets/hero-section";
+import {OurStorySection} from "@widgets/our-story-section";
 import {RsvpSection} from "@widgets/rsvp-section";
+import {ScheduleSection} from "@widgets/schedule-section";
+import {SiteNavigation} from "@widgets/site-navigation";
+import {WelcomeSection} from "@widgets/welcome-section";
 
 /** Scroll targets for nav items not yet implemented (Phases 5–7). */
 function NavAnchorStubs() {
@@ -16,13 +20,13 @@ function NavAnchorStubs() {
 export default async function Home() {
     return (
         <>
-            <Navigation/>
+            <SiteNavigation/>
             <main className="flex flex-col pt-16">
-                <Hero/>
-                <Welcome/>
-                <Schedule/>
-                <DressCode/>
-                <OurStory/>
+                <HeroSection/>
+                <WelcomeSection/>
+                <ScheduleSection/>
+                <DressCodeSection/>
+                <OurStorySection/>
                 <RsvpSection/>
                 <NavAnchorStubs/>
             </main>

@@ -1,8 +1,7 @@
 import {getLocale, getTranslations} from "next-intl/server";
 
-import {Section} from "@/components/ui/Section";
-import {SectionHeader} from "@/components/ui/SectionHeader";
-import {formatRsvpDeadlineLine} from "@/lib/wedding-calendar";
+import {Section, SectionHeader} from "@shared/ui";
+import {formatRsvpDeadlineLine} from '@shared/lib/wedding-calendar'
 
 import {RsvpSectionForm} from "./RsvpSectionForm";
 

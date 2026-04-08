@@ -3,8 +3,8 @@
 import {useLocale, useTranslations} from "next-intl";
 import {toast} from "sonner";
 
-import {DynamicForm} from "@/components/ui/DynamicForm";
-import {RSVP_FIELDS} from "@/lib/config/rsvp";
+import {RSVP_FIELDS} from "@entities/rsvp";
+import {DynamicForm} from "@shared/ui";
 
 import {RsvpNotificationError, submitRsvpFetch} from "../lib/submit-rsvp-fetch";
 

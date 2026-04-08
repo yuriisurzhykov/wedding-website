@@ -8,6 +8,8 @@ Supabase clients.
 Re-exported from `index.ts`:
 
 - Types: `RsvpRow`, `RsvpRowInsert`, `RsvpFormInput`
+- Form UI types (same as dynamic form): `FormField`, `FormValues`, `FieldType`
+- `RSVP_FIELDS` — `FormField[]` for the production RSVP form
 - `mapRsvpFormToRow(input)` → `RsvpRowInsert`
 
 Internal defaults for guest counts live only inside `model/map-form-to-row.ts` (not exported).
@@ -15,8 +17,7 @@ Internal defaults for guest counts live only inside `model/map-form-to-row.ts` (
 ## When to use
 
 - **Features / API routes:** after validating JSON with Zod, call `mapRsvpFormToRow` before inserting into Postgres.
-- **UI:** keep using `lib/config/rsvp` field config; the form’s submit payload should align with `RsvpFormInput` (
-  camelCase, `attending` required).
+- **UI:** import `RSVP_FIELDS` (and form types if needed) from `@entities/rsvp`; transitional `lib/config/rsvp` re-exports the same. Submit payload should align with `RsvpFormInput` (camelCase, `attending` required).
 
 ## Invariants encoded in the mapper
 
@@ -30,4 +31,4 @@ Internal defaults for guest counts live only inside `model/map-form-to-row.ts` (
 1. Add the column in `supabase/schema.sql` and migrate.
 2. Extend `RsvpRow` / `RsvpRowInsert` in `model/types.ts`.
 3. Add the key to `RsvpFormInput` if it comes from the form.
-4. Update `mapRsvpFormToRow` and the feature-layer Zod schema, email template, and `lib/config/rsvp` fields.
+4. Update `model/rsvp-form-fields.ts`, `mapRsvpFormToRow`, the feature-layer Zod schema, and email templates.

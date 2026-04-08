@@ -1,0 +1,44 @@
+import {getLocale, getTranslations} from "next-intl/server";
+
+import {Countdown} from "@shared/ui";
+import {formatHeroWeddingLine, getWeddingCeremonyDate} from "@shared/lib/wedding-calendar";
+import {VENUE} from '@entities/wedding-venue'
+
+export async function HeroSection() {
+    const locale = await getLocale();
+    const translator = await getTranslations("hero");
+    const weddingDateLabel = formatHeroWeddingLine(locale);
+
+    return (
+        <section
+            className="flex min-h-screen flex-col items-center justify-center px-4 text-center"
+            style={{background: "var(--gradient-hero)"}}
+        >
+            <p
+                className="font-accent mb-2 text-[2rem] text-accent"
+                aria-hidden
+            >
+                two became one
+            </p>
+
+            <h1 className="font-display mb-4 text-hero text-text-primary">
+                {translator("names")}
+            </h1>
+
+            <p className="font-display mb-2 text-h3 text-text-secondary">
+                {translator("date", {date: weddingDateLabel})}
+            </p>
+
+            <a
+                href={VENUE.mapsUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mb-12 text-small text-text-muted underline-offset-4 transition-colors hover:text-primary hover:underline"
+            >
+                {translator("venue")}
+            </a>
+
+            <Countdown targetDate={getWeddingCeremonyDate()}/>
+        </section>
+    );
+}

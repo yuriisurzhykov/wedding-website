@@ -3,7 +3,7 @@ import "server-only";
 import {z} from "zod";
 
 import type {RsvpFormInput} from "@entities/rsvp";
-import {isUsPhoneValid, normalizeUsPhoneToE164} from "@/lib/phone";
+import {isUsPhoneValid, normalizeUsPhoneToE164} from '@shared/lib/phone'
 
 import type {GuestEmailLocale} from "./email/guest-confirmation-copy";
 

@@ -1,11 +1,6 @@
 import type {Metadata} from 'next'
 import {setRequestLocale} from 'next-intl/server'
-import {Button} from '@/components/ui/Button'
-import {Input} from '@/components/ui/Input'
-import {Section} from '@/components/ui/Section'
-import {SectionHeader} from '@/components/ui/SectionHeader'
-import {Select} from '@/components/ui/Select'
-import {TextArea} from '@/components/ui/TextArea'
+import {Button, Input, Section, SectionHeader, Select, TextArea} from '@shared/ui'
 import {UIBookClientSections} from './ui-book-client'
 
 const longPlaceholder =
@@ -69,7 +64,7 @@ export default async function UIBookPage({params}: Props) {
                             LanguageSwitcher
                         </a>
                         <a href="#navigation" className="underline underline-offset-2">
-                            Navigation
+                            SiteNavigation
                         </a>
                         <a href="#countdown" className="underline underline-offset-2">
                             Countdown

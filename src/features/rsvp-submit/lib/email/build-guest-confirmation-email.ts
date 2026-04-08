@@ -1,6 +1,6 @@
 import type {RsvpRowInsert} from "@entities/rsvp";
-import {VENUE} from "@/lib/constants";
-import {formatStoryWeddingLine} from "@/lib/wedding-calendar";
+import {VENUE} from '@entities/wedding-venue'
+import {formatStoryWeddingLine} from '@shared/lib/wedding-calendar'
 import {escapeHtml} from "@shared/lib/html-escape";
 
 import {getGuestConfirmationCopy, guestConfirmationSubject, type GuestEmailLocale,} from "./guest-confirmation-copy";

@@ -100,108 +100,104 @@ If something goes down — nobody will fix it. Vercel + R2 + Supabase — each c
 
 ## 3. Project structure
 
+The repo is moving to **Feature-Sliced Design (FSD)** for code under `src/`: layers, one-way imports, and a narrow public API per slice (`index.ts`). Official guide for FSD with Next.js: [feature-sliced.design — Next.js](https://feature-sliced.design/docs/guides/tech/with-nextjs). Import rules and aliases are summarized in **`docs/CODING_STANDARDS.md`** (FSD section) and in **`.cursor/rules/wedding-fsd-layers.mdc`**.
+
+### 3.1 Target layout: App Router + `src/` (FSD)
+
 ```
 wedding/
 ├── app/
-│   └── [locale]/                        # i18n — all pages under locale
-│       ├── layout.tsx                   # Root layout: fonts, metadata, providers
-│       ├── page.tsx                     # Home page: all sections in order
-│       └── admin/
-│           ├── layout.tsx               # Admin layout (token check on server)
-│           └── page.tsx                 # Admin dashboard
+│   ├── [locale]/                        # i18n — pages under locale
+│   │   ├── layout.tsx                   # Root layout: fonts, metadata, providers
+│   │   ├── page.tsx                     # Home: compose widgets (target: only @widgets/*)
+│   │   └── admin/
+│   │       ├── layout.tsx
+│   │       └── page.tsx
+│   ├── api/                             # Not localised — thin HTTP adapters
+│   │   ├── rsvp/route.ts                # POST: RSVP (delegates to @features/rsvp-submit)
+│   │   ├── upload/presign|confirm/...
+│   │   ├── wishes/route.ts
+│   │   ├── ping/route.ts
+│   │   └── admin/rsvp|photos/...
+│   └── globals.css                      # Theme tokens (@theme)
 │
-├── app/
-│   └── api/                             # API Routes WITHOUT locale — they are not localised
-│       ├── rsvp/
-│       │   └── route.ts                 # POST: save RSVP + send email
-│       ├── upload/
-│       │   ├── presign/
-│       │   │   └── route.ts             # POST: issue presigned URL for R2
-│       │   └── confirm/
-│       │       └── route.ts             # POST: confirm upload, write to DB
-│       ├── wishes/
-│       │   └── route.ts                 # POST: save wish
-│       ├── ping/
-│       │   └── route.ts                 # GET: keep-alive for Supabase
-│       └── admin/
-│           ├── rsvp/
-│           │   └── route.ts             # GET: list all RSVPs (protected)
-│           └── photos/
-│               └── route.ts             # GET: list all photos (protected)
+├── src/
+│   ├── shared/                          # No wedding-specific domain: UI primitives, clients, pure utils
+│   │   ├── api/                         # e.g. Supabase, Resend (server/browser boundaries documented)
+│   │   ├── lib/                         # cn, phone, public URL, wedding-calendar, …
+│   │   └── ui/                          # Design-system components (migrated from components/ui)
+│   ├── entities/                        # Domain model, types, list config, form↔DB mapping — no HTTP
+│   │   └── rsvp/                        # Example: RSVP field config and mappers (expand public API here)
+│   ├── features/                        # Use cases: Zod, writes, side effects (e.g. rsvp-submit)
+│   └── widgets/                         # Section composition: Section + copy + local client islands
+│       └── rsvp-section/                # One folder per section; see widget naming below
 │
-├── components/
-│   ├── sections/                        # Page sections (one file = one section)
-│   │   ├── Hero.tsx                     # Names, date, venue, countdown
-│   │   ├── Welcome.tsx                  # Welcome message (MDX content)
-│   │   ├── Schedule.tsx                 # Day schedule
-│   │   ├── DressCode.tsx                # Palette and interactive colour picker
-│   │   ├── OurStory.tsx                 # Our love story (MDX content)
-│   │   ├── RSVP.tsx                     # Attendance confirmation form
-│   │   ├── Gallery.tsx                  # Photo gallery with infinite scroll
-│   │   ├── Wishes.tsx                   # Wish feed + form
-│   │   └── Donate.tsx                   # Deep link buttons for transfers
-│   │
-│   ├── ui/                              # Reusable UI primitives
-│   │   ├── Button.tsx                   # Button with variants and sizes
-│   │   ├── Input.tsx                    # Text input
-│   │   ├── Textarea.tsx                 # Multi-line input
-│   │   ├── Select.tsx                   # Dropdown list
-│   │   ├── Section.tsx                  # Section wrapper (spacing, background)
-│   │   ├── SectionHeader.tsx            # Section title + subtitle
-│   │   ├── Countdown.tsx                # Countdown timer (client)
-│   │   ├── DynamicForm.tsx              # Config-driven form renderer
-│   │   ├── PhotoUploader.tsx            # Drag-and-drop photo uploader
-│   │   ├── DeepLinkButton.tsx           # Button with deep link logic
-│   │   ├── LanguageSwitcher.tsx         # RU / EN switcher
-│   │   └── Navigation.tsx              # Navigation with anchor links
-│   │
-│   └── admin/
-│       ├── RSVPTable.tsx                # RSVP table with filters
-│       └── PhotoGrid.tsx                # Photo grid with R2 links
-│
-├── lib/
-│   ├── config/                          # All data and configs live here
-│   │   ├── rsvp.ts                      # RSVP form fields (add field = add object)
-│   │   ├── schedule.ts                  # Schedule items
-│   │   ├── dresscode.ts                 # Wedding palette colours
-│   │   ├── nav.ts                       # Navigation links
-│   │   └── payments.ts                  # Payment services and deep links
-│   │
-│   ├── supabase.ts                      # Supabase clients (server + browser)
-│   ├── r2.ts                            # R2 client and presign helper
-│   ├── resend.ts                        # Email templates and sending
-│   ├── utils.ts                         # cn(), formatDate(), etc.
-│   └── constants.ts                     # Wedding date, venue, contacts
-│
-├── messages/                            # All UI strings
-│   ├── ru.json                          # Russian (default)
-│   └── en.json                          # English
-│
-├── content/                             # Long-form text in MDX
-│   ├── story/
-│   │   ├── ru.mdx                       # Our love story — RU
-│   │   └── en.mdx                       # Our love story — EN
-│   └── welcome/
-│       ├── ru.mdx                       # Welcome message — RU
-│       └── en.mdx                       # Welcome message — EN
-│
-├── middleware.ts                        # i18n routing + admin protection
-├── i18n/
-│   └── request.ts                       # next-intl configuration
-├── next.config.ts                       # Next.js config with next-intl plugin
-├── vercel.json                          # Cron jobs
+├── components/                          # Deprecated: README only — all UI lives under src/ (see §3.4)
+├── lib/                                 # Transitional re-exports + non-FSD helpers (see 3.4)
+├── messages/                            # ru.json, en.json — all UI strings
+├── content/                             # MDX long-form (welcome, story, …)
+├── middleware.ts
+├── i18n/request.ts
+├── next.config.ts
+├── vercel.json
 └── .env.local                           # Secrets (never in git)
-    ├── SUPABASE_URL
-    ├── SUPABASE_SERVICE_ROLE_KEY        # Server only — never in the frontend
-    ├── SUPABASE_ANON_KEY                # Safe for client
-    ├── R2_ACCOUNT_ID
-    ├── R2_ACCESS_KEY_ID
-    ├── R2_SECRET_ACCESS_KEY
-    ├── R2_BUCKET_NAME
-    ├── R2_PUBLIC_URL                    # Bucket CDN URL (custom domain)
-    ├── RESEND_API_KEY
-    ├── ADMIN_EMAIL                      # Where to send RSVP notifications
-    └── ADMIN_SECRET                     # Token for /admin routes
+```
+
+**Layers (short):** `shared` → `entities` → `features` → `widgets` → `app`. A slice exposes only what its **`index.ts`** exports; do not import deep paths from another slice.
+
+### 3.2 Widget naming (home page and header)
+
+Slice folders under `src/widgets/` use **kebab-case**. The default export surface from `index.ts` uses **PascalCase** component names (e.g. `RsvpSection`).
+
+| Current legacy file(s) | Widget slice folder |
+|------------------------|---------------------|
+| `Hero.tsx` (+ `Countdown`) | `hero-section` |
+| `Welcome.tsx` | `welcome-section` |
+| `Schedule.tsx` | `schedule-section` |
+| `DressCode.tsx` | `dresscode-section` |
+| `OurStory.tsx` | `our-story-section` |
+| `Navigation.tsx` | `site-navigation` |
+
+Optional alias for the same responsibility: `header-navigation` — pick **one** name per deployment; the table above is the canonical choice unless the team standardizes on the alias.
+
+### 3.3 `lib/config` vs `src/entities`
+
+- **End state:** domain lists and types (schedule, dresscode, nav, payments, RSVP fields, …) live under **`src/entities/<name>/`** (e.g. `model/` or `config/`), exported from that slice’s **`index.ts`**.
+- **Transition:** to avoid a single huge import-rewrite PR, new or moved definitions may be implemented in **`src/entities/...`** and **re-exported** from the existing **`lib/config/*.ts`** files. Callers can keep using `@/lib/config/...` until a dedicated pass switches imports to `@entities/...` and drops the shim.
+- **RSVP:** extend **`@entities/rsvp`** for field config and types; keep **`lib/config/rsvp.ts`** as a thin re-export until migration completes.
+
+### 3.4 Legacy and transitional paths
+
+**`components/`** — empty except `components/README.md` (deprecated; do not add code here). Sections and primitives were moved to `src/widgets/*` and `src/shared/ui/`.
+
+```
+wedding/
+├── lib/
+│   ├── config/                          # Thin re-exports → @entities/* (see 3.3)
+│   ├── supabase.ts, utils.ts, constants.ts, …  # Shims → @shared/* / @entities/* where noted
+│   └── wedding-calendar/                # Re-export or alias of @shared/lib/wedding-calendar (if present)
+│
+├── content/, messages/                  # MDX + i18n JSON — not FSD slices
+└── (no utils/supabase/ — use src/shared/api/supabase)
+```
+
+Prefer **`@shared/*`**, **`@entities/*`**, **`@features/*`**, **`@widgets/*`** in new code; keep `@/lib/*` only where a shim still exists.
+
+Env block for local secrets (unchanged):
+
+```
+.env.local
+    SUPABASE_URL
+    SUPABASE_SERVICE_ROLE_KEY            # Server only — never in the frontend
+    SUPABASE_ANON_KEY                    # Safe for client
+    R2_ACCOUNT_ID
+    R2_ACCESS_KEY_ID
+    R2_SECRET_ACCESS_KEY
+    R2_BUCKET_NAME
+    R2_PUBLIC_URL                        # Bucket CDN URL (custom domain)
+    RESEND_API_KEY
+    ADMIN_EMAIL                          # Where to send RSVP notifications
+    ADMIN_SECRET                         # Token for /admin routes
 ```
 
 ---
@@ -3570,28 +3566,33 @@ export function Navigation() {
 
 ## 18. Rule for everything new
 
-When adding something new — follow this order:
+When adding something new — follow this order (**FSD under `src/`**; `lib/` and `components/` are transitional — see **§3**).
 
 ```
-1. DATA / CONFIG → lib/config/*.ts
-   Example: new schedule item → SCHEDULE in schedule.ts
+1. DATA / CONFIG → src/entities/<slice>/ (model or config) + public export from index.ts
+   During migration: optional thin re-export from lib/config/*.ts if external callers still use @/lib/config
+   Example: new schedule item → @entities/schedule; keep lib/config/schedule.ts as re-export if needed
 
 2. STRINGS → messages/ru.json + messages/en.json
    Both files at the same time, always.
 
-3. NEW SECTION → components/sections/NewSection.tsx
-   + add to app/[locale]/page.tsx
-   + add to lib/config/nav.ts
+3. NEW SECTION → src/widgets/<kebab-name>-section/ (see §3.2 widget naming)
+   + export from widget index.ts (PascalCase component)
+   + wire in app/[locale]/page.tsx
+   + nav: @entities/site-nav (or lib/config/nav.ts re-export until fully switched)
 
-4. NEW UI PRIMITIVE → components/ui/NewComponent.tsx
+4. NEW UI PRIMITIVE → src/shared/ui/
    Only CSS tokens: className="text-primary bg-bg-card"
    Never: style={{ color: '#C9A69A' }}
 
-5. NEW FORM FIELD:
-   a. Add object to RSVP_FIELDS in lib/config/rsvp.ts
-   b. Add strings to messages/ru.json and messages/en.json
-   c. Add field to zod schema in app/api/rsvp/route.ts
-   d. Add column in Supabase if storage is needed
+5. NEW USE CASE (API + validation + side effects) → src/features/<name>/
+   app/api/*/route.ts stays thin: parse request, call feature, map errors to HTTP
+
+6. NEW FORM FIELD (RSVP example):
+   a. Field definition in @entities/rsvp (re-export via lib/config/rsvp.ts during transition)
+   b. Strings in messages/ru.json and messages/en.json
+   c. Zod + submit path in @features/rsvp-submit (not duplicated in the route)
+   d. Column in Supabase if storage is needed
 
 NEVER hardcode:
   ✗ Colours: style={{ color: '#C9A69A' }}

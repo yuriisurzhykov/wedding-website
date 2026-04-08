@@ -1,6 +1,6 @@
 import "server-only";
 
-import {createServerClient} from "@/lib/supabase";
+import {createServerClient} from '@shared/api/supabase/server'
 import {mapRsvpFormToRow} from "@entities/rsvp";
 
 import {notifyAdminOfNewRsvp} from "../lib/notify-admin";

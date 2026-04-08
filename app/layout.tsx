@@ -2,7 +2,7 @@ import type {Metadata} from 'next'
 import {Cormorant_Garamond, Great_Vibes, Lato} from 'next/font/google'
 import {Analytics} from '@vercel/analytics/next'
 import {getLocale} from 'next-intl/server'
-import {AppToaster} from '@/components/ui/AppToaster'
+import {AppToaster} from '@shared/ui'
 import './globals.css'
 
 const fontDisplay = Cormorant_Garamond({

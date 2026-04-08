@@ -50,7 +50,7 @@ User-controlled strings in HTML go through `escapeHtml` from `@shared/lib/html-e
 
 ## Adding a new field
 
-1. **Form / i18n** — `lib/config/rsvp` (`RSVP_FIELDS`) and messages.
+1. **Form / i18n** — `@entities/rsvp` (`RSVP_FIELDS`; `lib/config/rsvp` re-exports during migration) and messages.
 2. **Validation** — `lib/validate-payload.ts` (`rsvpPayloadSchema`): types, max lengths, refinements.
 3. **DB mapping** — `@entities/rsvp` (`RsvpFormInput`, `mapRsvpFormToRow`).
 4. **Types** — `@entities/rsvp` `RsvpRow` / `RsvpRowInsert` if the column is new (and `supabase/schema.sql`).

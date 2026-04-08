@@ -43,4 +43,4 @@ Each slice should have a short **README.md** (or one consolidated `docs/...` doc
 
 ## Migration
 
-Moving all of `components/` into FSD is a separate effort. Prefer placing new work under `src/` by layer; import legacy from widgets/features temporarily without breaking import rules.
+Legacy `components/` is deprecated (stub `components/README.md` only). New work belongs under `src/` by layer. If a shim is needed, use `lib/config/*` re-exports per **ARCHITECTURE.md** §3.3 — do not add new code under `components/`.

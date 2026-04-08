@@ -8,10 +8,10 @@ Shared by human developers and AI assistants. Cursor loads the same expectations
 
 ## Adding features
 
-1. Config / data → `lib/config/*.ts` or FSD `entities` / `shared` when applicable.
+1. Config / data → `src/entities/<slice>/` (export via slice `index.ts`). Optional thin **re-export** from `lib/config/*.ts` for callers that still use `@/lib/config/...`; see **ARCHITECTURE.md §3.3**. Prefer `@entities/...` in new code.
 2. Strings → `messages/ru.json` **and** `messages/en.json` together.
-3. New section → `components/sections/` or `src/widgets/`, register in `app/[locale]/page.tsx` and `lib/config/nav.ts`.
-4. New primitive → `components/ui/`, theme tokens only (no inline hex colors).
+3. New section → `src/widgets/<name>/` (kebab-case folder; widget names in **ARCHITECTURE.md §3.2**), register in `app/[locale]/page.tsx` and `@entities/site-nav` (or `lib/config/nav.ts` re-export).
+4. New primitive → `src/shared/ui/` only; theme tokens only (no inline hex colors). Do not add files under `components/` (deprecated; see **ARCHITECTURE.md §3.4**).
 
 ## Do not hardcode
 
