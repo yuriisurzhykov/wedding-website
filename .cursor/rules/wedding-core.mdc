@@ -1,0 +1,29 @@
+---
+description: Core site standards — data, i18n, design tokens, pointer to ARCHITECTURE
+alwaysApply: true
+---
+
+# Wedding site — core rules
+
+The single source of truth for product and stack is **ARCHITECTURE.md** at the repo root. For larger changes, align with it and **§18 “Rule for everything new”**.
+
+## Order for adding features (summary)
+
+1. Data and config → `lib/config/*.ts` (or `entities` / `shared` when already split per FSD).
+2. UI strings → **both** `messages/ru.json` and `messages/en.json` **in the same change**.
+3. New page section → `components/sections/` or a widget under `src/widgets/`, wire in `app/[locale]/page.tsx`, add an entry in `lib/config/nav.ts`.
+4. New UI primitive → `components/ui/`, design-system classes only (Tailwind tokens / theme variables), no inline colors.
+
+## Do not hardcode
+
+- Colors: no `style={{ color: '#...' }}` or magic hex in JSX for styling.
+- User-facing copy: no raw strings in components — use `next-intl` keys.
+- Data lists: no `const items = [{ title: '...' }]` in UI — move to config.
+
+## Diffs
+
+Change only what the task requires. Avoid drive-by refactors and unrelated files.
+
+## Humans and AI
+
+The same expectations for the team live in **docs/CODING_STANDARDS.md** (mirror of these rules).

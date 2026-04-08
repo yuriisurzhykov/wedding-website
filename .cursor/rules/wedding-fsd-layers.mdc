@@ -1,0 +1,46 @@
+---
+description: Feature-Sliced Design — src/ layers, path aliases, imports, slice public API
+alwaysApply: true
+---
+
+# FSD and `src/` layout
+
+The codebase follows **Feature-Sliced Design** (see Phase 4 RSVP plan and [FSD + Next.js](https://feature-sliced.design/docs/guides/tech/with-nextjs)).
+
+## Path aliases (tsconfig)
+
+- `@shared/*` → `src/shared/*`
+- `@entities/*` → `src/entities/*`
+- `@features/*` → `src/features/*`
+- `@widgets/*` → `src/widgets/*`
+
+The Next app root stays under `app/`. **Keep API routes thin** — HTTP only, no business logic.
+
+## Import direction
+
+Allowed flow: **shared → entities → features → widgets → app**. Do not import “up” the stack or reach into slice internals bypassing the slice public API.
+
+## Layer roles
+
+| Layer | Role |
+|-------|------|
+| **entities** | Domain model, types, form↔DB mapping. No HTTP, no external services. |
+| **features** | Use cases (validation, DB writes, notifications). Server-only where secrets are needed. |
+| **widgets** | Section composition: UI + `fetch` / props from the page. |
+| **shared** | Reuse: env + Resend, utilities, shared UI (as migrated). |
+
+## One file, one reason to change
+
+Split validation schema (Zod), DB row mapping, email HTML, and the HTTP adapter into **separate modules**, not one god file.
+
+## Slice public API
+
+Export to the outside through a narrow **`index.ts`**. Do not leak internal constants; expose functions and contract types.
+
+## Slice documentation
+
+Each slice should have a short **README.md** (or one consolidated `docs/...` doc): why the slice exists, public contract, errors and how callers handle them, how to extend safely (e.g. new form field → i18n → Zod → map → email → types). Public exports need **JSDoc**: how to call, return/throw behavior, invariants.
+
+## Migration
+
+Moving all of `components/` into FSD is a separate effort. Prefer placing new work under `src/` by layer; import legacy from widgets/features temporarily without breaking import rules.

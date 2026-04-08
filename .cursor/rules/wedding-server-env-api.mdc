@@ -1,0 +1,29 @@
+---
+description: Server, env, API routes, HTTP and domain function contracts
+alwaysApply: true
+---
+
+# Server, environment variables, and API
+
+## Env at the server boundary only
+
+- Read `process.env` inside **server-only** helpers (`getXConfig()`, `assertXEnv()`), return a **typed object** or fail with a clear error.
+- **Do not** export raw secrets from modules, global `const FROM = '...'` for production, etc. Variable names must match **ARCHITECTURE.md** and `.env.example` (e.g. `SUPABASE_*`, `RESEND_API_KEY`, `ADMIN_EMAIL`, `RESEND_FROM_EMAIL`).
+- Dev fallbacks live in **one** place with a short comment explaining why (e.g. inside `getTransactionalFromAddress()`).
+
+## Thin API route
+
+`app/api/.../route.ts`: parse `Request`, call `@features/...`, **map errors to HTTP** (status + JSON body). No duplicated validation and no direct DB inserts in the route file when the use case already lives in a feature.
+
+## Contracts
+
+- Document in the feature README: request/response shape, **400 / 500** behavior, what the client should do.
+- For the domain function (e.g. `submitRsvp`), pick **one** style: either `Result` or thrown errors caught in the route; list cases in **JSDoc**.
+
+## Email and side effects
+
+Admin notifications **must not** block the guest response: send asynchronously (fire-and-forget), **log** failures (see ARCHITECTURE Phase 4 §4.1). Explain why in the README.
+
+## Validation
+
+Incoming JSON: **Zod** (or the project’s agreed validator), with `refine` for domain invariants (e.g. `guest_count` when `attending: false`).

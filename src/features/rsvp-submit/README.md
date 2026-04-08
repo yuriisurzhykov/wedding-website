@@ -36,7 +36,7 @@ Sent only when the stored row has a **non-empty** `email` (trimmed), and **only 
 
 **Locale:** `parseRsvpPayload` returns `locale: 'ru' | 'en'` (default `'en'` if the client omits `locale`). Copy lives in `lib/email/guest-confirmation-copy.ts` only — no client i18n in the server templates.
 
-**Site link:** `getPublicSiteUrl()` (`NEXT_PUBLIC_SITE_URL` or `https://${VERCEL_URL}`) is passed into the guest builder; if unset, the HTML/text omit the primary CTA but the rest of the message still sends.
+**Site link:** `getPublicSiteUrl()` (`NEXT_PUBLIC_SITE_URL`, else Vercel `VERCEL_PROJECT_PRODUCTION_URL` / `VERCEL_URL`) is passed into the guest builder; if unset, the HTML/text omit the primary CTA but the rest of the message still sends.
 
 ## Email build contracts (Resend)
 
