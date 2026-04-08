@@ -115,7 +115,7 @@ function DynamicFormBookDemo() {
         key={resetKey}
         fields={bookFormFields}
         namespace="rsvp"
-        onSubmit={async () => {
+        onSubmitAction={async () => {
           await new Promise((r) => setTimeout(r, 700))
           if (failNext) throw new Error('demo')
         }}

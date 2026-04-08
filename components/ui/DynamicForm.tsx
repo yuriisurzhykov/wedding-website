@@ -1,6 +1,6 @@
 'use client'
 
-import {useState} from 'react'
+import React, {useState} from 'react'
 import {useTranslations} from 'next-intl'
 import {Button} from './Button'
 import {Input} from './Input'
@@ -29,13 +29,10 @@ function FieldRenderer(
     const label = t(`fields.${field.key}.label`)
     const placeholder = t(`fields.${field.key}.placeholder`)
     const rawValue = values[field.key]
-    const value =
-        rawValue === undefined || rawValue === null ? '' : String(rawValue)
+    const value = rawValue === undefined || rawValue === null ? '' : String(rawValue)
 
     const handleChange = (
-        e: React.ChangeEvent<
-            HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-        >,
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
     ) => {
         const raw = e.target.value
         if (field.type === 'select' && raw === '') {
@@ -55,33 +52,22 @@ function FieldRenderer(
                     type="checkbox"
                     id={field.key}
                     checked={Boolean(values[field.key])}
-                    onChange={(e) => onChange(field.key, e.target.checked)}
+                    onChange={(event) => onChange(field.key, event.target.checked)}
                     className="accent-primary h-4 w-4"
                 />
                 <span className="text-body text-text-primary">
-          {label}
-                    {field.required ? (
-                        <span className="text-primary ml-1" aria-hidden>
-              *
-            </span>
-                    ) : null}
-        </span>
+                    {label}
+                    {field.required ? (<span className="text-primary ml-1" aria-hidden>*</span>) : null}
+                </span>
             </label>
         )
     }
 
     return (
         <div className="flex flex-col gap-1.5">
-            <label
-                htmlFor={field.key}
-                className="text-small font-medium text-text-secondary"
-            >
+            <label htmlFor={field.key} className="text-small font-medium text-text-secondary">
                 {label}
-                {field.required ? (
-                    <span className="text-primary ml-1" aria-hidden>
-            *
-          </span>
-                ) : null}
+                {field.required ? (<span className="text-primary ml-1" aria-hidden>*</span>) : null}
             </label>
 
             {field.type === 'textarea' ? (
@@ -129,11 +115,11 @@ function FieldRenderer(
 
 export function DynamicForm({
                                 fields,
-                                onSubmit,
+                                onSubmitAction,
                                 namespace,
                             }: {
     fields: FormField[]
-    onSubmit: (values: FormValues) => Promise<void>
+    onSubmitAction: (values: FormValues) => Promise<void>
     namespace: string
 }) {
     const t = useTranslations(namespace)
@@ -150,7 +136,7 @@ export function DynamicForm({
         if (attending === null) return
         setStatus('submitting')
         try {
-            await onSubmit({...values, attending})
+            await onSubmitAction({...values, attending})
             setStatus('success')
         } catch {
             setStatus('error')
