@@ -44,7 +44,7 @@ Sent only when the stored row has a **non-empty** `email` (trimmed), and **only 
 |-----------------|------|
 | `AdminRsvpEmailPayload` | `{ subject, html, text }` from `buildAdminRsvpEmail` |
 | `GuestConfirmationEmailPayload` | `{ subject, html, text }` from `buildGuestConfirmationEmail` |
-| `buildAdminRsvpPlainText` | Plain-text body reused in HTML footer and inbox search |
+| `buildAdminRsvpPlainText` | Plain-text body for Resend `text` part (inbox search / plain-text clients); not repeated inside HTML |
 
 User-controlled strings in HTML go through `escapeHtml` from `@shared/lib/html-escape`. Theme tokens: `lib/email/wedding-email-theme.ts` (keep in sync with `app/globals.css` `@theme`).
 

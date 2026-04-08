@@ -18,7 +18,8 @@ function dashIfEmpty(value: string | null | undefined): string {
 }
 
 /**
- * Plain-text body for the admin notification (searchable in the inbox; also embedded in the HTML footer).
+ * Plain-text body for the admin notification (Resend `text` part — searchable, plain-text clients).
+ * Not duplicated inside the HTML body.
  *
  * @returns Line-oriented summary including the new row `id`.
  */
@@ -38,8 +39,8 @@ export function buildAdminRsvpPlainText(row: RsvpRowInsert, id: string): string 
 
 function adminTableRow(label: string, valueHtml: string): string {
     return `<tr>
-<td style="padding:10px 12px;color:${T.textSecondary};width:140px;vertical-align:top;border-bottom:1px solid ${T.border};font-family:${T.fontBody};font-size:14px;"><b>${label}</b></td>
-<td style="padding:10px 12px;color:${T.textPrimary};border-bottom:1px solid ${T.border};font-family:${T.fontBody};font-size:14px;">${valueHtml}</td>
+<td style="padding:10px 10px 10px 0;color:${T.textSecondary};width:1%;vertical-align:top;border-bottom:1px solid ${T.border};font-family:${T.fontBody};font-size:14px;white-space:nowrap;"><b>${label}</b></td>
+<td style="padding:10px 0 10px 12px;color:${T.textPrimary};border-bottom:1px solid ${T.border};font-family:${T.fontBody};font-size:14px;word-break:break-word;">${valueHtml}</td>
 </tr>`;
 }
 
@@ -86,20 +87,24 @@ export function buildAdminRsvpEmail(
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="x-apple-disable-message-reformatting"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="stylesheet" href="${WEDDING_EMAIL_GOOGLE_FONTS_HREF}"/>
 <title>${escapeHtml(subject)}</title>
 </head>
-<body style="margin:0;padding:24px;background:${T.bgBase};font-family:${T.fontBody};color:${T.textPrimary};">
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:600px;margin:0 auto;background:${T.white};border-radius:12px;overflow:hidden;border:1px solid ${T.border};box-shadow:0 4px 24px rgba(44,36,32,0.08);">
-<tr><td style="padding:28px 28px 8px 28px;">
-<h1 style="margin:0 0 12px 0;font-family:${T.fontDisplay};font-size:26px;font-weight:600;color:${T.primary};border-bottom:1px solid ${T.border};padding-bottom:12px;">New RSVP — ${nameSafe}</h1>
-<p style="margin:0 0 20px 0;font-family:${T.fontBody};font-size:14px;color:${T.textSecondary};">Row ID: <code style="background:${T.bgSection};padding:2px 6px;border-radius:4px;font-size:13px;">${escapeHtml(id)}</code></p>
-<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;">${rowsHtml}</table>
+<body style="margin:0;padding:0;background:${T.bgBase};font-family:${T.fontBody};color:${T.textPrimary};-webkit-text-size-adjust:100%;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;background:${T.bgBase};">
+<tr>
+<td align="center" style="padding:24px 12px;">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="width:100%;max-width:600px;margin:0 auto;background:${T.white};border-radius:12px;overflow:hidden;border:1px solid ${T.border};box-shadow:0 4px 24px rgba(44,36,32,0.08);">
+<tr><td style="padding:28px 24px 24px 24px;">
+<h1 style="margin:0 0 12px 0;font-family:${T.fontDisplay};font-size:24px;line-height:1.25;font-weight:600;color:${T.primary};border-bottom:1px solid ${T.border};padding-bottom:12px;">New RSVP — ${nameSafe}</h1>
+<p style="margin:0 0 20px 0;font-family:${T.fontBody};font-size:14px;color:${T.textSecondary};">Row ID: <code style="background:${T.bgSection};padding:2px 6px;border-radius:4px;font-size:13px;word-break:break-all;">${escapeHtml(id)}</code></p>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="width:100%;border-collapse:collapse;">${rowsHtml}</table>
 </td></tr>
-<tr><td style="padding:16px 28px 28px 28px;background:${T.bgSection};font-family:${T.fontBody};font-size:12px;color:${T.textSecondary};line-height:1.5;">
-<pre style="margin:0;white-space:pre-wrap;font-family:ui-monospace,Consolas,monospace;font-size:12px;color:${T.textPrimary};">${escapeHtml(text)}</pre>
-</td></tr>
+</table>
+</td>
+</tr>
 </table>
 </body>
 </html>`;
