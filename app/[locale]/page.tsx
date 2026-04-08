@@ -1,11 +1,11 @@
 import {DressCode, Hero, OurStory, Schedule, Welcome} from "@/components/sections";
 import {Navigation} from "@/components/ui/Navigation";
+import {RsvpSection} from "@widgets/rsvp-section";
 
-/** Scroll targets for nav items not yet implemented (Phases 4–7). */
+/** Scroll targets for nav items not yet implemented (Phases 5–7). */
 function NavAnchorStubs() {
     return (
         <>
-            <section id="rsvp" className="scroll-mt-16" aria-hidden/>
             <section id="gallery" className="scroll-mt-16" aria-hidden/>
             <section id="wishes" className="scroll-mt-16" aria-hidden/>
             <section id="donate" className="scroll-mt-16" aria-hidden/>
@@ -13,7 +13,7 @@ function NavAnchorStubs() {
     );
 }
 
-export default function Home() {
+export default async function Home() {
     return (
         <>
             <Navigation/>
@@ -23,6 +23,7 @@ export default function Home() {
                 <Schedule/>
                 <DressCode/>
                 <OurStory/>
+                <RsvpSection/>
                 <NavAnchorStubs/>
             </main>
         </>

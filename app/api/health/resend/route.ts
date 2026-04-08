@@ -1,5 +1,11 @@
 import {NextResponse} from "next/server";
-import {Resend} from "resend";
+
+import {
+    createResendClient,
+    getAdminEmailForNotifications,
+    getResendApiKey,
+    getTransactionalFromAddress,
+} from "@shared/api/resend";
 
 /**
  * Sends one test email to ADMIN_EMAIL. Auth: header only (never put ADMIN_SECRET in the URL).
@@ -9,7 +15,7 @@ import {Resend} from "resend";
  *
  * Example (PowerShell): $h = @{ Authorization = "Bearer <paste ADMIN_SECRET from .env.local>" }; Invoke-RestMethod -Uri http://localhost:3000/api/health/resend -Headers $h
  *
- * RESEND_FROM_EMAIL — optional; default uses Resend sandbox sender (works for quick tests).
+ * `RESEND_FROM_EMAIL` — optional; default uses Resend onboarding sender (see `@shared/api/resend`).
  */
 /** Value after "Bearer " (case-insensitive), trimmed. No end-of-string anchor — avoids edge cases with proxies/clients. */
 function parseBearerToken(auth: string | null): string {
@@ -54,8 +60,8 @@ function assertBearerAdminSecret(request: Request): NextResponse | null {
 }
 
 async function sendTestEmail() {
-    const apiKey = process.env.RESEND_API_KEY;
-    const to = process.env.ADMIN_EMAIL;
+    const apiKey = getResendApiKey();
+    const to = getAdminEmailForNotifications();
 
     if (!apiKey) {
         return NextResponse.json(
@@ -70,11 +76,8 @@ async function sendTestEmail() {
         );
     }
 
-    const from =
-        process.env.RESEND_FROM_EMAIL?.trim() ??
-        "Yurii Mariia <onboarding@resend.dev>";
-
-    const resend = new Resend(apiKey);
+    const from = getTransactionalFromAddress();
+    const resend = createResendClient(apiKey);
     const {data, error} = await resend.emails.send({
         from,
         to: [to],

@@ -1,6 +1,6 @@
 'use client'
 
-import {useEffect, useState} from 'react'
+import {useEffect, useState, useSyncExternalStore} from 'react'
 import {useTranslations} from 'next-intl'
 
 interface TimeLeft {
@@ -11,6 +11,16 @@ interface TimeLeft {
 }
 
 const ZERO: TimeLeft = {days: 0, hours: 0, minutes: 0, seconds: 0}
+
+const noopSubscribe = () => () => {}
+
+function useIsClient() {
+    return useSyncExternalStore(
+        noopSubscribe,
+        () => true,
+        () => false,
+    )
+}
 
 function calcTimeLeft(target: Date): TimeLeft {
     const diff = target.getTime() - Date.now()
@@ -25,22 +35,24 @@ function calcTimeLeft(target: Date): TimeLeft {
 
 export function Countdown({targetDate}: { targetDate: Date }) {
     const t = useTranslations('hero.countdown')
-    const [mounted, setMounted] = useState(false)
+    const mounted = useIsClient()
     const [time, setTime] = useState<TimeLeft>(ZERO)
+    const [passed, setPassed] = useState(false)
 
     useEffect(() => {
-        setMounted(true)
-        setTime(calcTimeLeft(targetDate))
-    }, [targetDate])
-
-    const passed =
-        mounted && targetDate.getTime() <= Date.now()
-
-    useEffect(() => {
-        if (!mounted || passed) return
-        const id = setInterval(() => setTime(calcTimeLeft(targetDate)), 1_000)
+        if (!mounted) return
+        const tick = (): boolean => {
+            const p = targetDate.getTime() <= Date.now()
+            setPassed(p)
+            setTime(calcTimeLeft(targetDate))
+            return p
+        }
+        if (tick()) return
+        const id = setInterval(() => {
+            if (tick()) clearInterval(id)
+        }, 1_000)
         return () => clearInterval(id)
-    }, [targetDate, passed, mounted])
+    }, [targetDate, mounted])
 
     if (mounted && passed) {
         return <p className="text-text-secondary">{t('passed')}</p>

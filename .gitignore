@@ -12,8 +12,9 @@ Thumbs.db
 
 # Ignore all env files
 .env*
+.env*.local
 
 # Node.js modules
 node_modules/
 .vercel
-.env*.local
+tsconfig.tsbuildinfo
