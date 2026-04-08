@@ -1,11 +1,13 @@
-import {useTranslations} from "next-intl";
+import {getLocale, getTranslations} from "next-intl/server";
 
 import {Section} from "@/components/ui/Section";
 import {SectionHeader} from "@/components/ui/SectionHeader";
 import {SCHEDULE} from "@/lib/config/schedule";
+import {formatScheduleClock} from "@/lib/wedding-calendar";
 
-export function Schedule() {
-    const t = useTranslations();
+export async function Schedule() {
+    const locale = await getLocale();
+    const t = await getTranslations();
 
     return (
         <Section id="schedule" theme="alt">
@@ -27,7 +29,7 @@ export function Schedule() {
                             <div className="flex-1 pt-2 pb-6">
                                 <div className="mb-1 flex items-baseline gap-3">
                   <span className="font-mono text-small font-medium text-primary">
-                    {item.time}
+                    {formatScheduleClock(locale, item.hour, item.minute)}
                   </span>
                                     <h3 className="font-display text-h3 text-text-primary">
                                         {t(item.titleKey)}

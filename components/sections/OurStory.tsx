@@ -3,10 +3,12 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { MdxByLocale } from "@/components/content/MdxByLocale";
 import { Section } from "@/components/ui/Section";
 import { SectionHeader } from "@/components/ui/SectionHeader";
+import { formatStoryWeddingLine } from "@/lib/wedding-calendar";
 
 export async function OurStory() {
   const locale = await getLocale();
   const t = await getTranslations("story");
+  const weddingDateLabel = formatStoryWeddingLine(locale);
 
   return (
     <Section id="story" theme="alt">
@@ -16,6 +18,7 @@ export async function OurStory() {
       >
         <SectionHeader title={t("title")} />
         <MdxByLocale part="story" locale={locale} />
+        <p>{t("vowsLead", { date: weddingDateLabel })}</p>
       </div>
     </Section>
   );

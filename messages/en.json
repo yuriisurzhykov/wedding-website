@@ -14,8 +14,8 @@
   },
   "hero": {
     "names": "Yurii & Mariia",
-    "date": "June 12, 2026",
-    "venue": "Premier Palace Hotel, Kyiv — open in Maps",
+    "date": "{date}",
+    "venue": "WGBC Battle Ground — open in Maps",
     "countdown": {
       "days": "days",
       "hours": "hours",
@@ -33,19 +33,19 @@
     "items": {
       "gathering": {
         "title": "Guest arrival",
-        "desc": "Meet in the lobby bar. Come a little early — we will greet you and head to the ceremony together."
+        "desc": "Meet at WGBC in Battle Ground, WA. Arrive a little early — we will greet you and head to the ceremony together."
       },
       "ceremony": {
         "title": "Ceremony",
-        "desc": "Wedding ceremony at St. Andrew's Church. Please arrive about ten minutes before the start."
+        "desc": "Wedding ceremony on campus. Please arrive about ten minutes before the start."
       },
       "reception": {
-        "title": "Transfer",
-        "desc": "We will travel together to the banquet venue at the same hotel."
+        "title": "Reception",
+        "desc": "We will move together to the reception space at the same venue."
       },
       "dinner": {
         "title": "Dinner & celebration",
-        "desc": "Reception in the ballroom: dinner, music, and dancing."
+        "desc": "Dinner, music, and dancing — still at WGBC."
       }
     }
   },
@@ -67,11 +67,12 @@
     }
   },
   "story": {
-    "title": "Our story"
+    "title": "Our story",
+    "vowsLead": "On {date}, we will say our vows surrounded by the people who shaped our path. We cannot wait to celebrate with you."
   },
   "rsvp": {
     "title": "RSVP",
-    "subtitle": "Please respond by June 1",
+    "subtitle": "Please respond by {deadline}",
     "willAttend": "I'll be there 🎉",
     "wontAttend": "Sorry, I can't make it",
     "fields": {
