@@ -1,6 +1,6 @@
 # Feature: `rsvp-submit`
 
-Server-only flow: accept JSON from the guest → validate → insert into Supabase (`rsvp`) → notify the admin (and the guest when `email` is set) by email without blocking the success response on mail delivery.
+Server-only flow: accept JSON from the guest → validate → insert into Supabase (`rsvp`) → **await** admin email → **await** guest confirmation only when `email` is set and admin send succeeded. If mail fails after insert, the API returns **502** so the UI can toast; the row still exists in the database.
 
 ## Why this slice exists
 
@@ -24,14 +24,15 @@ Internal modules (`lib/validate-payload`, `lib/notify-admin`, `lib/notify-guest-
 | `kind: 'validation'` | **400** | `{ error: 'validation', fieldErrors, formErrors }` |
 | `kind: 'config'` | **500** | Generic error; log `message` server-side |
 | `kind: 'database'` | **500** | Generic error; log `message` server-side |
+| `kind: 'notification'` | **502** | `{ error: 'notification_failed', step: 'admin' or 'guest', id }` — row saved; client should show a toast (see widget `RsvpSectionForm`) |
 
-## Admin email (fire-and-forget)
+## Admin email (sequential, blocking)
 
-After a **successful insert**, `notifyAdminOfNewRsvp` runs in the background (`void …catch`). Content is built by `lib/email/build-admin-rsvp-email.ts` as **multipart** `{ subject, html, text }` for Resend. The guest still gets success if email fails; failures are logged under `[rsvp-submit]`. Missing `RESEND_API_KEY` or `ADMIN_EMAIL` skips email with a **warning** only.
+After a **successful insert**, `submitRsvp` **awaits** `notifyAdminOfNewRsvp`. Content is built by `lib/email/build-admin-rsvp-email.ts` as **multipart** `{ subject, html, text }` for Resend. Missing `RESEND_API_KEY` / `ADMIN_EMAIL` or a Resend error yields `kind: 'notification'`, `step: 'admin'`.
 
-## Guest confirmation email (fire-and-forget)
+## Guest confirmation email (after admin only)
 
-Sent only when the stored row has a **non-empty** `email` (trimmed). `notifyGuestRsvpConfirmation` builds content via `lib/email/build-guest-confirmation-email.ts` (same multipart shape as admin). Missing `RESEND_API_KEY` logs a **warning** and returns; **no log** when the guest omitted email (intentional no-op). Resend failures are logged as `[rsvp-submit] Guest confirmation failed (RSVP still saved): …` while the API still returns **200** after insert.
+Sent only when the stored row has a **non-empty** `email` (trimmed), and **only after** admin send succeeds. `notifyGuestRsvpConfirmation` uses `lib/email/build-guest-confirmation-email.ts`. If the guest provided an email but Resend fails, the API returns **502** with `step: 'guest'`. **No-op** when the guest omitted email (nothing to send).
 
 **Locale:** `parseRsvpPayload` returns `locale: 'ru' | 'en'` (default `'en'` if the client omits `locale`). Copy lives in `lib/email/guest-confirmation-copy.ts` only — no client i18n in the server templates.
 

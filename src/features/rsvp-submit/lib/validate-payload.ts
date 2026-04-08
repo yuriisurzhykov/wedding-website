@@ -3,6 +3,7 @@ import "server-only";
 import {z} from "zod";
 
 import type {RsvpFormInput} from "@entities/rsvp";
+import {isUsPhoneValid, normalizeUsPhoneToE164} from "@/lib/phone";
 
 import type {GuestEmailLocale} from "./email/guest-confirmation-copy";
 
@@ -14,7 +15,7 @@ function emptyToUndefined(v: unknown): unknown {
 
 const optionalPhone = z.preprocess(
     emptyToUndefined,
-    z.string().trim().max(50).optional(),
+    z.string().trim().max(40).optional(),
 );
 
 const optionalEmail = z.preprocess(
@@ -47,37 +48,61 @@ export const rsvpPayloadSchema = z
     })
     .strict()
     .superRefine((data, ctx) => {
-        if (!data.attending) return;
-        const raw = data.guestCount;
-        if (raw === undefined || raw === null) return;
-        const n =
-            typeof raw === "number"
-                ? raw
-                : typeof raw === "string" && raw.trim() !== ""
-                  ? Number(raw)
-                  : NaN;
-        if (!Number.isInteger(n) || n < 1 || n > 100) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "Guest count must be a whole number from 1 to 100",
-                path: ["guestCount"],
-            });
+        if (data.attending) {
+            const raw = data.guestCount;
+            if (raw !== undefined && raw !== null) {
+                const n =
+                    typeof raw === "number"
+                        ? raw
+                        : typeof raw === "string" && raw.trim() !== ""
+                          ? Number(raw)
+                          : NaN;
+                if (!Number.isInteger(n) || n < 1 || n > 100) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        message:
+                            "Guest count must be a whole number from 1 to 100",
+                        path: ["guestCount"],
+                    });
+                }
+            }
+        }
+
+        const rawPhone = data.phone;
+        if (
+            rawPhone !== undefined &&
+            rawPhone !== null &&
+            String(rawPhone).trim() !== ""
+        ) {
+            if (!isUsPhoneValid(String(rawPhone))) {
+                ctx.addIssue({
+                    code: z.ZodIssueCode.custom,
+                    message:
+                        "Enter a valid US phone number, or leave this field empty.",
+                    path: ["phone"],
+                });
+            }
         }
     })
     .transform(
         (data): {form: RsvpFormInput; locale: GuestEmailLocale} => {
-            const {locale, ...rest} = data;
+            const {locale: localeRaw, ...rest} = data;
+            const locale = (localeRaw ?? "en") as GuestEmailLocale;
+            const phone =
+                rest.phone && String(rest.phone).trim()
+                    ? normalizeUsPhoneToE164(String(rest.phone))
+                    : undefined;
             return {
                 form: {
                     name: rest.name,
                     email: rest.email,
-                    phone: rest.phone,
+                    phone,
                     guestCount: rest.guestCount as RsvpFormInput["guestCount"],
                     dietary: rest.dietary,
                     message: rest.message,
                     attending: rest.attending,
                 },
-                locale: locale ?? "en",
+                locale,
             };
         },
     );

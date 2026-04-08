@@ -13,6 +13,7 @@ import {parseRsvpPayload} from "../lib/validate-payload";
  * - **`validation`** — Body failed Zod checks; safe to return **400** with `fieldErrors` / `formErrors`.
  * - **`config`** — Server env for Supabase is missing; treat as **500** (misconfiguration).
  * - **`database`** — Supabase insert failed; treat as **500** (log `message`, generic body to client).
+ * - **`notification`** — Row was inserted, but admin or guest email failed; treat as **502** (RSVP is saved; client should toast and avoid implying the full mail pipeline succeeded).
  */
 export type SubmitRsvpResult =
     | {ok: true; id: string}
@@ -23,28 +24,19 @@ export type SubmitRsvpResult =
           formErrors: string[];
       }
     | {ok: false; kind: "config"; message: string}
-    | {ok: false; kind: "database"; message: string};
-
-function logNotifyFailure(err: unknown): void {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error("[rsvp-submit] Admin notification failed (RSVP still saved):", msg);
-}
-
-function logGuestNotifyFailure(err: unknown): void {
-    const msg = err instanceof Error ? err.message : String(err);
-    console.error(
-        "[rsvp-submit] Guest confirmation failed (RSVP still saved):",
-        msg,
-    );
-}
+    | {ok: false; kind: "database"; message: string}
+    | {
+          ok: false;
+          kind: "notification";
+          step: "admin" | "guest";
+          id: string;
+          message: string;
+      };
 
 /**
- * Validates the payload, inserts into `rsvp` via service-role Supabase, then **schedules** admin email
- * without blocking the returned result on email delivery.
- *
- * **Email:** Admin and (when `email` is set) guest notifications are fire-and-forget. Missing Resend/admin
- * env no-ops with a warning where applicable. Resend errors are logged only; the function still resolves
- * with `{ ok: true }` when the row was inserted.
+ * Validates the payload, inserts into `rsvp`, then sends mail **in order**: admin first, guest only after
+ * admin succeeds (guest only if `row.email` is non-empty). Any mail failure after insert yields
+ * `{ ok: false, kind: 'notification', … }` while the row remains in the database.
  *
  * @param rawBody — Parsed JSON from the client (unknown shape until validated).
  * @returns {@link SubmitRsvpResult} — never throws; callers translate `kind` to HTTP.
@@ -90,9 +82,38 @@ export async function submitRsvp(rawBody: unknown): Promise<SubmitRsvpResult> {
         };
     }
 
-    void notifyAdminOfNewRsvp(row, id).catch(logNotifyFailure);
+    try {
+        await notifyAdminOfNewRsvp(row, id);
+    } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        console.error(
+            `[rsvp-submit] Admin notification failed after save (id=${id}): ${message}`,
+        );
+        return {
+            ok: false,
+            kind: "notification",
+            step: "admin",
+            id,
+            message,
+        };
+    }
+
     if (row.email?.trim()) {
-        void notifyGuestRsvpConfirmation(row, locale).catch(logGuestNotifyFailure);
+        try {
+            await notifyGuestRsvpConfirmation(row, locale);
+        } catch (e) {
+            const message = e instanceof Error ? e.message : String(e);
+            console.error(
+                `[rsvp-submit] Guest confirmation failed after admin ok (id=${id}): ${message}`,
+            );
+            return {
+                ok: false,
+                kind: "notification",
+                step: "guest",
+                id,
+                message,
+            };
+        }
     }
 
     return {ok: true, id};

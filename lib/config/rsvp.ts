@@ -32,6 +32,7 @@ export const RSVP_FIELDS: FormField[] = [
     {
         key: 'email',
         type: 'email',
+        required: true,
     },
     {
         key: 'phone',

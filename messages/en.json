@@ -86,7 +86,7 @@
       },
       "phone": {
         "label": "Phone",
-        "placeholder": "+1 (xxx) xxx-xxxx"
+        "placeholder": "(555) 123-4567"
       },
       "guestCount": {
         "label": "Number of guests",
@@ -109,7 +109,13 @@
     "submitting": "Sending...",
     "successAttend": "Thank you! We can't wait to see you 🎉",
     "successDecline": "We're sorry you can't join us. Thanks for letting us know 🤍",
-    "error": "Something went wrong. Please reach out to us directly."
+    "error": "Something went wrong. Please reach out to us directly.",
+    "toast": {
+      "notifyFailed": {
+        "admin": "Your RSVP was saved, but we couldn't notify the hosts. Please contact us directly.",
+        "guest": "Your RSVP was saved, but we couldn't send the confirmation email. We still have your response — reach out if you need anything."
+      }
+    }
   },
   "gallery": {
     "title": "Gallery",

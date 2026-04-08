@@ -2,6 +2,7 @@
 
 import React, {useState} from 'react'
 import {useTranslations} from 'next-intl'
+import {formatPhoneAsYouType} from '@/lib/phone'
 import {Button} from './Button'
 import {Input} from './Input'
 import {Select} from './Select'
@@ -37,6 +38,10 @@ function FieldRenderer(
         const raw = e.target.value
         if (field.type === 'select' && raw === '') {
             onChange(field.key, '')
+            return
+        }
+        if (field.type === 'tel') {
+            onChange(field.key, formatPhoneAsYouType(raw))
             return
         }
         onChange(
@@ -107,6 +112,14 @@ function FieldRenderer(
                     onChange={handleChange}
                     min={field.min}
                     max={field.max}
+                    autoComplete={
+                        field.type === 'tel'
+                            ? 'tel'
+                            : field.type === 'email'
+                              ? 'email'
+                              : undefined
+                    }
+                    inputMode={field.type === 'tel' ? 'tel' : undefined}
                 />
             )}
         </div>

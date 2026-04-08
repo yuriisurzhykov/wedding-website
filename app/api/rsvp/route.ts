@@ -19,6 +19,23 @@ export async function POST(request: Request) {
         return NextResponse.json({ok: true}, {status: 200});
     }
 
+    if (result.kind === "notification") {
+        console.error(
+            "[api/rsvp] notification_failed",
+            result.step,
+            result.id,
+            result.message,
+        );
+        return NextResponse.json(
+            {
+                error: "notification_failed",
+                step: result.step,
+                id: result.id,
+            },
+            {status: 502},
+        );
+    }
+
     if (result.kind === "validation") {
         return NextResponse.json(
             {

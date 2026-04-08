@@ -13,8 +13,8 @@ import {buildAdminRsvpEmail} from "./email/build-admin-rsvp-email";
 /**
  * Sends a multipart (HTML + plain text) transactional email to the admin inbox with the stored RSVP row.
  *
- * **Non-fatal:** Missing `RESEND_API_KEY` or `ADMIN_EMAIL` logs a warning and returns without throwing.
- * Resend API errors are thrown so callers can log them.
+ * **Required after a successful insert:** Missing `RESEND_API_KEY` or `ADMIN_EMAIL`, or a Resend API error,
+ * throws so the caller can fail the request before any guest confirmation is sent.
  *
  * @param row — Insert payload that was persisted (same shape as DB row minus id/timestamps).
  * @param id — New row UUID from Supabase.
@@ -27,10 +27,9 @@ export async function notifyAdminOfNewRsvp(
     const apiKey = getResendApiKey();
     const to = getAdminEmailForNotifications();
     if (!apiKey || !to) {
-        console.warn(
-            "[rsvp-submit] Skipping admin email: RESEND_API_KEY or ADMIN_EMAIL is not set",
+        throw new Error(
+            "Cannot notify admin: RESEND_API_KEY or ADMIN_EMAIL is not configured",
         );
-        return;
     }
 
     const from = getTransactionalFromAddress();
