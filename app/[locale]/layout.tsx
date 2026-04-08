@@ -2,8 +2,9 @@ import {NextIntlClientProvider} from 'next-intl'
 import {getMessages, setRequestLocale} from 'next-intl/server'
 import {notFound} from 'next/navigation'
 import {routing} from '@/i18n/routing'
+import {NavigationProgressBar} from '@shared/ui'
 import {SiteNavigation} from '@widgets/site-navigation'
-import React from 'react'
+import React, {Suspense} from 'react'
 
 type Props = Readonly<{
     children: React.ReactNode
@@ -27,6 +28,9 @@ export default async function LocaleLayout({children, params}: Props) {
 
     return (
         <NextIntlClientProvider locale={locale} messages={messages}>
+            <Suspense fallback={null}>
+                <NavigationProgressBar/>
+            </Suspense>
             <SiteNavigation/>
             <main className="flex flex-col pt-16">{children}</main>
         </NextIntlClientProvider>

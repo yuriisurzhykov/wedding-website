@@ -1,7 +1,9 @@
 import "server-only";
 
+import {revalidateTag} from "next/cache";
 import {z} from "zod";
 
+import {GALLERY_PHOTOS_LIST_CACHE_TAG} from "@features/gallery-list";
 import {GALLERY_ALLOWED_CONTENT_TYPES, GALLERY_MAX_FILE_BYTES,} from "@entities/photo";
 import {createServerClient} from "@shared/api/supabase/server";
 import {resolveGalleryImageContentType} from "@shared/lib/gallery-image-content-type";
@@ -112,6 +114,8 @@ export async function uploadGalleryPhotoFromMultipart(
     if (!saved.ok) {
         return {ok: false, kind: "database", message: saved.message};
     }
+
+    revalidateTag(GALLERY_PHOTOS_LIST_CACHE_TAG, "max");
 
     return {
         ok: true,

@@ -1,5 +1,8 @@
 import "server-only";
 
+import {revalidateTag} from "next/cache";
+
+import {GALLERY_PHOTOS_LIST_CACHE_TAG} from "@features/gallery-list";
 import {createServerClient} from "@shared/api/supabase/server";
 import {assertR2UploadConfig, createPresignedPhotoPutUrl} from "@shared/api/r2";
 
@@ -110,6 +113,8 @@ export async function confirmGalleryUpload(
     if (!saved.ok) {
         return {ok: false, kind: "database", message: saved.message};
     }
+
+    revalidateTag(GALLERY_PHOTOS_LIST_CACHE_TAG, "max");
 
     return {ok: true, publicUrl: saved.publicUrl};
 }

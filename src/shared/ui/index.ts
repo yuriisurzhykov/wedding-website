@@ -5,6 +5,7 @@ export {DynamicForm} from './dynamic-form'
 export type {FieldType, FormField, FormValues} from './dynamic-form'
 export {Input} from './Input'
 export {LanguageSwitcher} from './LanguageSwitcher'
+export {NavigationProgressBar} from './NavigationProgressBar'
 export {MdxByLocale} from './mdx-by-locale/MdxByLocale'
 export {PhotoFileInput} from './PhotoFileInput'
 export {

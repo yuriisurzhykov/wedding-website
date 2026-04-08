@@ -81,23 +81,68 @@ export function SiteNavigation() {
         close()
     }, [close])
 
+    const hashScrollCleanupRef = useRef<(() => void) | undefined>(undefined)
+
+    const runHomeHashScroll = useCallback(() => {
+        hashScrollCleanupRef.current?.()
+        const raw =
+            typeof window !== 'undefined' ? window.location.hash.slice(1) : ''
+        if (!raw) {
+            return
+        }
+
+        let cancelled = false
+        let rafId = 0
+        let attempts = 0
+        /** Home sections can mount after RSC/streaming; retry until the anchor exists. */
+        const maxAttempts = 240
+
+        const tick = () => {
+            if (cancelled) {
+                return
+            }
+            const el = document.getElementById(raw)
+            if (el) {
+                el.scrollIntoView({behavior: 'smooth'})
+                return
+            }
+            attempts += 1
+            if (attempts >= maxAttempts) {
+                return
+            }
+            rafId = requestAnimationFrame(tick)
+        }
+
+        rafId = requestAnimationFrame(tick)
+
+        hashScrollCleanupRef.current = () => {
+            cancelled = true
+            cancelAnimationFrame(rafId)
+            hashScrollCleanupRef.current = undefined
+        }
+    }, [])
+
+    useEffect(() => {
+        if (pathname !== '/') {
+            hashScrollCleanupRef.current?.()
+            return
+        }
+        runHomeHashScroll()
+        return () => {
+            hashScrollCleanupRef.current?.()
+        }
+    }, [pathname, runHomeHashScroll])
+
     useEffect(() => {
         if (pathname !== '/') {
             return
         }
-        const raw = typeof window !== 'undefined' ? window.location.hash.slice(1) : ''
-        if (!raw) {
-            return
+        const onHashChange = () => {
+            runHomeHashScroll()
         }
-        const el = document.getElementById(raw)
-        if (!el) {
-            return
-        }
-        const id = requestAnimationFrame(() => {
-            el.scrollIntoView({behavior: 'smooth'})
-        })
-        return () => cancelAnimationFrame(id)
-    }, [pathname])
+        window.addEventListener('hashchange', onHashChange)
+        return () => window.removeEventListener('hashchange', onHashChange)
+    }, [pathname, runHomeHashScroll])
 
     useEffect(() => {
         if (!open) {

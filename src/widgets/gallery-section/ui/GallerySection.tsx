@@ -1,12 +1,16 @@
+import {Suspense} from "react";
+
 import {getTranslations} from "next-intl/server";
 
 import {cn} from "@shared/lib/cn";
 import {Section, SectionHeader} from "@shared/ui";
 
-import {listGalleryPhotos} from "@features/gallery-list";
-
-import {galleryListLimitForPresentation, type GalleryPresentation,} from "../lib/gallery-presentation";
-import {GalleryPhotosClient, type GalleryPhotosClientSlots,} from "./GalleryPhotosClient";
+import {type GalleryPresentation} from "../lib/gallery-presentation";
+import {GalleryPhotosStreamFallback} from "./GalleryPhotosStreamFallback";
+import {
+    GallerySectionPhotosIsland,
+    type GalleryPhotosClientSlots,
+} from "./GallerySectionPhotosIsland";
 
 export type {GalleryPresentation};
 
@@ -37,14 +41,6 @@ export async function GallerySection(
     }: GallerySectionProps = {}
 ) {
     const t = await getTranslations("gallery");
-    const limit = galleryListLimitForPresentation(presentation);
-    const result = await listGalleryPhotos({limit, offset: 0});
-    const initialPhotos = result.ok ? result.photos : [];
-    const initialHasMore = result.ok ? result.hasMore : false;
-
-    if (!result.ok) {
-        console.error("[GallerySection] listGalleryPhotos", result.kind, result.message);
-    }
 
     return (
         <Section id="gallery" theme="alt" className={className}>
@@ -55,12 +51,16 @@ export async function GallerySection(
                 )}
             >
                 <SectionHeader title={t("title")} subtitle={t("subtitle")}/>
-                <GalleryPhotosClient
-                    initialPhotos={initialPhotos}
-                    initialHasMore={initialHasMore}
-                    presentation={presentation}
-                    slots={options?.slots}
-                />
+                <Suspense
+                    fallback={
+                        <GalleryPhotosStreamFallback presentation={presentation}/>
+                    }
+                >
+                    <GallerySectionPhotosIsland
+                        presentation={presentation}
+                        slots={options?.slots}
+                    />
+                </Suspense>
             </div>
         </Section>
     );
