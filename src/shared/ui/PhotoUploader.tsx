@@ -5,20 +5,16 @@ import {useTranslations} from 'next-intl'
 import {toast} from 'sonner'
 
 import {cn} from '@shared/lib/cn'
-import {GALLERY_USE_SERVER_MULTIPART_UPLOAD} from '@shared/lib/gallery-upload-mode'
+import {formatUploadApiErrorResponse} from '@shared/lib/format-upload-api-error'
 import {postMultipartGalleryPhoto} from '@shared/lib/gallery-client-upload'
+import {resolveGalleryImageContentType} from '@shared/lib/gallery-image-content-type'
+import {GALLERY_USE_SERVER_MULTIPART_UPLOAD} from '@shared/lib/gallery-upload-mode'
+import {useGalleryAcceptedBatch} from '@shared/lib/use-gallery-accepted-batch'
 
 import {Button} from './Button'
 import {Input} from './Input'
+import {PhotoFileInput} from './PhotoFileInput'
 
-const MAX_SIZE = 5 * 1024 * 1024
-const ALLOWED_TYPES = [
-    'image/jpeg',
-    'image/jpg',
-    'image/png',
-    'image/webp',
-    'image/heic',
-] as const
 const MAX_PARALLEL = 3
 
 type FileStatus = 'pending' | 'uploading' | 'done' | 'error'
@@ -43,21 +39,36 @@ export async function presignedPhotoUploadAdapter(
     uploaderName: string,
     onProgress: (p: number) => void,
 ): Promise<void> {
+    const contentType = resolveGalleryImageContentType(file)
+    if (!contentType) {
+        throw new Error(
+            'Unsupported or unknown image type. Use JPEG, PNG, WebP, or HEIC.',
+        )
+    }
+
     const presignRes = await fetch('/api/upload/presign', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({contentType: file.type, size: file.size}),
+        body: JSON.stringify({contentType, size: file.size}),
     })
-    if (!presignRes.ok) throw new Error('Presign failed')
+    if (!presignRes.ok) {
+        const detail = await formatUploadApiErrorResponse(presignRes)
+        throw new Error(`Presign failed: ${detail}`)
+    }
     const {url, key} = (await presignRes.json()) as {url: string; key: string}
     onProgress(30)
 
     const uploadRes = await fetch(url, {
         method: 'PUT',
-        headers: {'Content-Type': file.type},
+        headers: {'Content-Type': contentType},
         body: file,
     })
-    if (!uploadRes.ok) throw new Error('Upload failed')
+    if (!uploadRes.ok) {
+        const detail = await uploadRes.text().catch(() => uploadRes.statusText)
+        throw new Error(
+            `Upload to storage failed (${uploadRes.status}). ${detail.slice(0, 120)}`,
+        )
+    }
     onProgress(80)
 
     const confirmRes = await fetch('/api/upload/confirm', {
@@ -65,7 +76,10 @@ export async function presignedPhotoUploadAdapter(
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify({key, uploaderName, sizeBytes: file.size}),
     })
-    if (!confirmRes.ok) throw new Error('Confirm failed')
+    if (!confirmRes.ok) {
+        const detail = await formatUploadApiErrorResponse(confirmRes)
+        throw new Error(`Confirm failed: ${detail}`)
+    }
     onProgress(100)
 }
 
@@ -111,17 +125,16 @@ export function PhotoUploader({
     const [files, setFiles] = useState<UploadFile[]>([])
     const [name, setName] = useState('')
     const [isDragging, setDragging] = useState(false)
+    const toAccepted = useGalleryAcceptedBatch()
 
-    const addFiles = useCallback((newFiles: File[]) => {
-        const valid = newFiles.filter(
-            (f) =>
-                (ALLOWED_TYPES as readonly string[]).includes(f.type) &&
-                f.size <= MAX_SIZE,
-        )
+    const appendAcceptedFiles = useCallback((accepted: File[]) => {
+        if (accepted.length === 0) {
+            return
+        }
         setFiles((prev) => [
             ...prev,
-            ...valid.map((f) => ({
-                file: f,
+            ...accepted.map((file) => ({
+                file,
                 status: 'pending' as FileStatus,
                 progress: 0,
             })),
@@ -131,11 +144,7 @@ export function PhotoUploader({
     function handleDrop(e: React.DragEvent) {
         e.preventDefault()
         setDragging(false)
-        addFiles(Array.from(e.dataTransfer.files))
-    }
-
-    function handleInput(e: React.ChangeEvent<HTMLInputElement>) {
-        addFiles(Array.from(e.target.files ?? []))
+        appendAcceptedFiles(toAccepted(Array.from(e.dataTransfer.files)))
     }
 
     function updateFile(index: number, updates: Partial<UploadFile>) {
@@ -211,13 +220,12 @@ export function PhotoUploader({
             >
                 <p className="mb-1 text-text-secondary">{t('dropzone')}</p>
                 <p className="text-small text-text-muted">{t('maxSize')}</p>
-                <input
+                <PhotoFileInput
                     ref={fileInputRef}
-                    type="file"
+                    id="gallery-photo-picker"
                     multiple
-                    accept={ALLOWED_TYPES.join(',')}
                     className="hidden"
-                    onChange={handleInput}
+                    onBatchAccepted={appendAcceptedFiles}
                 />
             </div>
 

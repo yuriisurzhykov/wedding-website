@@ -5,15 +5,21 @@ import {useRef, useState} from "react";
 import {useTranslations} from "next-intl";
 import {toast} from "sonner";
 
+import {GALLERY_MAX_FILE_BYTES} from "@entities/photo";
 import {cn} from "@shared/lib/cn";
+import {isGalleryUploadOversizeMessage} from "@shared/lib/validate-gallery-photo-file";
 import {Button} from "@shared/ui/Button";
 import {Input} from "@shared/ui/Input";
+import {PhotoFileInput} from "@shared/ui";
 import {TextArea} from "@shared/ui/TextArea";
 
 import {uploadWishAttachment} from "../lib/upload-wish-attachment";
 
+const MAX_MB = Math.floor(GALLERY_MAX_FILE_BYTES / (1024 * 1024));
+
 export function WishesSectionForm({className}: {className?: string}) {
     const t = useTranslations("wishes");
+    const tu = useTranslations("upload");
     const router = useRouter();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [name, setName] = useState("");
@@ -66,8 +72,18 @@ export function WishesSectionForm({className}: {className?: string}) {
             toast.success(t("success"));
             router.refresh();
             setSubmitting(false);
-        } catch {
-            setError(t("error"));
+        } catch (err) {
+            console.error("[WishesSectionForm]", err);
+            const raw =
+                err instanceof Error && err.message.trim()
+                    ? err.message
+                    : t("error");
+            if (isGalleryUploadOversizeMessage(raw)) {
+                toast.error(tu("photoTooLarge", {maxMb: MAX_MB}));
+                setError(null);
+            } else {
+                setError(raw);
+            }
             setSubmitting(false);
         }
     }
@@ -112,17 +128,12 @@ export function WishesSectionForm({className}: {className?: string}) {
                 <label htmlFor="wish-photo" className="text-small font-medium text-text-primary">
                     {t("photoLabel")}
                 </label>
-                <input
+                <PhotoFileInput
                     ref={fileInputRef}
                     id="wish-photo"
-                    name="photo"
-                    type="file"
-                    accept="image/jpeg,image/jpg,image/png,image/webp,image/heic"
+                    showHint
+                    onFileChange={setPhoto}
                     className="text-small text-text-secondary file:mr-3 file:rounded-pill file:border-0 file:bg-bg-section file:px-4 file:py-2 file:text-body file:text-text-primary"
-                    onChange={(e) => {
-                        const f = e.target.files?.[0] ?? null;
-                        setPhoto(f);
-                    }}
                 />
             </div>
             {error ? (

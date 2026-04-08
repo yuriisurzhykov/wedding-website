@@ -48,6 +48,24 @@ function FieldRenderer({
         onChange(field.key, field.transform ? field.transform(raw) : raw)
     }
 
+    const handleTelPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+        e.preventDefault()
+        const el = e.currentTarget
+        const start = el.selectionStart ?? value.length
+        const end = el.selectionEnd ?? value.length
+        const pasted = e.clipboardData.getData('text/plain')
+        const merged = value.slice(0, start) + pasted + value.slice(end)
+        onChange(field.key, formatPhoneAsYouType(merged))
+    }
+
+    const handleTelBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+        const raw = e.target.value
+        const formatted = formatPhoneAsYouType(raw)
+        if (formatted !== raw) {
+            onChange(field.key, formatted)
+        }
+    }
+
     if (field.type === 'checkbox') {
         return (
             <label className="flex cursor-pointer items-center gap-3">
@@ -116,6 +134,8 @@ function FieldRenderer({
                     placeholder={placeholder}
                     value={value}
                     onChange={handleChange}
+                    onPaste={field.type === 'tel' ? handleTelPaste : undefined}
+                    onBlur={field.type === 'tel' ? handleTelBlur : undefined}
                     min={field.min}
                     max={field.max}
                     autoComplete={

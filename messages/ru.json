@@ -13,6 +13,11 @@
     "closeMenu": "Закрыть меню",
     "scrollToTop": "Наверх"
   },
+  "upload": {
+    "photoSizeHint": "JPEG, PNG, WebP или HEIC — до {maxMb} МБ.",
+    "photoTooLarge": "Файл слишком большой. Максимум {maxMb} МБ.",
+    "photoInvalidType": "Выберите изображение JPEG, PNG, WebP или HEIC."
+  },
   "hero": {
     "names": "Юрий & Мария",
     "date": "{date}",

@@ -29,7 +29,7 @@ type WishesSectionProps = {
 };
 
 /**
- * Wishes block: server-loaded feed and client form posting to `POST /api/wishes`.
+ * Wishes block: server-loaded feed (or empty hint), with the wish form below the hint when the list is empty, otherwise above the feed.
  */
 export async function WishesSection(
     {
@@ -61,12 +61,12 @@ export async function WishesSection(
             >
                 <SectionHeader title={t("title")} subtitle={t("subtitle")}/>
                 <WishesFeedClient
+                    form={<WishesSectionForm className={formSlot}/>}
                     initialWishes={wishes}
                     initialHasMore={hasMore}
                     presentation={presentation}
                     slots={feedSlots}
                 />
-                <WishesSectionForm className={formSlot}/>
             </div>
         </Section>
     );

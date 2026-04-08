@@ -13,6 +13,11 @@
     "closeMenu": "Close menu",
     "scrollToTop": "Back to top"
   },
+  "upload": {
+    "photoSizeHint": "JPEG, PNG, WebP, or HEIC — up to {maxMb} MB.",
+    "photoTooLarge": "This photo is too large. Maximum size is {maxMb} MB.",
+    "photoInvalidType": "Please choose a JPEG, PNG, WebP, or HEIC image."
+  },
   "hero": {
     "names": "Yurii & Mariia",
     "date": "{date}",

@@ -1,5 +1,7 @@
 "use client";
 
+import {formatUploadApiErrorResponse} from "@shared/lib/format-upload-api-error";
+
 /**
  * Uploads one photo via same-origin `POST /api/upload/server` (multipart).
  * Avoids browser→R2 CORS; file bytes go Next.js → R2.
@@ -22,7 +24,9 @@ export async function postMultipartGalleryPhoto(
     onProgress(85);
 
     if (!res.ok) {
-        throw new Error("Upload failed");
+        const detail = await formatUploadApiErrorResponse(res);
+        console.error("[postMultipartGalleryPhoto]", res.status, detail);
+        throw new Error(`Upload failed: ${detail}`);
     }
 
     const data = (await res.json()) as {ok?: boolean; key?: string};

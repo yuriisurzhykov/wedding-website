@@ -1,6 +1,12 @@
 'use client'
 
-import {useCallback, useEffect, useRef, useState} from 'react'
+import {
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+    type ReactNode,
+} from 'react'
 
 import type {WishView} from '@entities/wish'
 
@@ -20,6 +26,8 @@ export type WishesFeedClientSlots = {
 }
 
 type WishesFeedClientProps = {
+    /** Wish form; placed after the feed when there are wishes, or below the empty state when there are none. */
+    form: ReactNode
     initialWishes: WishView[]
     initialHasMore: boolean
     presentation: WishesPresentation
@@ -30,6 +38,7 @@ type WishesFeedClientProps = {
  * Client island: paginated feed on the full wishes page; preview uses SSR slice only.
  */
 export function WishesFeedClient({
+    form,
     initialWishes,
     initialHasMore,
     presentation,
@@ -67,11 +76,17 @@ export function WishesFeedClient({
     }, [hasMore, loadingMore, pageSize, presentation, wishes.length])
 
     if (wishes.length === 0) {
-        return <WishesFeedEmpty className={slots?.empty}/>
+        return (
+            <>
+                <WishesFeedEmpty className={slots?.empty}/>
+                {form}
+            </>
+        )
     }
 
     return (
         <>
+            {form}
             <WishesFeed wishes={wishes} className={slots?.feed}/>
             {presentation === 'full' ? (
                 <WishesLoadMore

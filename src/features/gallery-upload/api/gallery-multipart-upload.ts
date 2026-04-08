@@ -4,6 +4,7 @@ import {z} from "zod";
 
 import {GALLERY_ALLOWED_CONTENT_TYPES, GALLERY_MAX_FILE_BYTES,} from "@entities/photo";
 import {createServerClient} from "@shared/api/supabase/server";
+import {resolveGalleryImageContentType} from "@shared/lib/gallery-image-content-type";
 
 import {persistPhotoRow} from "../lib/persist-photo-row";
 import {putGalleryPhotoToR2} from "../lib/put-photo-to-r2";
@@ -56,11 +57,12 @@ export async function uploadGalleryPhotoFromMultipart(
     }
     const uploaderName = nameParsed.data;
 
-    const typeParsed = contentTypeSchema.safeParse(file.type);
-    if (!typeParsed.success) {
+    const fromBrowser = contentTypeSchema.safeParse(file.type);
+    const inferred = resolveGalleryImageContentType(file);
+    const contentType = fromBrowser.success ? fromBrowser.data : inferred;
+    if (!contentType) {
         return validationError("Unsupported file type");
     }
-    const contentType = typeParsed.data;
 
     if (file.size <= 0 || file.size > GALLERY_MAX_FILE_BYTES) {
         return validationError("Invalid file size");

@@ -1,4 +1,6 @@
+import {formatUploadApiErrorResponse} from "@shared/lib/format-upload-api-error";
 import {postMultipartGalleryPhoto} from "@shared/lib/gallery-client-upload";
+import {resolveGalleryImageContentType} from "@shared/lib/gallery-image-content-type";
 import {GALLERY_USE_SERVER_MULTIPART_UPLOAD} from "@shared/lib/gallery-upload-mode";
 
 /**
@@ -11,25 +13,43 @@ export async function uploadWishAttachment(
     uploaderName: string,
     onProgress: (p: number) => void,
 ): Promise<string> {
+    const contentType = resolveGalleryImageContentType(file);
+    if (!contentType) {
+        const msg =
+            "Unsupported or unknown image type. Use JPEG, PNG, WebP, or HEIC.";
+        console.error("[uploadWishAttachment]", msg, {
+            name: file.name,
+            type: file.type,
+            size: file.size,
+        });
+        throw new Error(msg);
+    }
+
     if (!GALLERY_USE_SERVER_MULTIPART_UPLOAD) {
         const presignRes = await fetch("/api/upload/presign", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({contentType: file.type, size: file.size}),
+            body: JSON.stringify({contentType, size: file.size}),
         });
         if (!presignRes.ok) {
-            throw new Error("Presign failed");
+            const detail = await formatUploadApiErrorResponse(presignRes);
+            console.error("[uploadWishAttachment] presign", presignRes.status, detail);
+            throw new Error(`Presign failed: ${detail}`);
         }
-        const {url, key} = (await presignRes.json()) as {url: string; key: string};
+        const {url, key} = (await presignRes.json()) as { url: string; key: string };
         onProgress(30);
 
         const uploadRes = await fetch(url, {
             method: "PUT",
-            headers: {"Content-Type": file.type},
+            headers: {"Content-Type": contentType},
             body: file,
         });
         if (!uploadRes.ok) {
-            throw new Error("Upload failed");
+            const detail = await uploadRes.text().catch(() => uploadRes.statusText);
+            console.error("[uploadWishAttachment] put R2", uploadRes.status, detail);
+            throw new Error(
+                `Upload to storage failed (${uploadRes.status}). ${detail.slice(0, 120)}`,
+            );
         }
         onProgress(80);
 
@@ -43,7 +63,9 @@ export async function uploadWishAttachment(
             }),
         });
         if (!confirmRes.ok) {
-            throw new Error("Confirm failed");
+            const detail = await formatUploadApiErrorResponse(confirmRes);
+            console.error("[uploadWishAttachment] confirm", confirmRes.status, detail);
+            throw new Error(`Confirm failed: ${detail}`);
         }
         onProgress(100);
 

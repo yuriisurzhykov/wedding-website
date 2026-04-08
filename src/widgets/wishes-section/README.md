@@ -1,4 +1,4 @@
-# widget: wishes-section
+# Widget: wishes-section
 
 Section `#wishes` (home preview and `/wishes` full page).
 
@@ -15,12 +15,19 @@ Types: `WishesPresentation`, `WishesSectionOptions`.
 
 | Piece | Role |
 | --- | --- |
-| `WishesSection` | Server: `listWishes` first page, header, wires feed + form. |
-| `WishesFeedClient` | Client: pagination state, composes feed + load more. |
+| `WishesSection` | Server: `listWishes` first page, header, wires feed + form order. |
+| `WishesFeedClient` | Client: `form` prop (React node) + feed; if there are no wishes, renders **empty message first**, then the form; if there are wishes, **form first**, then feed + load more. |
 | `WishesFeed` | Card list. |
 | `WishesLoadMore` | “Load more” (`full` only). |
 | `WishesFeedEmpty` | Empty state. |
-| `WishesSectionForm` | `POST /api/wishes` (`@features/wish-submit`). |
+| `WishesSectionForm` | `POST /api/wishes` (`@features/wish-submit`). Optional photo via **`PhotoFileInput`** (`@shared/ui`); copy for limits/toasts comes from next-intl **`upload`** plus **`wishes`** for the rest of the form. |
 | `lib/fetch-wishes-page.ts` | `GET /api/wishes` paging helper (client-only). |
 
-Optional image upload uses `upload-wish-attachment.ts` (presign / R2 / confirm, aligned with gallery upload).
+## Optional photo
+
+`lib/upload-wish-attachment.ts` uses the same presign / R2 / confirm path as the gallery (`@features/gallery-upload`). Size/type rules match `@entities/photo` and `@shared/lib/validate-gallery-photo-file`. On presign failure (e.g. size), the form surfaces errors and may toast using `upload` strings.
+
+## Errors & edge cases
+
+- Wish `POST` validation errors: `@features/wish-submit` (see feature README).
+- Photo upload failures: see `@shared/ui` `PhotoFileInput` and `src/shared/lib/README.md` (Gallery / photo uploads).
