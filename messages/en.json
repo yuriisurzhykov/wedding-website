@@ -11,6 +11,9 @@
     "mainNav": "Main navigation"
   },
   "hero": {
+    "names": "Yurii & Mariia",
+    "date": "June 12, 2026",
+    "venue": "Premier Palace Hotel, Kyiv — open in Maps",
     "countdown": {
       "days": "days",
       "hours": "hours",
@@ -18,6 +21,50 @@
       "seconds": "seconds",
       "passed": "The big day has arrived! 🎉"
     }
+  },
+  "welcome": {
+    "title": "Dear guests"
+  },
+  "schedule": {
+    "title": "Schedule",
+    "subtitle": "How the day unfolds",
+    "items": {
+      "gathering": {
+        "title": "Guest arrival",
+        "desc": "Meet in the lobby bar. Come a little early — we will greet you and head to the ceremony together."
+      },
+      "ceremony": {
+        "title": "Ceremony",
+        "desc": "Wedding ceremony at St. Andrew's Church. Please arrive about ten minutes before the start."
+      },
+      "reception": {
+        "title": "Transfer",
+        "desc": "We will travel together to the banquet venue at the same hotel."
+      },
+      "dinner": {
+        "title": "Dinner & celebration",
+        "desc": "Reception in the ballroom: dinner, music, and dancing."
+      }
+    }
+  },
+  "dresscode": {
+    "title": "Dress code",
+    "subtitle": "Soft pastels and natural tones — please avoid pure white or black.",
+    "notAllowed": "Please avoid",
+    "yourColor": "This color fits our palette",
+    "notYourColor": "We would prefer a different shade",
+    "colors": {
+      "ivory": "Ivory",
+      "champagne": "Champagne",
+      "dustyrose": "Dusty rose",
+      "sage": "Sage",
+      "ash": "Ash",
+      "white": "White",
+      "black": "Black"
+    }
+  },
+  "story": {
+    "title": "Our story"
   },
   "rsvp": {
     "title": "RSVP",
