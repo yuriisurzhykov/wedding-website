@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 import type {WishView} from "@entities/wish";
 
 export function WishesFeed({wishes}: {wishes: WishView[]}) {
@@ -18,22 +20,23 @@ export function WishesFeed({wishes}: {wishes: WishView[]}) {
                     </p>
                     {w.photoUrl ? (
                         <div className="relative mt-4 overflow-hidden rounded-card">
-                            {/* eslint-disable-next-line @next/next/no-img-element -- same URL as foreground; browser cache */}
-                            <img
+                            <Image
                                 src={w.photoUrl}
                                 alt=""
                                 aria-hidden
-                                loading="lazy"
-                                decoding="async"
-                                className="pointer-events-none absolute inset-0 z-0 h-full w-full origin-center scale-110 object-cover blur-3xl brightness-90 saturate-150"
+                                fill
+                                sizes="128px"
+                                quality={25}
+                                className="pointer-events-none z-0 origin-center scale-110 object-cover blur-3xl brightness-90 saturate-150"
                             />
                             <div className="relative z-10 flex justify-center p-2 sm:p-3">
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img
+                                <Image
                                     src={w.photoUrl}
                                     alt=""
-                                    loading="lazy"
-                                    decoding="async"
+                                    width={1600}
+                                    height={1600}
+                                    sizes="(max-width: 640px) 100vw, 36rem"
+                                    quality={80}
                                     className="relative h-auto max-h-72 w-auto max-w-full object-contain sm:max-h-96"
                                 />
                             </div>

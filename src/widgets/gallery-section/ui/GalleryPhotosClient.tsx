@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import {useCallback, useEffect, useRef, useState} from 'react'
 import {useTranslations} from 'next-intl'
 
@@ -91,7 +92,10 @@ export function GalleryPhotosClient({initialPhotos}: GalleryPhotosClientProps) {
                     aria-label={t('gridLabel')}
                 >
                     {photos.map((p, i) => (
-                        <li key={p.id}>
+                        <li
+                            key={p.id}
+                            className="min-h-px [contain-intrinsic-size:12rem_12rem] [content-visibility:auto]"
+                        >
                             <button
                                 type="button"
                                 className={cn(
@@ -104,12 +108,14 @@ export function GalleryPhotosClient({initialPhotos}: GalleryPhotosClientProps) {
                                     total: photos.length,
                                 })}
                             >
-                                {/* eslint-disable-next-line @next/next/no-img-element -- R2 public URLs */}
-                                <img
+                                <Image
                                     src={p.publicUrl}
                                     alt=""
-                                    loading="lazy"
-                                    className="size-full object-cover transition-transform duration-fast group-hover:scale-[1.02]"
+                                    fill
+                                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 34vw, 25vw"
+                                    className="object-cover transition-transform duration-fast motion-reduce:transition-none group-hover:scale-[1.02] motion-reduce:group-hover:scale-100"
+                                    priority={i < 6}
+                                    quality={75}
                                 />
                             </button>
                         </li>

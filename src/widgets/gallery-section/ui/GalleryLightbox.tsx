@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import {useEffect, useRef} from 'react'
 import {useTranslations} from 'next-intl'
 
@@ -105,8 +106,7 @@ export function GalleryLightbox({
                                 </button>
                             ) : null}
                             <div className="relative min-h-0 min-w-0 max-w-full flex-1">
-                                {/* eslint-disable-next-line @next/next/no-img-element -- R2 public URLs */}
-                                <img
+                                <Image
                                     src={current.publicUrl}
                                     alt={
                                         current.uploaderName
@@ -115,7 +115,11 @@ export function GalleryLightbox({
                                               })
                                             : t('lightboxAlt')
                                     }
-                                    className="absolute inset-0 m-auto max-h-full max-w-full object-contain"
+                                    fill
+                                    sizes="100vw"
+                                    priority
+                                    quality={88}
+                                    className="object-contain object-center"
                                 />
                             </div>
                             {multi ? (
