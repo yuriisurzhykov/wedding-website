@@ -1,0 +1,80 @@
+{
+  "nav": {
+    "schedule": "Schedule",
+    "dresscode": "Dress code",
+    "story": "Our story",
+    "rsvp": "RSVP",
+    "gallery": "Gallery",
+    "wishes": "Wishes",
+    "donate": "Gift",
+    "coupleNames": "Yurii & Mariia",
+    "mainNav": "Main navigation"
+  },
+  "hero": {
+    "countdown": {
+      "days": "days",
+      "hours": "hours",
+      "minutes": "minutes",
+      "seconds": "seconds",
+      "passed": "The big day has arrived! 🎉"
+    }
+  },
+  "rsvp": {
+    "title": "RSVP",
+    "subtitle": "Please respond by June 1",
+    "willAttend": "I'll be there 🎉",
+    "wontAttend": "Sorry, I can't make it",
+    "fields": {
+      "name": {
+        "label": "Your name",
+        "placeholder": "Jane Doe"
+      },
+      "email": {
+        "label": "Email",
+        "placeholder": "jane@example.com"
+      },
+      "phone": {
+        "label": "Phone",
+        "placeholder": "+1 (xxx) xxx-xxxx"
+      },
+      "guestCount": {
+        "label": "Number of guests",
+        "placeholder": "Select"
+      },
+      "dietary": {
+        "label": "Dietary restrictions / allergies",
+        "placeholder": "Vegetarian..."
+      },
+      "message": {
+        "label": "Message",
+        "placeholder": "Write something..."
+      },
+      "marketing": {
+        "label": "Email me occasional updates",
+        "placeholder": ""
+      }
+    },
+    "submit": "Submit",
+    "submitting": "Sending...",
+    "successAttend": "Thank you! We can't wait to see you 🎉",
+    "successDecline": "We're sorry you can't join us. Thanks for letting us know 🤍",
+    "error": "Something went wrong. Please reach out to us directly."
+  },
+  "gallery": {
+    "title": "Gallery",
+    "subtitle": "Share your memories",
+    "upload": "Upload",
+    "uploaderName": "Your name",
+    "dropzone": "Drag photos here or click to choose",
+    "maxSize": "Up to 5 MB per file",
+    "done": "Photos uploaded! Thank you 🎉",
+    "empty": "No photos yet. Be the first!"
+  },
+  "donate": {
+    "title": "Gift the couple",
+    "subtitle": "Your presence is the best gift. If you'd like to contribute materially, we'd be very grateful 🤍",
+    "zelleCopied": "Number copied! Open your banking app → Zelle",
+    "zelleCopyFailed": "Could not copy. Use this number:",
+    "noFees": "All transfers are fee-free — money goes directly to us"
+  }
+}
