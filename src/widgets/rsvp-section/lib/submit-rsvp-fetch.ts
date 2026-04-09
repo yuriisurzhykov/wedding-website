@@ -4,6 +4,37 @@
  * @param body — Serialized with `JSON.stringify` (typically form values including `attending`).
  */
 
+import type {ApplyGuestSessionFromApiBody, GuestSessionClientSnapshot} from "@features/guest-session";
+
+function extractGuestSessionFromRsvpJson(data: unknown): Parameters<
+    ApplyGuestSessionFromApiBody
+>[0] {
+    if (!data || typeof data !== "object") {
+        return {sessionEstablished: false};
+    }
+    const o = data as Record<string, unknown>;
+    if (o.sessionEstablished !== true) {
+        return {sessionEstablished: false};
+    }
+    const s = o.session;
+    if (!s || typeof s !== "object") {
+        return {sessionEstablished: false};
+    }
+    const displayName = (s as Record<string, unknown>).displayName;
+    if (typeof displayName !== "string" || !displayName.trim()) {
+        return {sessionEstablished: false};
+    }
+    return {
+        sessionEstablished: true,
+        session: s as GuestSessionClientSnapshot,
+    };
+}
+
+export type SubmitRsvpFetchOptions = {
+    /** §4: apply session from the same response body as `Set-Cookie` (plan §3.3). */
+    onGuestSessionFromResponse?: ApplyGuestSessionFromApiBody;
+};
+
 export class RsvpNotificationError extends Error {
     readonly step: "admin" | "guest";
     readonly id: string;
@@ -28,11 +59,15 @@ function isNotificationFailurePayload(
     );
 }
 
-export async function submitRsvpFetch(body: Record<string, unknown>): Promise<void> {
+export async function submitRsvpFetch(
+    body: Record<string, unknown>,
+    options?: SubmitRsvpFetchOptions,
+): Promise<void> {
     const res = await fetch("/api/rsvp", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify(body),
+        credentials: "same-origin",
     });
 
     let data: unknown;
@@ -44,8 +79,11 @@ export async function submitRsvpFetch(body: Record<string, unknown>): Promise<vo
 
     if (!res.ok) {
         if (res.status === 502 && isNotificationFailurePayload(data)) {
+            options?.onGuestSessionFromResponse?.(extractGuestSessionFromRsvpJson(data));
             throw new RsvpNotificationError(data.step, data.id);
         }
         throw new Error(`RSVP request failed: ${res.status}`);
     }
+
+    options?.onGuestSessionFromResponse?.(extractGuestSessionFromRsvpJson(data));
 }

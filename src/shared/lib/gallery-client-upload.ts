@@ -18,6 +18,7 @@ export async function postMultipartGalleryPhoto(
 
     const res = await fetch("/api/upload/server", {
         method: "POST",
+        credentials: "same-origin",
         body: fd,
     });
 

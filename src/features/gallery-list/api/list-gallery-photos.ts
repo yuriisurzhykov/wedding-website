@@ -8,6 +8,8 @@ export type ListGalleryPhotosOptions = {
     limit?: number;
     /** Zero-based offset in the `uploaded_at` desc ordering. */
     offset?: number;
+    /** When set (guest session), each row includes `canDelete` if it belongs to this RSVP. */
+    viewerRsvpId?: string | null;
 };
 
 export type ListGalleryPhotosResult =
@@ -23,6 +25,7 @@ export async function listGalleryPhotos(
 ): Promise<ListGalleryPhotosResult> {
     const limit = options?.limit ?? 48;
     const offset = options?.offset ?? 0;
+    const viewerRsvpId = options?.viewerRsvpId;
 
     let supabase;
     try {
@@ -47,7 +50,9 @@ export async function listGalleryPhotos(
     const pageRows = rows.slice(0, limit);
     return {
         ok: true,
-        photos: pageRows.map(mapPhotoRowToGalleryView),
+        photos: pageRows.map((row) =>
+            mapPhotoRowToGalleryView(row, viewerRsvpId),
+        ),
         hasMore,
     };
 }

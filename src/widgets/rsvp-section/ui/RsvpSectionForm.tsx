@@ -1,5 +1,6 @@
 "use client";
 
+import {useGuestSession} from "@features/guest-session";
 import {useLocale, useTranslations} from "next-intl";
 import {toast} from "sonner";
 
@@ -15,6 +16,7 @@ export function RsvpSectionForm() {
     const locale = useLocale();
     const emailLocale = locale === "ru" ? "ru" : "en";
     const t = useTranslations("rsvp");
+    const {applyFromApiBody} = useGuestSession();
 
     return (
         <DynamicForm
@@ -22,10 +24,13 @@ export function RsvpSectionForm() {
             namespace="rsvp"
             onSubmitAction={async (values) => {
                 try {
-                    await submitRsvpFetch({
-                        ...values,
-                        locale: emailLocale,
-                    });
+                    await submitRsvpFetch(
+                        {
+                            ...values,
+                            locale: emailLocale,
+                        },
+                        {onGuestSessionFromResponse: applyFromApiBody},
+                    );
                 } catch (e) {
                     if (e instanceof RsvpNotificationError) {
                         toast.error(t(`toast.notifyFailed.${e.step}`));

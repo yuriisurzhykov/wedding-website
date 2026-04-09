@@ -17,6 +17,9 @@ type GuestCopy = {
     signOff: string;
     dietaryLabel: string;
     messageLabel: string;
+    /** Shown when {@link buildGuestConfirmationEmail} receives a magic-link URL. */
+    magicLinkIntro: string;
+    magicLinkButton: string;
 };
 
 const COPY: Record<GuestEmailLocale, GuestCopy> = {
@@ -39,6 +42,9 @@ const COPY: Record<GuestEmailLocale, GuestCopy> = {
         signOff: "С любовью,\nЮрий и Мария",
         dietaryLabel: "Питание",
         messageLabel: "Сообщение",
+        magicLinkIntro:
+            "Если вы откроете свадебный сайт в другом браузере или на другом устройстве, войдите по ссылке ниже — имя и email вводить не нужно.",
+        magicLinkButton: "Открыть сайт как гость",
     },
     en: {
         subjectAttending: "Thank you — we can’t wait to see you",
@@ -59,6 +65,9 @@ const COPY: Record<GuestEmailLocale, GuestCopy> = {
         signOff: "With love,\nYurii & Mariia",
         dietaryLabel: "Dietary",
         messageLabel: "Message",
+        magicLinkIntro:
+            "If you open the wedding site in another browser or device, use the link below to sign in as a guest — you won’t need to re-enter your name or email.",
+        magicLinkButton: "Open the site as a guest",
     },
 };
 

@@ -11,6 +11,14 @@ import {getPublicSiteUrl} from "@shared/lib/get-public-site-url";
 import {buildGuestConfirmationEmail} from "./email/build-guest-confirmation-email";
 import type {GuestEmailLocale} from "./email/guest-confirmation-copy";
 
+/** Absolute URLs embedded in the guest confirmation email (both optional). */
+export type GuestConfirmationEmailLinks = {
+    /** Origin for the primary “open site” CTA; defaults to {@link getPublicSiteUrl} when omitted. */
+    publicSiteUrl?: string;
+    /** Full `GET /api/guest/claim?token=…&locale=…` URL when the token and site base were available at RSVP time. */
+    magicLinkClaimUrl?: string;
+};
+
 /**
  * Sends a multipart thank-you email to the guest after their RSVP is stored.
  *
@@ -20,10 +28,12 @@ import type {GuestEmailLocale} from "./email/guest-confirmation-copy";
  *
  * @param row — Persisted insert; `email` must be non-empty to send.
  * @param locale — Drives copy from {@link buildGuestConfirmationEmail} / `guest-confirmation-copy`.
+ * @param emailLinks — Optional; pass the same `publicSiteUrl` used to build `magicLinkClaimUrl` so both CTAs appear together after RSVP.
  */
 export async function notifyGuestRsvpConfirmation(
     row: RsvpRowInsert,
     locale: GuestEmailLocale,
+    emailLinks?: GuestConfirmationEmailLinks,
 ): Promise<void> {
     const to = row.email?.trim();
     if (!to) {
@@ -38,11 +48,12 @@ export async function notifyGuestRsvpConfirmation(
     }
 
     const from = getTransactionalFromAddress();
-    const siteUrl = getPublicSiteUrl();
+    const siteUrl = emailLinks?.publicSiteUrl ?? getPublicSiteUrl();
     const {subject, html, text} = buildGuestConfirmationEmail(
         row,
         locale,
         siteUrl,
+        emailLinks?.magicLinkClaimUrl,
     );
     const resend = createResendClient(apiKey);
     const {error} = await resend.emails.send({

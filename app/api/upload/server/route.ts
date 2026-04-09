@@ -1,5 +1,9 @@
 import {NextResponse} from "next/server";
 
+import {
+    buildGuestSessionErrorJson,
+    httpStatusForGuestSessionErrorCode,
+} from "@features/guest-session";
 import {uploadGalleryPhotoFromMultipart} from "@features/gallery-upload";
 
 export const runtime = "nodejs";
@@ -17,6 +21,12 @@ export async function POST(request: Request) {
         );
     }
 
+    if (result.kind === "no_session") {
+        return NextResponse.json(buildGuestSessionErrorJson(result.code), {
+            status: httpStatusForGuestSessionErrorCode(result.code),
+        });
+    }
+
     if (result.kind === "validation") {
         return NextResponse.json(
             {error: "validation", message: result.message},
@@ -26,14 +36,18 @@ export async function POST(request: Request) {
 
     if (result.kind === "config") {
         console.error("[api/upload/server] config", result.message);
-        return NextResponse.json({error: "server_error"}, {status: 500});
+        return NextResponse.json(buildGuestSessionErrorJson("server_error"), {status: 500});
     }
 
     if (result.kind === "r2") {
         console.error("[api/upload/server] r2", result.message);
-        return NextResponse.json({error: "server_error"}, {status: 500});
+        return NextResponse.json(buildGuestSessionErrorJson("upload_r2_failed"), {
+            status: 500,
+        });
     }
 
     console.error("[api/upload/server] database", result.message);
-    return NextResponse.json({error: "server_error"}, {status: 500});
+    return NextResponse.json(buildGuestSessionErrorJson("upload_confirm_failed"), {
+        status: 500,
+    });
 }

@@ -15,6 +15,7 @@ export async function fetchGalleryPhotosPage(
     })
     const res = await fetch(`/api/gallery/photos?${params}`, {
         cache: 'no-store',
+        credentials: 'same-origin',
     })
     if (!res.ok) {
         return null
@@ -23,8 +24,12 @@ export async function fetchGalleryPhotosPage(
         photos?: GalleryPhotoView[]
         hasMore?: boolean
     }
+    const photos = (data.photos ?? []).map((p) => ({
+        ...p,
+        canDelete: Boolean(p.canDelete),
+    }))
     return {
-        photos: data.photos ?? [],
+        photos,
         hasMore: Boolean(data.hasMore),
     }
 }

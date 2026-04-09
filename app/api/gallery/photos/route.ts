@@ -1,7 +1,14 @@
 import {NextResponse} from "next/server";
 import {z} from "zod";
 
+import {
+    buildGuestSessionErrorJson,
+    httpStatusForGuestSessionErrorCode,
+} from "@features/guest-session";
+import {validateGuestSessionFromRequest} from "@features/guest-session/server";
+import {deleteGalleryPhoto} from "@features/gallery-upload";
 import {listGalleryPhotos} from "@features/gallery-list";
+import {createServerClient} from "@shared/api/supabase/server";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +33,19 @@ export async function GET(request: Request) {
     }
 
     const {limit, offset} = parsed.data;
-    const result = await listGalleryPhotos({limit, offset});
+
+    let viewerRsvpId: string | null = null;
+    try {
+        const supabase = createServerClient();
+        const validation = await validateGuestSessionFromRequest(supabase, request);
+        if (validation.ok) {
+            viewerRsvpId = validation.session.rsvp_id;
+        }
+    } catch {
+        /* misconfigured env — list still works without per-row canDelete */
+    }
+
+    const result = await listGalleryPhotos({limit, offset, viewerRsvpId});
 
     if (!result.ok) {
         console.error("[api/gallery/photos]", result.kind, result.message);
@@ -37,4 +56,56 @@ export async function GET(request: Request) {
         photos: result.photos,
         hasMore: result.hasMore,
     });
+}
+
+/**
+ * Body: `{ "photoId": "<uuid>" }`. Requires guest session cookie; deletes R2 object and DB row when `photos.rsvp_id` matches.
+ */
+export async function DELETE(request: Request) {
+    let body: unknown;
+    try {
+        body = await request.json();
+    } catch {
+        return NextResponse.json(
+            {error: "invalid_json", message: "Request body must be valid JSON"},
+            {status: 400},
+        );
+    }
+
+    const result = await deleteGalleryPhoto(body, request);
+
+    if (result.ok) {
+        return NextResponse.json({ok: true}, {status: 200});
+    }
+
+    if (result.kind === "no_session") {
+        return NextResponse.json(buildGuestSessionErrorJson(result.code), {
+            status: httpStatusForGuestSessionErrorCode(result.code),
+        });
+    }
+
+    if (result.kind === "forbidden") {
+        return NextResponse.json(buildGuestSessionErrorJson("photo_delete_forbidden"), {
+            status: httpStatusForGuestSessionErrorCode("photo_delete_forbidden"),
+        });
+    }
+
+    if (result.kind === "validation") {
+        return NextResponse.json(
+            {
+                error: "validation",
+                fieldErrors: result.fieldErrors,
+                formErrors: result.formErrors,
+            },
+            {status: 400},
+        );
+    }
+
+    if (result.kind === "config") {
+        console.error("[api/gallery/photos] DELETE config", result.message);
+        return NextResponse.json(buildGuestSessionErrorJson("server_error"), {status: 500});
+    }
+
+    console.error("[api/gallery/photos] DELETE database", result.message);
+    return NextResponse.json(buildGuestSessionErrorJson("server_error"), {status: 500});
 }

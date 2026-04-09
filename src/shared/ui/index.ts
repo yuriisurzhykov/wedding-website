@@ -15,8 +15,10 @@ export {
     presignedPhotoUploadAdapter,
     serverPhotoUploadAdapter,
 } from './PhotoUploader'
-export type {PhotoUploadAdapter} from './PhotoUploader'
+export type {PhotoUploadAdapter, PhotoUploaderGuestSession} from './PhotoUploader'
 export {Section} from './Section'
 export {SectionHeader} from './SectionHeader'
+export {Surface} from './Surface'
+export type {SurfaceVariant} from './Surface'
 export {Select} from './Select'
 export {TextArea} from './TextArea'

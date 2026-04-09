@@ -5,6 +5,7 @@
     "story": "Our story",
     "rsvp": "RSVP",
     "gallery": "Gallery",
+    "guestSignIn": "Guest sign-in",
     "wishes": "Wishes",
     "donate": "Gift",
     "coupleNames": "Yurii & Mariia",
@@ -141,23 +142,137 @@
     "lightboxAltWithName": "Photo from {name}",
     "lightboxCounter": "{current} of {total}",
     "loadMore": "Load more",
-    "loadMoreLoading": "Loading…"
+    "loadMoreLoading": "Loading…",
+    "signedInAs": "Uploading as {name} (from your RSVP).",
+    "uploadSessionRequired": "To upload photos, complete RSVP on this site or sign in again with the same name and email you used on the form.",
+    "uploadHintAnonymousHome": "To attach a photo, <rsvp>sign in via RSVP</rsvp> on this site or use the sign-in link from your RSVP confirmation email.",
+    "deletePhotoAria": "Delete this photo",
+    "deleteLightboxLabel": "Delete",
+    "deleteSuccess": "Photo removed from the gallery.",
+    "deleteErrorGeneric": "Could not delete the photo. Please try again.",
+    "deleteConfirmTitle": "Delete this photo?",
+    "deleteConfirmDescription": "It will be removed from the gallery for everyone. This cannot be undone.",
+    "deleteConfirmCancel": "Keep it",
+    "deleteConfirmSubmit": "Delete",
+    "deleteDeleting": "Deleting…"
   },
   "wishes": {
     "title": "Wishes",
     "subtitle": "Warm words and photos for the couple",
     "nameLabel": "Your name",
     "namePlaceholder": "Jane Doe",
+    "nameRequired": "Please enter your name.",
+    "signedInAs": "Posting as {name} (from your RSVP).",
     "messageLabel": "Your wish",
     "messagePlaceholder": "Write your message…",
     "photoLabel": "Optional photo",
+    "photoGuestSignInHint": "Sign in as a guest (RSVP on this site or the link in your email) to attach a photo.",
     "submit": "Send wish",
     "submitting": "Sending…",
     "success": "Thank you! Your wish was posted 💌",
     "error": "Something went wrong. Please try again.",
     "empty": "No wishes yet. Be the first!",
     "loadMore": "Load more",
-    "loadMoreLoading": "Loading…"
+    "loadMoreLoading": "Loading…",
+    "anonymousSessionHintHome": "To add a photo to your wish or post under your RSVP name without retyping it, <rsvp>sign in via RSVP</rsvp> on this site or use the sign-in link from your confirmation email."
+  },
+  "guestSession": {
+    "signInPage": {
+      "documentTitle": "Guest sign-in"
+    },
+    "restore": {
+      "title": "Guest sign-in",
+      "subtitle": "Use the same name and email you entered on the RSVP form. After signing in you can upload gallery photos and post wishes without retyping your name.",
+      "nameLabel": "Your name",
+      "namePlaceholder": "Jane Doe",
+      "emailLabel": "Email",
+      "emailPlaceholder": "jane@example.com",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "successToast": "You are signed in.",
+      "fullPageLink": "Open the dedicated sign-in page",
+      "validationSummaryTitle": "Check the form",
+      "validationSummaryDescription": "Fix the fields below and try again.",
+      "nameFieldHint": "Enter your name as on the RSVP form.",
+      "emailFieldHint": "Enter a valid email address (same as on RSVP).",
+      "rsvpLink": "Haven’t RSVP’d yet? Go to the RSVP section."
+    },
+    "errors": {
+      "guest_session_expired": {
+        "title": "Your guest session has expired",
+        "description": "For security, sign-in from the site expires after a while. Use the same name and email you entered on the RSVP form to sign in again.",
+        "action": "Sign in again"
+      },
+      "guest_session_missing": {
+        "title": "You are not signed in",
+        "description": "To continue as a guest, sign in with the name and email you used on the RSVP form.",
+        "action": "Sign in"
+      },
+      "guest_session_invalid": {
+        "title": "We could not verify your session",
+        "description": "Your browser sent a session we no longer recognize. Sign in again with the name and email from your RSVP.",
+        "action": "Sign in again"
+      },
+      "restore_credentials_no_match": {
+        "title": "We could not find your RSVP",
+        "description": "Check that your name and email match exactly what you entered when you RSVP’d — spelling, spaces, and the same email address. If you used another address or are not sure, try that one, ask the hosts for a new link, or try again later if you were rate limited.",
+        "action": "Check details and try again"
+      },
+      "rate_limited": {
+        "title": "Too many sign-in attempts",
+        "description": "Please wait {retryAfterSec} seconds before trying again.",
+        "action": "Wait and retry"
+      },
+      "request_failed": {
+        "title": "The request did not go through",
+        "description": "Check your connection, then try again. If it keeps happening, refresh the page.",
+        "action": "Try again"
+      },
+      "server_error": {
+        "title": "Something went wrong on our side",
+        "description": "Please try again in a moment. If the problem continues, refresh the page or contact the hosts.",
+        "action": "Try again later"
+      },
+      "upload_presign_failed": {
+        "title": "Could not start the upload",
+        "description": "The server could not prepare your upload. Check your connection and file type, then try again.",
+        "action": "Try again"
+      },
+      "upload_r2_failed": {
+        "title": "Could not store the file",
+        "description": "The upload did not reach storage. Check your network and try again.",
+        "action": "Try again"
+      },
+      "upload_confirm_failed": {
+        "title": "Could not save your photo",
+        "description": "The file uploaded, but we could not finish saving it. Try uploading again.",
+        "action": "Try again"
+      },
+      "upload_no_session": {
+        "title": "Sign in to upload",
+        "description": "Sign in with the name and email from your RSVP to upload photos to the gallery.",
+        "action": "Sign in"
+      },
+      "photo_delete_forbidden": {
+        "title": "You cannot delete this photo",
+        "description": "You can only remove photos you uploaded while signed in with your guest session.",
+        "action": "Back"
+      },
+      "magic_link_invalid": {
+        "title": "This link is invalid or expired",
+        "description": "The sign-in link may have been used already, expired, or copied incorrectly. Open the wedding site and sign in with the name and email from your RSVP, or ask the hosts for a new link.",
+        "action": "Go to the site"
+      }
+    }
+  },
+  "guestClaim": {
+    "pageTitle": "Guest link",
+    "invalidTitle": "This link is invalid or has expired",
+    "invalidDescription": "If you already RSVP’d, open the wedding site and sign in with the same name and email you used on the form, or RSVP again from the site.",
+    "serverErrorTitle": "Something went wrong",
+    "serverErrorDescription": "We couldn’t complete sign-in. Please try again in a moment or open the site and use name + email to restore access.",
+    "backHome": "Back to the wedding site",
+    "signInCta": "Guest sign-in (name and email)"
   },
   "donate": {
     "title": "Gift the couple",

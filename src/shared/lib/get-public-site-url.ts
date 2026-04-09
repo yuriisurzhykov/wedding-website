@@ -1,5 +1,7 @@
 import "server-only";
 
+import {inferPublicSiteOriginFromRequest} from "./infer-public-site-origin-from-request";
+
 function toHttpsAbsoluteUrl(hostOrUrl: string): string {
     const host = hostOrUrl.replace(/^\/+/, "").replace(/\/+$/, "");
     if (host.startsWith("http://") || host.startsWith("https://")) {
@@ -29,4 +31,23 @@ export function getPublicSiteUrl(): string | undefined {
         return undefined;
     }
     return toHttpsAbsoluteUrl(vercelHost);
+}
+
+/**
+ * Base URL for links generated during a request (RSVP email, magic link).
+ *
+ * Order: {@link getPublicSiteUrl} (env / Vercel), then {@link inferPublicSiteOriginFromRequest} when `request` is set.
+ * Production should still set `NEXT_PUBLIC_SITE_URL` so links match the canonical domain.
+ */
+export function resolvePublicSiteBaseForServerEmail(
+    request?: Request,
+): string | undefined {
+    const fromEnv = getPublicSiteUrl();
+    if (fromEnv) {
+        return fromEnv;
+    }
+    if (request) {
+        return inferPublicSiteOriginFromRequest(request);
+    }
+    return undefined;
 }

@@ -1,3 +1,4 @@
+import {getViewerRsvpIdFromServerCookies} from "@features/guest-session/server";
 import {listGalleryPhotosCached} from "@features/gallery-list";
 
 import {
@@ -21,7 +22,12 @@ type Props = {
  */
 export async function GallerySectionPhotosIsland({presentation, slots}: Props) {
     const limit = galleryListLimitForPresentation(presentation);
-    const result = await listGalleryPhotosCached({limit, offset: 0});
+    const viewerRsvpId = await getViewerRsvpIdFromServerCookies();
+    const result = await listGalleryPhotosCached({
+        limit,
+        offset: 0,
+        viewerRsvpId,
+    });
     const initialPhotos = result.ok ? result.photos : [];
     const initialHasMore = result.ok ? result.hasMore : false;
 

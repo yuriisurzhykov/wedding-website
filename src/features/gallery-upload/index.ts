@@ -11,6 +11,14 @@ export {
     type ConfirmGalleryUploadResult,
 } from "./api/gallery-upload";
 export {
+    deleteGalleryPhoto,
+    type DeleteGalleryPhotoResult,
+} from "./api/delete-gallery-photo";
+export {
     uploadGalleryPhotoFromMultipart,
     type MultipartGalleryUploadResult,
 } from "./api/gallery-multipart-upload";
+export {
+    loadRsvpDisplayNameForUpload,
+    type LoadRsvpDisplayNameResult,
+} from "./lib/load-rsvp-display-name-for-upload";

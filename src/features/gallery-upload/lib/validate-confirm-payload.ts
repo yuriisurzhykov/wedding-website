@@ -5,7 +5,8 @@ import {z} from "zod";
 export const galleryConfirmPayloadSchema = z
     .object({
         key: z.string().min(1).startsWith("photos/"),
-        uploaderName: z.string().trim().min(1).max(100),
+        /** Ignored when a guest session is present — server uses `rsvp.name`. */
+        uploaderName: z.string().trim().min(1).max(100).optional(),
         sizeBytes: z.number().int().nonnegative().optional(),
     })
     .strict();

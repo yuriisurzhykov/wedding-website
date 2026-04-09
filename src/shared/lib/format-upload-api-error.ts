@@ -61,5 +61,13 @@ export async function formatUploadApiErrorResponse(res: Response): Promise<strin
         return o.error;
     }
 
+    if (typeof o.error === "object" && o.error !== null) {
+        const errObj = o.error as Record<string, unknown>;
+        const code = errObj.code;
+        if (typeof code === "string" && code.trim()) {
+            return code.trim();
+        }
+    }
+
     return text.length > 280 ? `${text.slice(0, 277)}…` : text;
 }

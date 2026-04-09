@@ -20,9 +20,15 @@ export async function listGalleryPhotosCached(
 ): Promise<ListGalleryPhotosResult> {
     const limit = options?.limit ?? 48;
     const offset = options?.offset ?? 0;
+    const viewerRsvpId = options?.viewerRsvpId;
+
+    if (viewerRsvpId) {
+        return listGalleryPhotos({limit, offset, viewerRsvpId});
+    }
 
     const cachedRead = unstable_cache(
-        async () => listGalleryPhotos({limit, offset}),
+        async () =>
+            listGalleryPhotos({limit, offset, viewerRsvpId: null}),
         ["list-gallery-photos", String(limit), String(offset)],
         {revalidate: 60, tags: [GALLERY_PHOTOS_LIST_CACHE_TAG]},
     );

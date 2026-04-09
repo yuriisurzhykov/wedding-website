@@ -1,5 +1,9 @@
 import {NextResponse} from "next/server";
 
+import {
+    buildGuestSessionErrorJson,
+    httpStatusForGuestSessionErrorCode,
+} from "@features/guest-session";
 import {confirmGalleryUpload} from "@features/gallery-upload";
 
 export async function POST(request: Request) {
@@ -13,13 +17,19 @@ export async function POST(request: Request) {
         );
     }
 
-    const result = await confirmGalleryUpload(body);
+    const result = await confirmGalleryUpload(body, request);
 
     if (result.ok) {
         return NextResponse.json(
             {ok: true, url: result.publicUrl},
             {status: 200},
         );
+    }
+
+    if (result.kind === "no_session") {
+        return NextResponse.json(buildGuestSessionErrorJson(result.code), {
+            status: httpStatusForGuestSessionErrorCode(result.code),
+        });
     }
 
     if (result.kind === "validation") {
@@ -35,9 +45,11 @@ export async function POST(request: Request) {
 
     if (result.kind === "config") {
         console.error("[api/upload/confirm] config", result.message);
-        return NextResponse.json({error: "server_error"}, {status: 500});
+        return NextResponse.json(buildGuestSessionErrorJson("server_error"), {status: 500});
     }
 
     console.error("[api/upload/confirm] database", result.message);
-    return NextResponse.json({error: "server_error"}, {status: 500});
+    return NextResponse.json(buildGuestSessionErrorJson("upload_confirm_failed"), {
+        status: 500,
+    });
 }

@@ -1,8 +1,9 @@
 'use client'
 
-import {type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useId, useRef, useState,} from 'react'
+import {type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useId, useMemo, useRef, useState,} from 'react'
 import {useTranslations} from 'next-intl'
 
+import {useGuestSession} from '@features/guest-session'
 import {usePathname} from '@/i18n/navigation'
 import {SITE_NAV_REGISTRY} from '@entities/site-nav'
 import {cn} from '@shared/lib/cn'
@@ -54,6 +55,17 @@ function CloseIcon({className}: { className?: string }) {
 
 export function SiteNavigation() {
     const translator = useTranslations('nav')
+    const {status: guestSessionStatus} = useGuestSession()
+    const siteNavEntries = useMemo(() => {
+        let list = [...SITE_NAV_REGISTRY]
+        if (guestSessionStatus !== 'anonymous') {
+            list = list.filter((item) => item.navKey !== 'rsvp')
+        }
+        if (guestSessionStatus === 'authenticated') {
+            list = list.filter((item) => item.navKey !== 'guestSignIn')
+        }
+        return list
+    }, [guestSessionStatus])
     const pathname = usePathname()
     const onHome = pathname === '/'
     const [open, setOpen] = useState(false)
@@ -213,7 +225,7 @@ export function SiteNavigation() {
                     </button>
 
                     <div className="hidden md:flex items-center gap-6">
-                        {SITE_NAV_REGISTRY.map((item) => (
+                        {siteNavEntries.map((item) => (
                             <SiteNavRegistryEntryControl
                                 key={item.navKey}
                                 item={item}
@@ -276,7 +288,7 @@ export function SiteNavigation() {
                     )}
                 >
                     <ul className="flex flex-1 flex-col gap-1 overflow-y-auto p-4">
-                        {SITE_NAV_REGISTRY.map((item) => (
+                        {siteNavEntries.map((item) => (
                             <li key={item.navKey}>
                                 <SiteNavRegistryEntryControl
                                     item={item}

@@ -1,6 +1,23 @@
 import {NextResponse} from "next/server";
 
-import {submitRsvp} from "@features/rsvp-submit";
+import {submitRsvp, type SubmitRsvpGuestSession} from "@features/rsvp-submit";
+import {getGuestSessionCookieDescriptor, getGuestSessionRuntimeConfig} from "@features/guest-session/server";
+
+function jsonWithOptionalGuestSessionCookie(
+    body: Record<string, unknown>,
+    guestSession: SubmitRsvpGuestSession | null,
+    status = 200,
+): NextResponse {
+    const res = NextResponse.json(body, {status});
+    if (guestSession) {
+        const desc = getGuestSessionCookieDescriptor(
+            guestSession.rawToken,
+            getGuestSessionRuntimeConfig(),
+        );
+        res.cookies.set(desc.name, desc.value, desc.options);
+    }
+    return res;
+}
 
 export async function POST(request: Request) {
     let body: unknown;
@@ -13,10 +30,18 @@ export async function POST(request: Request) {
         );
     }
 
-    const result = await submitRsvp(body);
+    const result = await submitRsvp(body, {request});
 
     if (result.ok) {
-        return NextResponse.json({ok: true}, {status: 200});
+        const gs = result.guestSession;
+        return jsonWithOptionalGuestSessionCookie(
+            {
+                ok: true,
+                sessionEstablished: gs !== null,
+                ...(gs ? {session: gs.snapshot} : {}),
+            },
+            gs,
+        );
     }
 
     if (result.kind === "notification") {
@@ -26,13 +51,17 @@ export async function POST(request: Request) {
             result.id,
             result.message,
         );
-        return NextResponse.json(
+        const gs = result.guestSession;
+        return jsonWithOptionalGuestSessionCookie(
             {
                 error: "notification_failed",
                 step: result.step,
                 id: result.id,
+                sessionEstablished: gs !== null,
+                ...(gs ? {session: gs.snapshot} : {}),
             },
-            {status: 502},
+            gs,
+            502,
         );
     }
 

@@ -61,6 +61,7 @@
     --radius-sm: 0.375rem;   /* rounded-sm */
     --radius-md: 0.75rem;    /* rounded-md */
     --radius-lg: 1.5rem;     /* rounded-lg */
+    --radius-card: var(--radius-lg); /* rounded-card — same radius as cards / surfaces */
     --radius-pill: 9999px;   /* rounded-pill */
     /* --------------------------------------------------
      SHADOWS
@@ -92,6 +93,20 @@
     --transition-fast: 150ms ease;
     --transition-normal: 300ms ease;
     --transition-slow: 600ms ease;
+}
+
+/* Gallery: trash control — subtle wiggle on hover (see `GalleryTrashIconButton`). */
+@keyframes gallery-trash-wiggle {
+    0%,
+    100% {
+        transform: rotate(0deg) translateY(0);
+    }
+    35% {
+        transform: rotate(-12deg) translateY(-2px);
+    }
+    70% {
+        transform: rotate(8deg) translateY(-1px);
+    }
 }
 
 /* ============================================================

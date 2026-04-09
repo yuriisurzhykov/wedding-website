@@ -7,6 +7,8 @@ import {useTranslations} from 'next-intl'
 import type {GalleryPhotoView} from '@entities/photo'
 import {cn} from '@shared/lib/cn'
 
+import {GalleryTrashIcon} from './GalleryTrashIcon'
+
 /** Horizontal distance (px) before a drag counts as prev/next. */
 const LIGHTBOX_SWIPE_THRESHOLD_PX = 50
 
@@ -52,6 +54,8 @@ type GalleryLightboxProps = {
     onClose: () => void
     onPrev: () => void
     onNext: () => void
+    /** Shown when the current slide is deletable for this viewer. */
+    onRequestDelete?: () => void
 }
 
 /**
@@ -70,6 +74,7 @@ export function GalleryLightbox(
         onClose,
         onPrev,
         onNext,
+        onRequestDelete,
     }: GalleryLightboxProps
 ) {
     const t = useTranslations('gallery')
@@ -103,6 +108,7 @@ export function GalleryLightbox(
 
     const current = openIndex !== null ? photos[openIndex] : null
     const multi = photos.length > 1
+    const canDeleteCurrent = Boolean(current?.canDelete && onRequestDelete)
 
     const photoColumnRef = useRef<HTMLDivElement>(null)
     const photoImgRef = useRef<HTMLImageElement | null>(null)
@@ -220,7 +226,23 @@ export function GalleryLightbox(
                         tabIndex={-1}
                     />
                     <div className="pointer-events-none relative z-10 flex min-h-0 flex-1 flex-col">
-                        <div className="flex shrink-0 justify-end p-3 sm:p-4">
+                        <div className="flex shrink-0 justify-end gap-2 p-3 sm:gap-3 sm:p-4">
+                            {canDeleteCurrent ? (
+                                <button
+                                    type="button"
+                                    data-lightbox-interactive
+                                    className="group pointer-events-auto inline-flex items-center gap-2 rounded-pill bg-white/10 px-3 py-2 text-small text-white transition-colors hover:bg-white/20 sm:px-4 sm:text-body"
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        onRequestDelete?.()
+                                    }}
+                                >
+                                    <GalleryTrashIcon className="size-4 text-white"/>
+                                    <span className="max-sm:sr-only">
+                                        {t('deleteLightboxLabel')}
+                                    </span>
+                                </button>
+                            ) : null}
                             <button
                                 type="button"
                                 data-lightbox-interactive

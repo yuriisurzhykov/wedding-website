@@ -8,6 +8,7 @@ export const SITE_NAV_REGISTRY = [
     {kind: 'section', navKey: 'story', sectionId: 'story'},
     {kind: 'section', navKey: 'rsvp', sectionId: 'rsvp'},
     {kind: 'route', navKey: 'gallery', pathname: '/gallery'},
+    {kind: 'route', navKey: 'guestSignIn', pathname: '/guest/sign-in'},
     {kind: 'route', navKey: 'wishes', pathname: '/wishes'},
     {kind: 'section', navKey: 'donate', sectionId: 'donate'},
 ] as const

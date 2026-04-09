@@ -61,7 +61,12 @@ export async function WishesSection(
             >
                 <SectionHeader title={t("title")} subtitle={t("subtitle")}/>
                 <WishesFeedClient
-                    form={<WishesSectionForm className={formSlot}/>}
+                    form={
+                        <WishesSectionForm
+                            presentation={presentation}
+                            className={formSlot}
+                        />
+                    }
                     initialWishes={wishes}
                     initialHasMore={hasMore}
                     presentation={presentation}

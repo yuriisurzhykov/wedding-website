@@ -20,11 +20,11 @@ Internal modules (`lib/validate-payload`, `lib/persist-rsvp-row`, `lib/notify-ad
 
 | Situation | Suggested HTTP | Response body hint |
 |-----------|----------------|-------------------|
-| `ok: true` | **200** | `{ ok: true }` (route may omit `id` for privacy) |
+| `ok: true` | **200** | `{ ok: true, sessionEstablished, session? }` — §4 snapshot when `guest_sessions` insert succeeded; **`Set-Cookie`** (HttpOnly) with opaque token; no `id` in body for privacy |
 | `kind: 'validation'` | **400** | `{ error: 'validation', fieldErrors, formErrors }` |
 | `kind: 'config'` | **500** | Generic error; log `message` server-side |
 | `kind: 'database'` | **500** | Generic error; log `message` server-side |
-| `kind: 'notification'` | **502** | `{ error: 'notification_failed', step: 'admin' or 'guest', id }` — row saved; client should show a toast (see widget `RsvpSectionForm`) |
+| `kind: 'notification'` | **502** | `{ error: 'notification_failed', step: 'admin' or 'guest', id, sessionEstablished, session? }` + optional **`Set-Cookie`** if session was created before mail failed — row saved; client should toast (see widget `RsvpSectionForm`) and may still apply `session` via `GuestSessionProvider` |
 
 ## Admin email (sequential, blocking)
 

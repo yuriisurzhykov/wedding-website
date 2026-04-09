@@ -4,6 +4,8 @@ import {formatStoryWeddingLine} from '@shared/lib/wedding-calendar'
 import {escapeHtml} from "@shared/lib/html-escape";
 
 import {getGuestConfirmationCopy, guestConfirmationSubject, type GuestEmailLocale,} from "./guest-confirmation-copy";
+import {buildGuestConfirmationMagicLinkEmailParts} from "./guest-confirmation-magic-link-email-parts";
+import {normalizeOptionalHttpsUrl} from "./normalize-optional-https-url";
 import {WEDDING_EMAIL_GOOGLE_FONTS_HREF, WEDDING_EMAIL_THEME as T,} from "./wedding-email-theme";
 
 /** Parts passed to Resend `emails.send` for the guest thank-you after RSVP (multipart/alternative). */
@@ -43,12 +45,14 @@ function optionalBlockText(
  * @param row — Stored RSVP row shape; callers should only invoke when `row.email` is non-empty (enforced in `notifyGuestRsvpConfirmation`).
  * @param locale — Matches the language the guest used on the form (`POST` body `locale` or default `en`).
  * @param siteUrl — Optional absolute site URL for the primary CTA; if missing/invalid, the button and text CTA are omitted.
+ * @param magicLinkClaimUrl — Optional `GET /api/guest/claim` URL (opaque token); omitted when unavailable.
  * @returns {@link GuestConfirmationEmailPayload} for `notifyGuestRsvpConfirmation` → Resend.
  */
 export function buildGuestConfirmationEmail(
     row: RsvpRowInsert,
     locale: GuestEmailLocale,
     siteUrl?: string,
+    magicLinkClaimUrl?: string,
 ): GuestConfirmationEmailPayload {
     const copy = getGuestConfirmationCopy(locale);
     const subject = guestConfirmationSubject(row, locale);
@@ -80,22 +84,24 @@ export function buildGuestConfirmationEmail(
                 .join("")}</div>`
             : "";
 
-    const normalizedSite =
-        siteUrl?.trim() &&
-        (siteUrl.trim().startsWith("http://") ||
-            siteUrl.trim().startsWith("https://"))
-            ? siteUrl.trim().replace(/\/+$/, "")
-            : undefined;
-
-    const ctaHtml = normalizedSite
-        ? `<p style="margin:28px 0 0 0;text-align:center;">
-<a href="${escapeHtml(normalizedSite)}" style="display:inline-block;padding:12px 28px;background:${T.primary};color:${T.white};text-decoration:none;border-radius:9999px;font-family:${T.fontBody};font-size:15px;font-weight:600;">${escapeHtml(copy.openSite)}</a>
-</p>`
-        : "";
+    const normalizedSite = normalizeOptionalHttpsUrl(siteUrl);
+    const normalizedMagic = normalizeOptionalHttpsUrl(magicLinkClaimUrl);
 
     const ctaLine = normalizedSite
         ? `${copy.openSite}: ${normalizedSite}`
         : null;
+
+    const magicParts = normalizedMagic
+        ? buildGuestConfirmationMagicLinkEmailParts(
+            {
+                magicLinkIntro: copy.magicLinkIntro,
+                magicLinkButton: copy.magicLinkButton,
+            },
+            normalizedMagic,
+        )
+        : null;
+
+    const magicHtml = magicParts?.htmlBlock ?? "";
 
     const html = `<!DOCTYPE html>
 <html lang="${locale}">
@@ -117,7 +123,7 @@ export function buildGuestConfirmationEmail(
 ${whenWhereHtml}
 </div>
 ${extrasHtml}
-${ctaHtml}
+${magicHtml}
 <p style="margin:32px 0 0 0;font-family:${T.fontBody};font-size:14px;line-height:1.6;color:${T.textSecondary};white-space:pre-line;">${escapeHtml(copy.signOff)}</p>
 </td></tr>
 </table>
@@ -137,8 +143,8 @@ ${ctaHtml}
     if (extrasText.length > 0) {
         textLines.push("", ...extrasText);
     }
-    if (ctaLine) {
-        textLines.push("", ctaLine);
+    if (magicParts) {
+        textLines.push(...magicParts.textAppend);
     }
     textLines.push("", copy.signOff);
     const text = textLines.join("\n");

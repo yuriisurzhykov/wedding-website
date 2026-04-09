@@ -2,9 +2,13 @@ import "server-only";
 
 import {z} from "zod";
 
+/**
+ * `authorName` is optional when a valid guest session cookie is present — the server
+ * uses `rsvp.name` (same rules as gallery confirm). Otherwise it is required.
+ */
 export const wishSubmitPayloadSchema = z
     .object({
-        authorName: z.string().trim().min(1).max(100),
+        authorName: z.string().trim().max(100).optional(),
         message: z.string().trim().min(1).max(2000),
         photoR2Key: z
             .string()

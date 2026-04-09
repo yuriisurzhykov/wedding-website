@@ -3,7 +3,7 @@ import {DressCodeSection} from '@widgets/dresscode-section'
 import {GallerySection} from '@widgets/gallery-section'
 import {HeroSection} from '@widgets/hero-section'
 import {OurStorySection} from '@widgets/our-story-section'
-import {RsvpSection} from '@widgets/rsvp-section'
+import {RsvpSection, RsvpSectionGate} from '@widgets/rsvp-section'
 import {ScheduleSection} from '@widgets/schedule-section'
 import {WelcomeSection} from '@widgets/welcome-section'
 import {WishesSection} from '@widgets/wishes-section'
@@ -16,7 +16,9 @@ export default async function Home() {
             <ScheduleSection/>
             <DressCodeSection/>
             <OurStorySection/>
-            <RsvpSection/>
+            <RsvpSectionGate>
+                <RsvpSection/>
+            </RsvpSectionGate>
             <GallerySection presentation="preview"/>
             <WishesSection presentation="preview"/>
             <DonateSection/>

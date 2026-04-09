@@ -1,5 +1,7 @@
 import "server-only";
 
+import {loadRsvpDisplayNameForUpload} from "@features/gallery-upload";
+import {validateGuestSessionFromRequest} from "@features/guest-session/server";
 import {createServerClient} from "@shared/api/supabase/server";
 import {assertR2UploadConfig} from "@shared/api/r2";
 
@@ -20,8 +22,14 @@ export type SubmitWishResult =
 /**
  * Validates JSON and inserts into `wishes` (service role). Optional `photoR2Key` must
  * refer to an object already uploaded under `photos/`; `photo_url` is derived from `R2_PUBLIC_URL`.
+ *
+ * When the request carries a valid guest session cookie, `authorName` in the body is
+ * ignored and `rsvp.name` is used (same source as gallery uploads).
  */
-export async function submitWish(rawBody: unknown): Promise<SubmitWishResult> {
+export async function submitWish(
+    rawBody: unknown,
+    request: Request,
+): Promise<SubmitWishResult> {
     const parsed = parseWishSubmitPayload(rawBody);
     if (!parsed.ok) {
         const flat = parsed.error.flatten();
@@ -33,7 +41,40 @@ export async function submitWish(rawBody: unknown): Promise<SubmitWishResult> {
         };
     }
 
-    const {authorName, message, photoR2Key} = parsed.data;
+    const {authorName: authorNameRaw, message, photoR2Key} = parsed.data;
+
+    let supabase;
+    try {
+        supabase = createServerClient();
+    } catch (e) {
+        const message = e instanceof Error ? e.message : String(e);
+        return {ok: false, kind: "config", message};
+    }
+
+    const sessionResult = await validateGuestSessionFromRequest(supabase, request);
+
+    let authorName: string;
+    if (sessionResult.ok) {
+        const nameResult = await loadRsvpDisplayNameForUpload(
+            supabase,
+            sessionResult.session.rsvp_id,
+        );
+        if (!nameResult.ok) {
+            return {ok: false, kind: "database", message: nameResult.message};
+        }
+        authorName = nameResult.name;
+    } else {
+        const fromClient = authorNameRaw?.trim() ?? "";
+        if (!fromClient) {
+            return {
+                ok: false,
+                kind: "validation",
+                fieldErrors: {authorName: ["Required"]},
+                formErrors: [],
+            };
+        }
+        authorName = fromClient;
+    }
 
     let photoUrl: string | null = null;
     if (photoR2Key) {
@@ -44,14 +85,6 @@ export async function submitWish(rawBody: unknown): Promise<SubmitWishResult> {
             const msg = e instanceof Error ? e.message : String(e);
             return {ok: false, kind: "config", message: msg};
         }
-    }
-
-    let supabase;
-    try {
-        supabase = createServerClient();
-    } catch (e) {
-        const message = e instanceof Error ? e.message : String(e);
-        return {ok: false, kind: "config", message};
     }
 
     const saved = await persistWishRow(supabase, {

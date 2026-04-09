@@ -1,5 +1,9 @@
 import {NextResponse} from "next/server";
 
+import {
+    buildGuestSessionErrorJson,
+    httpStatusForGuestSessionErrorCode,
+} from "@features/guest-session";
 import {presignGalleryUpload} from "@features/gallery-upload";
 
 export async function POST(request: Request) {
@@ -13,10 +17,16 @@ export async function POST(request: Request) {
         );
     }
 
-    const result = await presignGalleryUpload(body);
+    const result = await presignGalleryUpload(body, request);
 
     if (result.ok) {
         return NextResponse.json({url: result.url, key: result.key}, {status: 200});
+    }
+
+    if (result.kind === "no_session") {
+        return NextResponse.json(buildGuestSessionErrorJson(result.code), {
+            status: httpStatusForGuestSessionErrorCode(result.code),
+        });
     }
 
     if (result.kind === "validation") {
@@ -32,9 +42,11 @@ export async function POST(request: Request) {
 
     if (result.kind === "config") {
         console.error("[api/upload/presign] config", result.message);
-        return NextResponse.json({error: "server_error"}, {status: 500});
+        return NextResponse.json(buildGuestSessionErrorJson("server_error"), {status: 500});
     }
 
     console.error("[api/upload/presign] r2", result.message);
-    return NextResponse.json({error: "server_error"}, {status: 500});
+    return NextResponse.json(buildGuestSessionErrorJson("upload_presign_failed"), {
+        status: 500,
+    });
 }

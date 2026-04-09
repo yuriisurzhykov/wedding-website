@@ -20,7 +20,7 @@ const optionalPhone = z.preprocess(
 
 const optionalEmail = z.preprocess(
     emptyToUndefined,
-    z.string().trim().email().max(320).optional(),
+    z.string().trim().max(320).pipe(z.email()).optional(),
 );
 
 const guestCountInput = z.preprocess(emptyToUndefined, z.unknown());

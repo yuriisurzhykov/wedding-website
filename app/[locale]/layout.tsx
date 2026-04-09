@@ -1,3 +1,4 @@
+import {GuestSessionProvider} from '@features/guest-session'
 import {NextIntlClientProvider} from 'next-intl'
 import {getMessages, setRequestLocale} from 'next-intl/server'
 import {notFound} from 'next/navigation'
@@ -28,11 +29,13 @@ export default async function LocaleLayout({children, params}: Props) {
 
     return (
         <NextIntlClientProvider locale={locale} messages={messages}>
-            <Suspense fallback={null}>
-                <NavigationProgressBar/>
-            </Suspense>
-            <SiteNavigation/>
-            <main className="flex flex-col pt-16">{children}</main>
+            <GuestSessionProvider>
+                <Suspense fallback={null}>
+                    <NavigationProgressBar/>
+                </Suspense>
+                <SiteNavigation/>
+                <main className="flex flex-col pt-16">{children}</main>
+            </GuestSessionProvider>
         </NextIntlClientProvider>
     )
 }

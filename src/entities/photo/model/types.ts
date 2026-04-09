@@ -6,6 +6,7 @@ export type PhotoDbRow = {
     public_url: string;
     size_bytes: number | null;
     uploaded_at: string;
+    rsvp_id?: string | null;
 };
 
 /** Safe view for the home gallery grid. */
@@ -14,4 +15,6 @@ export type GalleryPhotoView = {
     publicUrl: string;
     uploaderName: string | null;
     uploadedAt: string;
+    /** Present when the list API matched this row to the viewer’s guest session. */
+    canDelete?: boolean;
 };

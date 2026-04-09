@@ -50,7 +50,7 @@ export async function POST(request: Request) {
         );
     }
 
-    const result = await submitWish(body);
+    const result = await submitWish(body, request);
 
     if (result.ok) {
         return NextResponse.json({ok: true}, {status: 200});

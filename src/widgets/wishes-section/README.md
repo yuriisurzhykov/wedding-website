@@ -20,7 +20,7 @@ Types: `WishesPresentation`, `WishesSectionOptions`.
 | `WishesFeed` | Card list. |
 | `WishesLoadMore` | “Load more” (`full` only). |
 | `WishesFeedEmpty` | Empty state. |
-| `WishesSectionForm` | `POST /api/wishes` (`@features/wish-submit`). Optional photo via **`PhotoFileInput`** (`@shared/ui`); copy for limits/toasts comes from next-intl **`upload`** plus **`wishes`** for the rest of the form. |
+| `WishesSectionForm` | `POST /api/wishes` (`@features/wish-submit`). **`presentation`**: on the **full** `/wishes` page, when the guest is **anonymous**, **`GuestSessionRestoreForm`** is shown above the form. On the **home preview**, only a short hint with a link to **`#rsvp`** is shown (`wishes.anonymousSessionHintHome`). With a valid guest session, the name field is hidden and the server fills the author from RSVP; while loading, a skeleton avoids flashing the name field. Optional photo via **`PhotoFileInput`**; copy from **`upload`** + **`wishes`**. |
 | `lib/fetch-wishes-page.ts` | `GET /api/wishes` paging helper (client-only). |
 
 ## Optional photo

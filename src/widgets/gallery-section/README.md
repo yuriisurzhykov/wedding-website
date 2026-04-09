@@ -25,6 +25,7 @@ Types: `GalleryPresentation`, `GallerySectionOptions` (exported from the slice e
 
 ## Behavior
 
+- On the **full** gallery route (`/gallery`), when the guest is **anonymous**, **`GuestSessionRestoreForm`** is shown above **`PhotoUploader`**. On the **home preview**, only a short hint with a link to **`#rsvp`** is shown (no inline restore form).
 - After a successful upload, refetch **page 0** with the presentation’s page size.
 - **`presentation: 'full'`**: “Load more” calls the same API with `offset = photos.length` until `hasMore` is false.
 

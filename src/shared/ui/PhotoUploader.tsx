@@ -49,6 +49,7 @@ export async function presignedPhotoUploadAdapter(
     const presignRes = await fetch('/api/upload/presign', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
+        credentials: 'same-origin',
         body: JSON.stringify({contentType, size: file.size}),
     })
     if (!presignRes.ok) {
@@ -74,6 +75,7 @@ export async function presignedPhotoUploadAdapter(
     const confirmRes = await fetch('/api/upload/confirm', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
+        credentials: 'same-origin',
         body: JSON.stringify({key, uploaderName, sizeBytes: file.size}),
     })
     if (!confirmRes.ok) {
@@ -99,6 +101,15 @@ export const defaultPhotoUploadAdapter: PhotoUploadAdapter =
         : presignedPhotoUploadAdapter
 
 /** Simulated progress for demos / component book when API is unavailable. */
+/**
+ * When set (e.g. from {@link GalleryPhotosClient}), aligns with guest session: hide manual name
+ * when authenticated, skeleton while loading, prompt when anonymous (plan §3.1).
+ */
+export type PhotoUploaderGuestSession =
+    | {status: 'loading'}
+    | {status: 'anonymous'}
+    | {status: 'authenticated'; displayName: string}
+
 export async function mockPhotoUploadAdapter(
     _file: File,
     _uploaderName: string,
@@ -115,10 +126,16 @@ export async function mockPhotoUploadAdapter(
 export function PhotoUploader({
     uploadAdapter = defaultPhotoUploadAdapter,
     onUploadSuccess,
+    guestUpload,
+    suppressAnonymousHelpText = false,
 }: {
     uploadAdapter?: PhotoUploadAdapter
     /** Called after at least one file uploaded successfully (e.g. refetch gallery list). */
     onUploadSuccess?: () => void | Promise<void>
+    /** Guest session from a widget (`useGuestSession`). Omit in UI book / demos — manual name field stays. */
+    guestUpload?: PhotoUploaderGuestSession
+    /** When true and guest is anonymous, hide the default “sign in to upload” line (caller shows custom copy). */
+    suppressAnonymousHelpText?: boolean
 }) {
     const t = useTranslations('gallery')
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -126,6 +143,14 @@ export function PhotoUploader({
     const [name, setName] = useState('')
     const [isDragging, setDragging] = useState(false)
     const toAccepted = useGalleryAcceptedBatch()
+
+    const showNameSkeleton = guestUpload?.status === 'loading'
+    /** UI book / no provider: manual name. With guest session, only `anonymous` uses manual name elsewhere — gallery blocks upload until session exists. */
+    const needsManualName = guestUpload === undefined
+    const sessionAuthenticated = guestUpload?.status === 'authenticated'
+    const uploadBlocked = guestUpload?.status === 'anonymous'
+    const sessionLabel =
+        guestUpload?.status === 'authenticated' ? guestUpload.displayName : ''
 
     const appendAcceptedFiles = useCallback((accepted: File[]) => {
         if (accepted.length === 0) {
@@ -144,6 +169,9 @@ export function PhotoUploader({
     function handleDrop(e: React.DragEvent) {
         e.preventDefault()
         setDragging(false)
+        if (uploadBlocked || showNameSkeleton) {
+            return
+        }
         appendAcceptedFiles(toAccepted(Array.from(e.dataTransfer.files)))
     }
 
@@ -152,7 +180,17 @@ export function PhotoUploader({
     }
 
     async function handleUpload() {
-        if (!name.trim() || files.length === 0) return
+        if (files.length === 0 || showNameSkeleton || uploadBlocked) {
+            return
+        }
+
+        const labelForAdapter =
+            sessionAuthenticated && sessionLabel
+                ? sessionLabel
+                : name.trim()
+        if (!sessionAuthenticated && !labelForAdapter) {
+            return
+        }
 
         const pending = files
             .map((f, i) => ({...f, index: i}))
@@ -165,7 +203,9 @@ export function PhotoUploader({
             await Promise.all(
                 batch.map(({file, index}) => {
                     updateFile(index, {status: 'uploading'})
-                    return uploadAdapter(file, name, (p) => updateFile(index, {progress: p}))
+                    return uploadAdapter(file, labelForAdapter, (p) =>
+                        updateFile(index, {progress: p}),
+                    )
                         .then(() => {
                             updateFile(index, {status: 'done', progress: 100})
                             successCount += 1
@@ -185,37 +225,70 @@ export function PhotoUploader({
         }
     }
 
+    const canStartUpload =
+        files.length > 0 &&
+        !showNameSkeleton &&
+        !uploadBlocked &&
+        (sessionAuthenticated ? Boolean(sessionLabel) : Boolean(name.trim()))
+
     return (
         <div className="flex flex-col gap-5">
-            <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder={t('uploaderName')}
-            />
+            {showNameSkeleton ? (
+                <div className="flex flex-col gap-2" aria-hidden>
+                    <div className="h-4 w-28 max-w-[40%] animate-pulse rounded bg-bg-section" />
+                    <div className="h-10 w-full animate-pulse rounded-xl bg-bg-section" />
+                </div>
+            ) : needsManualName ? (
+                <Input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder={t('uploaderName')}
+                />
+            ) : sessionAuthenticated ? (
+                <p className="text-small text-text-secondary">{t('signedInAs', {name: sessionLabel})}</p>
+            ) : null}
+
+            {guestUpload?.status === 'anonymous' && !suppressAnonymousHelpText ? (
+                <p className="text-small text-text-secondary">{t('uploadSessionRequired')}</p>
+            ) : null}
 
             <div
                 role="button"
-                tabIndex={0}
+                tabIndex={uploadBlocked ? -1 : 0}
                 onDrop={handleDrop}
                 onDragOver={(e) => {
                     e.preventDefault()
-                    setDragging(true)
+                    if (!uploadBlocked && !showNameSkeleton) {
+                        setDragging(true)
+                    }
                 }}
                 onDragLeave={() => setDragging(false)}
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => {
+                    if (!uploadBlocked && !showNameSkeleton) {
+                        fileInputRef.current?.click()
+                    }
+                }}
                 onKeyDown={(e) => {
+                    if (uploadBlocked || showNameSkeleton) {
+                        return
+                    }
                     if (e.key === 'Enter' || e.key === ' ') {
                         e.preventDefault()
                         fileInputRef.current?.click()
                     }
                 }}
                 aria-label={t('dropzone')}
+                aria-disabled={uploadBlocked || showNameSkeleton}
                 className={cn(
-                    'cursor-pointer rounded-lg border-2 border-dashed p-10 text-center',
-                    'transition-colors duration-fast',
-                    isDragging
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-primary/50 hover:bg-bg-section',
+                    'rounded-lg border-2 border-dashed p-10 text-center transition-colors duration-fast',
+                    uploadBlocked || showNameSkeleton
+                        ? 'cursor-not-allowed opacity-60'
+                        : 'cursor-pointer',
+                    !uploadBlocked &&
+                        !showNameSkeleton &&
+                        (isDragging
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50 hover:bg-bg-section'),
                 )}
             >
                 <p className="mb-1 text-text-secondary">{t('dropzone')}</p>
@@ -263,7 +336,7 @@ export function PhotoUploader({
                 <Button
                     type="button"
                     onClick={handleUpload}
-                    disabled={!name.trim()}
+                    disabled={!canStartUpload}
                     className="w-full"
                 >
                     {t('upload')} ({files.filter((f) => f.status === 'pending').length})

@@ -8,4 +8,8 @@ import "server-only";
  */
 
 export {submitRsvp} from "./api/submit-rsvp";
-export type {SubmitRsvpResult} from "./api/submit-rsvp";
+export type {
+    SubmitRsvpContext,
+    SubmitRsvpGuestSession,
+    SubmitRsvpResult,
+} from "./api/submit-rsvp";
