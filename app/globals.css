@@ -84,11 +84,20 @@
    ============================================================ */
 :root {
     /* Gradients — no Tailwind convention, use directly */
+    /* Airy base: lighter stops so blush / sage / champagne separate on the field */
     --gradient-hero: linear-gradient(
             135deg,
-            #f8f1f3 0%,
-            #efd6da 42%,
-            #e8ddcf 100%
+            #faf8f6 0%,
+            color-mix(in srgb, var(--color-primary-light) 52%, #fdfaf7) 24%,
+            color-mix(in srgb, #efd6da 58%, #fdfaf7 42%) 46%,
+            color-mix(
+                    in srgb,
+                    color-mix(in srgb, var(--color-wedding-champagne) 60%, var(--color-wedding-blush) 40%)
+                            44%,
+                    #faf6f3
+            )
+                    72%,
+            color-mix(in srgb, #eee8e2 88%, #fdfaf7 12%) 100%
     );
     --gradient-section: linear-gradient(180deg, #fdf9f6 0%, #f3ebe4 100%);
     --gradient-overlay: linear-gradient(to bottom, transparent 0%, rgba(44, 36, 32, 0.6) 100%);
@@ -109,102 +118,7 @@
     --transition-slow: 600ms ease;
 }
 
-/* Hero: soft animated mesh — circles + blur merge orbs into a field; motion is deliberately
-   visible (larger translate / scale / rotate) and layers run out of phase. */
-.hero-mesh {
-    position: relative;
-    isolation: isolate;
-    overflow: hidden;
-    background: var(--gradient-hero);
-}
-
-.hero-mesh::before,
-.hero-mesh::after {
-    content: "";
-    position: absolute;
-    pointer-events: none;
-    z-index: 0;
-    /* Extra bleed so blur + motion don’t clip into hard edges */
-    inset: -35%;
-    will-change: transform;
-    transform-origin: 50% 45%;
-}
-
-/* Circles use vmin so aspect ratio doesn’t stretch orbs; multi-stop radials read as soft blobs */
-.hero-mesh::before {
-    background: radial-gradient(
-            circle clamp(12rem, 42vmin, 26rem) at 28% 38%,
-            color-mix(in srgb, var(--color-wedding-blush) 58%, transparent) 0%,
-            color-mix(in srgb, var(--color-wedding-blush) 22%, transparent) 48%,
-            transparent 72%
-    ),
-    radial-gradient(
-            circle clamp(11rem, 38vmin, 23rem) at 78% 22%,
-            color-mix(in srgb, var(--color-wedding-champagne) 52%, transparent) 0%,
-            color-mix(in srgb, var(--color-wedding-champagne) 18%, transparent) 44%,
-            transparent 68%
-    ),
-    radial-gradient(
-            circle clamp(13rem, 44vmin, 27rem) at 48% 88%,
-            color-mix(in srgb, var(--color-wedding-sage) 46%, transparent) 0%,
-            color-mix(in srgb, var(--color-wedding-sage) 16%, transparent) 50%,
-            transparent 74%
-    );
-    filter: blur(clamp(2.25rem, 7vmin, 4.5rem));
-    mix-blend-mode: normal;
-    animation: hero-mesh-drift-a 18s ease-in-out infinite alternate;
-}
-
-.hero-mesh::after {
-    opacity: 0.88;
-    background: radial-gradient(
-            circle clamp(12rem, 40vmin, 25rem) at 62% 48%,
-            color-mix(in srgb, var(--color-wedding-umber) 38%, transparent) 0%,
-            color-mix(in srgb, var(--color-wedding-umber) 12%, transparent) 46%,
-            transparent 70%
-    ),
-    radial-gradient(
-            circle clamp(10rem, 36vmin, 22rem) at 12% 72%,
-            color-mix(in srgb, var(--color-primary-light) 62%, transparent) 0%,
-            color-mix(in srgb, var(--color-primary-light) 22%, transparent) 42%,
-            transparent 66%
-    );
-    filter: blur(clamp(2rem, 6vmin, 4rem));
-    mix-blend-mode: soft-light;
-    animation: hero-mesh-drift-b 24s ease-in-out infinite alternate;
-    animation-delay: -9s;
-}
-
-.hero-mesh > * {
-    position: relative;
-    z-index: 1;
-}
-
-@keyframes hero-mesh-drift-a {
-    0% {
-        transform: translate(-11%, -9%) rotate(-3deg) scale(1.02);
-    }
-    100% {
-        transform: translate(12%, 10%) rotate(4deg) scale(1.14);
-    }
-}
-
-@keyframes hero-mesh-drift-b {
-    0% {
-        transform: translate(9%, 7%) rotate(4deg) scale(1.08);
-    }
-    100% {
-        transform: translate(-12%, -11%) rotate(-5deg) scale(0.96);
-    }
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .hero-mesh::before,
-    .hero-mesh::after {
-        animation: none;
-        will-change: auto;
-    }
-}
+/* Hero mesh gradient: app/hero-mesh-gradient.css (imported from layout after globals.css) */
 
 /* Gallery: trash control — subtle wiggle on hover (see `GalleryTrashIconButton`). */
 @keyframes gallery-trash-wiggle {

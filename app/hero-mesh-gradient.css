@@ -1,0 +1,293 @@
+/**
+ * Hero: mesh gradient on ::before (so filter/hue-rotate does not affect text).
+ * Five radial layers + noise; positions via @property. Hue drifts ~±10° on a separate timeline.
+ * Loaded after globals.css so --color-* tokens resolve.
+ */
+
+@property --hm-x-0 {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 10%;
+}
+
+@property --hm-y-0 {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 86%;
+}
+
+@property --hm-s-start-0 {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 5%;
+}
+
+@property --hm-s-end-0 {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 68%;
+}
+
+@property --hm-x-1 {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 24%;
+}
+
+@property --hm-y-1 {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 86%;
+}
+
+@property --hm-s-start-1 {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 16%;
+}
+
+@property --hm-s-end-1 {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 83%;
+}
+
+@property --hm-x-2 {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 11%;
+}
+
+@property --hm-y-2 {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 94%;
+}
+
+@property --hm-s-start-2 {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 16%;
+}
+
+@property --hm-s-end-2 {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 51%;
+}
+
+@property --hm-x-3 {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 36%;
+}
+
+@property --hm-y-3 {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 38%;
+}
+
+@property --hm-s-start-3 {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 3%;
+}
+
+@property --hm-s-end-3 {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 59%;
+}
+
+@property --hm-x-4 {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 44%;
+}
+
+@property --hm-y-4 {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 9%;
+}
+
+@property --hm-s-start-4 {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 13%;
+}
+
+@property --hm-s-end-4 {
+    syntax: "<percentage>";
+    inherits: false;
+    initial-value: 83%;
+}
+
+/* Subtle hue drift (~5–10°) — separate timing from mesh motion for livelier feel */
+@keyframes hero-mesh-hue-drift {
+    0%,
+    100% {
+        filter: hue-rotate(0deg);
+    }
+    18% {
+        filter: hue-rotate(7deg);
+    }
+    38% {
+        filter: hue-rotate(-9deg);
+    }
+    58% {
+        filter: hue-rotate(10deg);
+    }
+    78% {
+        filter: hue-rotate(-6deg);
+    }
+}
+
+@keyframes hero-mesh-gradient-shift {
+    0% {
+        --hm-x-0: 10%;
+        --hm-y-0: 86%;
+        --hm-s-start-0: 5%;
+        --hm-s-end-0: 68%;
+        --hm-x-1: 24%;
+        --hm-y-1: 86%;
+        --hm-s-start-1: 16%;
+        --hm-s-end-1: 83%;
+        --hm-x-2: 11%;
+        --hm-y-2: 94%;
+        --hm-s-start-2: 16%;
+        --hm-s-end-2: 51%;
+        --hm-x-3: 36%;
+        --hm-y-3: 38%;
+        --hm-s-start-3: 3%;
+        --hm-s-end-3: 59%;
+        --hm-x-4: 44%;
+        --hm-y-4: 9%;
+        --hm-s-start-4: 13%;
+        --hm-s-end-4: 83%;
+    }
+
+    100% {
+        --hm-x-0: 56%;
+        --hm-y-0: 30%;
+        --hm-s-start-0: 9%;
+        --hm-s-end-0: 54%;
+        --hm-x-1: 18%;
+        --hm-y-1: 56%;
+        --hm-s-start-1: 12%;
+        --hm-s-end-1: 53%;
+        --hm-x-2: 1%;
+        --hm-y-2: 92%;
+        --hm-s-start-2: 12%;
+        --hm-s-end-2: 53%;
+        --hm-x-3: 83%;
+        --hm-y-3: 30%;
+        --hm-s-start-3: 12%;
+        --hm-s-end-3: 53%;
+        --hm-x-4: 98%;
+        --hm-y-4: 59%;
+        --hm-s-start-4: 12%;
+        --hm-s-end-4: 53%;
+    }
+}
+
+.hero-mesh {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    contain: paint;
+    background-color: var(--color-bg-base);
+}
+
+/* Mesh + hue live on ::before so filter does not tint hero typography */
+.hero-mesh::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    /* Layer 0: lighter blush haze (lower-left); layer 4: stronger blush top — same hue, different weight/place */
+    --hm-c-0: color-mix(in srgb, var(--color-wedding-blush) 22%, transparent);
+    --hm-c-1: color-mix(in srgb, var(--color-primary-light) 88%, transparent);
+    --hm-c-2: color-mix(
+            in srgb,
+            color-mix(in srgb, var(--color-wedding-champagne) 65%, var(--color-wedding-blush) 35%)
+                    82%,
+            transparent
+    );
+    --hm-c-3: color-mix(in srgb, var(--color-bg-base) 96%, white);
+    --hm-c-4: color-mix(in srgb, var(--color-wedding-blush) 36%, transparent);
+    --hm-x-0: 10%;
+    --hm-y-0: 86%;
+    --hm-s-start-0: 5%;
+    --hm-s-end-0: 68%;
+    --hm-x-1: 24%;
+    --hm-y-1: 86%;
+    --hm-s-start-1: 16%;
+    --hm-s-end-1: 83%;
+    --hm-x-2: 11%;
+    --hm-y-2: 94%;
+    --hm-s-start-2: 16%;
+    --hm-s-end-2: 51%;
+    --hm-x-3: 36%;
+    --hm-y-3: 38%;
+    --hm-s-start-3: 3%;
+    --hm-s-end-3: 59%;
+    --hm-x-4: 44%;
+    --hm-y-4: 9%;
+    --hm-s-start-4: 13%;
+    --hm-s-end-4: 83%;
+    background-image:
+            url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E"),
+            radial-gradient(
+                    circle at var(--hm-x-0) var(--hm-y-0),
+                    var(--hm-c-0) var(--hm-s-start-0),
+                    transparent var(--hm-s-end-0)
+            ),
+            radial-gradient(
+                    circle at var(--hm-x-1) var(--hm-y-1),
+                    var(--hm-c-1) var(--hm-s-start-1),
+                    transparent var(--hm-s-end-1)
+            ),
+            radial-gradient(
+                    circle at var(--hm-x-2) var(--hm-y-2),
+                    var(--hm-c-2) var(--hm-s-start-2),
+                    transparent var(--hm-s-end-2)
+            ),
+            radial-gradient(
+                    circle at var(--hm-x-3) var(--hm-y-3),
+                    var(--hm-c-3) var(--hm-s-start-3),
+                    transparent var(--hm-s-end-3)
+            ),
+            radial-gradient(
+                    circle at var(--hm-x-4) var(--hm-y-4),
+                    var(--hm-c-4) var(--hm-s-start-4),
+                    transparent var(--hm-s-end-4)
+            );
+    background-repeat: repeat, no-repeat, no-repeat, no-repeat, no-repeat, no-repeat;
+    background-size:
+            200px 200px,
+            auto,
+            auto,
+            auto,
+            auto,
+            auto;
+    background-blend-mode: soft-light, normal, normal, normal, normal, normal;
+    filter: hue-rotate(0deg);
+    animation:
+            hero-mesh-gradient-shift 3s ease-in-out infinite alternate,
+            hero-mesh-hue-drift 5.3s ease-in-out infinite;
+}
+
+.hero-mesh > * {
+    position: relative;
+    z-index: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hero-mesh::before {
+        animation: none;
+        filter: none;
+    }
+}

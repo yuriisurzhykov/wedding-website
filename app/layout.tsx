@@ -4,6 +4,7 @@ import {Analytics} from '@vercel/analytics/next'
 import {getLocale} from 'next-intl/server'
 import {AppToaster} from '@shared/ui'
 import './globals.css'
+import './hero-mesh-gradient.css'
 
 const fontDisplay = Cormorant_Garamond({
     subsets: ['latin', 'cyrillic'],
