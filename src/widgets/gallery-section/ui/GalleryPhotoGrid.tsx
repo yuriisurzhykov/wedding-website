@@ -9,18 +9,18 @@ import {cn} from '@shared/lib/cn'
 import {GalleryTrashIcon} from './GalleryTrashIcon'
 
 type GalleryPhotoGridProps = {
-    photos: GalleryPhotoView[]
+    className?: string
     onOpenPhoto: (index: number) => void
     onRequestDelete?: (photoId: string) => void
-    className?: string
+    photos: GalleryPhotoView[]
 }
 
 export function GalleryPhotoGrid({
-    photos,
-    onOpenPhoto,
-    onRequestDelete,
-    className,
-}: GalleryPhotoGridProps) {
+                                     photos,
+                                     onOpenPhoto,
+                                     onRequestDelete,
+                                     className,
+                                 }: GalleryPhotoGridProps) {
     const t = useTranslations('gallery')
 
     return (

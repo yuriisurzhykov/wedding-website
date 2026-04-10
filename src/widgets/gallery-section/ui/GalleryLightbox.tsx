@@ -293,7 +293,7 @@ export function GalleryLightbox(
                                     fill
                                     sizes="100vw"
                                     priority
-                                    quality={88}
+                                    quality={80}
                                     className="object-contain object-center"
                                 />
                             </div>
