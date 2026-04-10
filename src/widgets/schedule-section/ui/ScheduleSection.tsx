@@ -2,14 +2,14 @@ import {getLocale, getTranslations} from "next-intl/server";
 
 import {Section, SectionHeader, type SectionTheme} from "@shared/ui";
 import {getScheduleIcon} from "@shared/ui/icons/schedule";
-import {SCHEDULE} from "@entities/schedule";
-import {formatScheduleClock} from "@shared/lib/wedding-calendar";
+import {type ScheduleItem, formatScheduleClock} from "@shared/lib/wedding-calendar";
 
 type Props = Readonly<{
+    items: ScheduleItem[];
     theme?: SectionTheme;
 }>;
 
-export async function ScheduleSection({theme = "alt"}: Props = {}) {
+export async function ScheduleSection({items, theme = "alt"}: Props) {
     const locale = await getLocale();
     const t = await getTranslations();
 
@@ -21,7 +21,7 @@ export async function ScheduleSection({theme = "alt"}: Props = {}) {
                 <div className="absolute top-0 bottom-0 left-8 w-px bg-border" aria-hidden/>
 
                 <div className="flex flex-col gap-8">
-                    {SCHEDULE.map((item) => {
+                    {items.map((item) => {
                         const Icon = getScheduleIcon(item.iconId);
                         return (
                             <div key={item.id} className="flex items-start gap-6">

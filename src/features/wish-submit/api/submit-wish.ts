@@ -2,6 +2,7 @@ import "server-only";
 
 import {loadRsvpIdentityForUpload} from "@features/gallery-upload";
 import {validateGuestSessionFromRequest} from "@features/guest-session/server";
+import {getSiteSettingsCached} from "@features/site-settings";
 import {createServerClient} from "@shared/api/supabase/server";
 import {assertR2UploadConfig} from "@shared/api/r2";
 import {canAttachWishPhotoAt} from "@shared/lib/wedding-calendar";
@@ -19,7 +20,8 @@ export type SubmitWishResult =
 }
     | { ok: false; kind: "config"; message: string }
     | { ok: false; kind: "database"; message: string }
-    | { ok: false; kind: "celebration"; message: string };
+    | { ok: false; kind: "celebration"; message: string }
+    | { ok: false; kind: "feature_disabled" };
 
 /**
  * Validates JSON and inserts into `wishes` (service role). Optional `photoR2Key` must
@@ -27,6 +29,8 @@ export type SubmitWishResult =
  *
  * When the request carries a valid guest session cookie, `authorName` in the body is
  * ignored and `rsvp.name` is used (same source as gallery uploads).
+ *
+ * `feature_disabled` — `wishSubmit` off, or `photoR2Key` with `wishPhotoAttach` off (HTTP **403**).
  */
 export async function submitWish(
     rawBody: unknown,
@@ -44,6 +48,14 @@ export async function submitWish(
     }
 
     const {authorName: authorNameRaw, message, photoR2Key} = parsed.data;
+
+    const siteSettings = await getSiteSettingsCached();
+    if (!siteSettings.capabilities.wishSubmit) {
+        return {ok: false, kind: "feature_disabled"};
+    }
+    if (photoR2Key && !siteSettings.capabilities.wishPhotoAttach) {
+        return {ok: false, kind: "feature_disabled"};
+    }
 
     let supabase;
     try {

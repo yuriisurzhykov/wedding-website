@@ -5,6 +5,7 @@ import {revalidateTag} from "next/cache";
 import type {GuestSessionPublicErrorCode} from "@features/guest-session";
 import {validateGuestSessionFromRequest} from "@features/guest-session/server";
 import {GALLERY_PHOTOS_LIST_CACHE_TAG} from "@features/gallery-list";
+import {getSiteSettingsCached} from "@features/site-settings";
 import {deleteR2Object} from "@shared/api/r2";
 import {createServerClient} from "@shared/api/supabase/server";
 
@@ -22,7 +23,8 @@ export type DeleteGalleryPhotoResult =
     | { ok: false; kind: "no_session"; code: GuestSessionPublicErrorCode }
     | { ok: false; kind: "forbidden" }
     | { ok: false; kind: "config"; message: string }
-    | { ok: false; kind: "database"; message: string };
+    | { ok: false; kind: "database"; message: string }
+    | { ok: false; kind: "feature_disabled" };
 
 /**
  * Deletes a gallery photo owned by the current guest session (`photos.rsvp_id` matches).
@@ -38,6 +40,11 @@ export async function deleteGalleryPhoto(
     } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
         return {ok: false, kind: "config", message};
+    }
+
+    const siteSettings = await getSiteSettingsCached();
+    if (!siteSettings.capabilities.galleryPhotoDelete) {
+        return {ok: false, kind: "feature_disabled"};
     }
 
     const sessionResult = await validateGuestSessionFromRequest(supabase, request);

@@ -78,6 +78,10 @@ export async function DELETE(request: Request) {
         return NextResponse.json({ok: true}, {status: 200});
     }
 
+    if (result.kind === "feature_disabled") {
+        return NextResponse.json({error: "feature_disabled"}, {status: 403});
+    }
+
     if (result.kind === "no_session") {
         return NextResponse.json(buildGuestSessionErrorJson(result.code), {
             status: httpStatusForGuestSessionErrorCode(result.code),

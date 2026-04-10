@@ -5,6 +5,7 @@ import {revalidateTag} from "next/cache";
 import type {GuestSessionPublicErrorCode} from "@features/guest-session";
 import {validateGuestSessionFromRequest} from "@features/guest-session/server";
 import {GALLERY_PHOTOS_LIST_CACHE_TAG} from "@features/gallery-list";
+import {getSiteSettingsCached} from "@features/site-settings";
 import {createServerClient} from "@shared/api/supabase/server";
 import {assertR2UploadConfig, createPresignedPhotoPutUrl} from "@shared/api/r2";
 
@@ -26,7 +27,8 @@ export type PresignGalleryUploadResult =
     | { ok: false; kind: "config"; message: string }
     | { ok: false; kind: "r2"; message: string }
     | { ok: false; kind: "no_session"; code: GuestSessionPublicErrorCode }
-    | { ok: false; kind: "celebration_closed" };
+    | { ok: false; kind: "celebration_closed" }
+    | { ok: false; kind: "feature_disabled" };
 
 export type ConfirmGalleryUploadResult =
     | { ok: true; publicUrl: string }
@@ -39,7 +41,8 @@ export type ConfirmGalleryUploadResult =
     | { ok: false; kind: "config"; message: string }
     | { ok: false; kind: "database"; message: string }
     | { ok: false; kind: "no_session"; code: GuestSessionPublicErrorCode }
-    | { ok: false; kind: "celebration_closed" };
+    | { ok: false; kind: "celebration_closed" }
+    | { ok: false; kind: "feature_disabled" };
 
 /**
  * Validates body, then returns a presigned PUT URL and object key for R2.
@@ -79,6 +82,15 @@ export async function presignGalleryUpload(
             fieldErrors: flat.fieldErrors,
             formErrors: flat.formErrors,
         };
+    }
+
+    const siteSettings = await getSiteSettingsCached();
+    const {purpose} = parsed.data;
+    if (purpose === "gallery" && !siteSettings.capabilities.galleryUpload) {
+        return {ok: false, kind: "feature_disabled"};
+    }
+    if (purpose === "wish" && !siteSettings.capabilities.wishPhotoAttach) {
+        return {ok: false, kind: "feature_disabled"};
     }
 
     const policy = assertUploadCelebrationPolicy(
@@ -142,6 +154,15 @@ export async function confirmGalleryUpload(
             fieldErrors: flat.fieldErrors,
             formErrors: flat.formErrors,
         };
+    }
+
+    const siteSettings = await getSiteSettingsCached();
+    const {purpose} = parsed.data;
+    if (purpose === "gallery" && !siteSettings.capabilities.galleryUpload) {
+        return {ok: false, kind: "feature_disabled"};
+    }
+    if (purpose === "wish" && !siteSettings.capabilities.wishPhotoAttach) {
+        return {ok: false, kind: "feature_disabled"};
     }
 
     const policy = assertUploadCelebrationPolicy(

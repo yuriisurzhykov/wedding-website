@@ -15,6 +15,8 @@ Site chrome is **composition** (not a generic primitive), so it lives in `widget
 
 ## Approach
 
+- Schedule and RSVP links follow live `site_settings.capabilities` via `useSiteCapabilities()` from
+  `@features/site-settings/client` (must render under `SiteCapabilitiesProvider` in the locale layout).
 - `SiteNavRegistryEntryControl` maps each registry entry to either a `Link` (routes or home with hash from another page)
   or a `button` with `scrollIntoView` (sections while already on `/`).
 - After client navigation to `/` with a fragment (e.g. from `/gallery` to `/#rsvp`), `SiteNavigation` runs a short

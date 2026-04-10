@@ -22,6 +22,7 @@
 **Errors**
 
 - **400** — validation (`fieldErrors` / `formErrors` from Zod, or multipart message).
+- **403** — `{ error: 'feature_disabled' }` — gallery flow when `galleryUpload` is off; presign/multipart with `purpose: 'wish'` when `wishPhotoAttach` is off; photo delete when `galleryPhotoDelete` is off.
 - **500** — missing R2 or Supabase env, R2 failure, or DB error.
 
 Public entry: `@features/gallery-upload` only. HTTP mapping lives in `app/api/upload/*`.

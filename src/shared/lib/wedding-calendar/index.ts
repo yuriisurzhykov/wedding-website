@@ -41,4 +41,9 @@ export {
     formatStoryWeddingLine,
 } from './internal/locale-strings'
 
-export {getScheduleItems, type ScheduleItem} from './internal/schedule-model'
+export {
+    getScheduleItems,
+    resolveScheduleItems,
+    type ScheduleItem,
+    type ScheduleTimelineRow,
+} from './internal/schedule-model'

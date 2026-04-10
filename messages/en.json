@@ -286,6 +286,67 @@
     "backHome": "Back to the wedding site",
     "signInCta": "Guest sign-in (name and email)"
   },
+  "admin": {
+    "settings": {
+      "metaTitle": "Site settings",
+      "title": "Site settings",
+      "subtitle": "Toggle guest-facing features and edit the day-of schedule. Changes apply after you save.",
+      "accessHint": "Open this page with ?token=YOUR_ADMIN_SECRET in the URL (same value as ADMIN_SECRET) so the browser can reach the admin area. Saving sends the secret in the Authorization header.",
+      "updatedAtLabel": "Last updated (server)",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "toast": {
+        "saved": "Settings saved"
+      },
+      "errors": {
+        "duplicateIds": "Each schedule item needs a unique id.",
+        "emptySchedule": "Add at least one schedule item.",
+        "noToken": "Missing admin token. Add ?token=… to the URL or reload after signing in with the secret.",
+        "saveFailed": "Could not save settings"
+      },
+      "capabilities": {
+        "title": "Features",
+        "toggle": "Enabled",
+        "labels": {
+          "ourStory": "Our story section",
+          "scheduleSection": "Schedule section",
+          "rsvp": "RSVP and guest sign-in",
+          "galleryUpload": "Gallery photo uploads",
+          "wishSubmit": "Guest wishes (text)",
+          "galleryPhotoDelete": "Delete own gallery photos",
+          "wishPhotoAttach": "Attach photos to wishes"
+        }
+      },
+      "schedule": {
+        "title": "Day-of program",
+        "addRow": "Add item",
+        "removeRow": "Remove",
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "rowId": "Stable id",
+        "messagePreset": "Text preset (translations)",
+        "icon": "Icon",
+        "hour": "Hour (0–23)",
+        "minute": "Minute (0–59)",
+        "titleKey": "Title message key",
+        "descKey": "Description message key",
+        "location": "Venue label",
+        "locationUrl": "Maps / venue URL",
+        "icons": {
+          "gathering": "Gathering",
+          "ceremony": "Ceremony",
+          "reception": "Reception",
+          "dinner": "Dinner"
+        }
+      },
+      "segments": {
+        "gathering": "Guest arrival",
+        "ceremony": "Ceremony",
+        "reception": "Reception",
+        "dinner": "Dinner & celebration"
+      }
+    }
+  },
   "donate": {
     "title": "Gift the couple",
     "subtitle": "Your presence is the best gift. If you'd like to contribute materially, we'd be very grateful 🤍",

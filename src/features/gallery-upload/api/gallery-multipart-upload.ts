@@ -6,6 +6,7 @@ import {z} from "zod";
 import type {GuestSessionPublicErrorCode} from "@features/guest-session";
 import {validateGuestSessionFromRequest} from "@features/guest-session/server";
 import {GALLERY_PHOTOS_LIST_CACHE_TAG} from "@features/gallery-list";
+import {getSiteSettingsCached} from "@features/site-settings";
 import {GALLERY_ALLOWED_CONTENT_TYPES, GALLERY_MAX_FILE_BYTES,} from "@entities/photo";
 import {createServerClient} from "@shared/api/supabase/server";
 import {resolveGalleryImageContentType} from "@shared/lib/gallery-image-content-type";
@@ -30,7 +31,8 @@ export type MultipartGalleryUploadResult =
     | { ok: false; kind: "r2"; message: string }
     | { ok: false; kind: "database"; message: string }
     | { ok: false; kind: "no_session"; code: GuestSessionPublicErrorCode }
-    | { ok: false; kind: "celebration_closed" };
+    | { ok: false; kind: "celebration_closed" }
+    | { ok: false; kind: "feature_disabled" };
 
 function validationError(message: string): MultipartGalleryUploadResult {
     return {ok: false, kind: "validation", message};
@@ -78,6 +80,14 @@ export async function uploadGalleryPhotoFromMultipart(
     const purposeRaw = formData.get("purpose");
     const purpose: UploadMediaPurpose =
         purposeRaw === "wish" ? "wish" : "gallery";
+
+    const siteSettings = await getSiteSettingsCached();
+    if (purpose === "gallery" && !siteSettings.capabilities.galleryUpload) {
+        return {ok: false, kind: "feature_disabled"};
+    }
+    if (purpose === "wish" && !siteSettings.capabilities.wishPhotoAttach) {
+        return {ok: false, kind: "feature_disabled"};
+    }
 
     const policy = assertUploadCelebrationPolicy(purpose, identity.attending);
     if (!policy.ok) {

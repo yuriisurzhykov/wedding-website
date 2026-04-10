@@ -1,4 +1,6 @@
 import {GuestSessionProvider} from '@features/guest-session'
+import {SiteCapabilitiesProvider} from '@features/site-settings/client'
+import {getSiteSettingsCached} from '@features/site-settings'
 import {NextIntlClientProvider} from 'next-intl'
 import {getMessages, setRequestLocale} from 'next-intl/server'
 import {notFound} from 'next/navigation'
@@ -26,16 +28,22 @@ export default async function LocaleLayout({children, params}: Props) {
     setRequestLocale(locale)
 
     const messages = await getMessages()
+    const siteSettings = await getSiteSettingsCached()
 
     return (
         <NextIntlClientProvider locale={locale} messages={messages}>
-            <GuestSessionProvider>
-                <Suspense fallback={null}>
-                    <NavigationProgressBar/>
-                </Suspense>
-                <SiteNavigation/>
-                <main className="flex flex-col pt-16">{children}</main>
-            </GuestSessionProvider>
+            <SiteCapabilitiesProvider
+                initialCapabilities={siteSettings.capabilities}
+                initialUpdatedAt={siteSettings.updated_at}
+            >
+                <GuestSessionProvider>
+                    <Suspense fallback={null}>
+                        <NavigationProgressBar/>
+                    </Suspense>
+                    <SiteNavigation/>
+                    <main className="flex flex-col pt-16">{children}</main>
+                </GuestSessionProvider>
+            </SiteCapabilitiesProvider>
         </NextIntlClientProvider>
     )
 }

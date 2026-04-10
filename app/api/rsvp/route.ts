@@ -44,6 +44,10 @@ export async function POST(request: Request) {
         );
     }
 
+    if (result.kind === "feature_disabled") {
+        return NextResponse.json({error: "feature_disabled"}, {status: 403});
+    }
+
     if (result.kind === "notification") {
         console.error(
             "[api/rsvp] notification_failed",

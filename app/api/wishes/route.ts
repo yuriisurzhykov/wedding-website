@@ -60,6 +60,10 @@ export async function POST(request: Request) {
         return NextResponse.json({ok: true}, {status: 200});
     }
 
+    if (result.kind === "feature_disabled") {
+        return NextResponse.json({error: "feature_disabled"}, {status: 403});
+    }
+
     if (result.kind === "validation") {
         return NextResponse.json(
             {

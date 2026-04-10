@@ -15,6 +15,7 @@ import {useTranslations} from 'next-intl'
 import {filterSiteNavRegistryForSiteFeatures} from '@entities/site-features'
 import {SITE_NAV_REGISTRY} from '@entities/site-nav'
 import {useGuestSession} from '@features/guest-session'
+import {useSiteCapabilities} from '@features/site-settings/client'
 import {Link, usePathname} from '@/i18n/navigation'
 import {cn} from '@shared/lib/cn'
 import {LanguageSwitcher} from '@shared/ui'
@@ -66,16 +67,20 @@ function CloseIcon({className}: { className?: string }) {
 export function SiteNavigation() {
     const translator = useTranslations('nav')
     const {status: guestSessionStatus} = useGuestSession()
+    const {capabilities} = useSiteCapabilities()
     const siteNavEntries = useMemo(() => {
         let list = filterSiteNavRegistryForSiteFeatures([...SITE_NAV_REGISTRY])
-        if (guestSessionStatus !== 'anonymous') {
+        if (!capabilities.scheduleSection) {
+            list = list.filter((item) => item.navKey !== 'schedule')
+        }
+        if (guestSessionStatus !== 'anonymous' || !capabilities.rsvp) {
             list = list.filter((item) => item.navKey !== 'rsvp')
         }
         if (guestSessionStatus === 'authenticated') {
             list = list.filter((item) => item.navKey !== 'guestSignIn')
         }
         return list
-    }, [guestSessionStatus])
+    }, [guestSessionStatus, capabilities.scheduleSection, capabilities.rsvp])
     const pathname = usePathname()
     const onHome = pathname === '/'
     const [open, setOpen] = useState(false)
