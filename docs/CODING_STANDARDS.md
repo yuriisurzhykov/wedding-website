@@ -1,7 +1,18 @@
 # Coding standards — wedding website
 
-Shared by human developers and AI assistants. Cursor loads the same expectations from `.cursor/rules/*.mdc`. The
-long-form plan lives in **ARCHITECTURE.md** (see **§18 Rule for everything new**).
+Shared by human developers and AI assistants.
+
+**AI assistants (Cursor and similar):** this file is **mandatory** for any change under `src/`, `app/`, or `messages/`.
+Project rules in [`.cursor/rules/`](../.cursor/rules/) are short reminders; they do not replace this document —
+especially
+for **slice README** structure (template below), README topic table, and comment policy. If a task touches a new entity,
+feature, or widget slice, read the **Module READMEs** section before shipping.
+
+Cursor loads overlapping expectations from `.cursor/rules/*.mdc` (`alwaysApply` rules should include a pointer here —
+see
+`wedding-coding-standards.mdc` when present).
+
+The long-form plan lives in **ARCHITECTURE.md** (see **§18 Rule for everything new**).
 
 ## Product and stack
 
