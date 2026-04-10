@@ -1,5 +1,5 @@
 import type {Metadata} from 'next'
-import {Cormorant_Garamond, Great_Vibes, Lato} from 'next/font/google'
+import {Cormorant_Garamond, Great_Vibes, Roboto, Roboto_Serif} from 'next/font/google'
 import {Analytics} from '@vercel/analytics/next'
 import {getLocale} from 'next-intl/server'
 import {AppToaster} from '@shared/ui'
@@ -13,22 +13,22 @@ const fontDisplay = Cormorant_Garamond({
     display: 'swap',
 })
 
-const fontBody = Lato({
-    subsets: ['latin', 'latin-ext'],
+const fontBody = Roboto({
+    subsets: ['latin', 'latin-ext', 'cyrillic'],
     weight: ['300', '400', '700'],
     variable: '--font-body',
     display: 'swap',
 })
 
 const fontAccent = Great_Vibes({
-    subsets: ['latin'],
+    subsets: ['latin', 'cyrillic'],
     weight: ['400'],
     variable: '--font-accent',
     display: 'swap',
 })
 
 export const metadata: Metadata = {
-    title: 'Wedding',
+    title: 'Yurii & Mariia Wedding',
     description: 'Wedding website',
 }
 

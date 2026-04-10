@@ -11,6 +11,8 @@ type Props = Readonly<{
     theme?: SectionTheme;
 }>;
 
+const DEFAULT_PALETTE_CLASS_NAME = "mb-10 grid grid-cols-4 justify-items-center gap-4"
+
 export function DressCodeSection({theme = "base"}: Props = {}) {
     const t = useTranslations("dresscode");
     const [selected, setSelected] = useState<string | null>(null);
@@ -21,7 +23,7 @@ export function DressCodeSection({theme = "base"}: Props = {}) {
         <Section id="dresscode" theme={theme}>
             <SectionHeader title={t("title")} subtitle={t("subtitle")}/>
 
-            <div className="mb-10 grid grid-cols-4 justify-items-center gap-4 sm:grid-cols-7">
+            <div className={cn(DEFAULT_PALETTE_CLASS_NAME, `sm:grid-cols-${PALETTE.length}`)}>
                 {PALETTE.map((color) => (
                     <button
                         key={color.hex}
@@ -32,12 +34,16 @@ export function DressCodeSection({theme = "base"}: Props = {}) {
                     >
                         <div
                             className={cn(
-                                "h-14 w-14 rounded-pill border-4 transition-all duration-300 sm:h-16 sm:w-16",
+                                "h-14 w-14 " +
+                                "rounded-pill " +
+                                "border-4 " +
+                                "transition-all " +
+                                "duration-300 " +
+                                "sm:h-16 sm:w-16",
                                 "group-hover:scale-110",
                                 selected === color.hex
                                     ? "scale-110 border-text-primary shadow-card"
                                     : "border-transparent",
-                                !color.allowed && "opacity-40",
                             )}
                             style={{background: color.hex}}
                         />
