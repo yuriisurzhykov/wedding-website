@@ -26,4 +26,4 @@ Change only what the task requires. Avoid drive-by refactors and unrelated files
 
 ## Humans and AI
 
-The same expectations for the team live in **docs/CODING_STANDARDS.md** (mirror of these rules).
+AI assistants must treat **docs/CODING_STANDARDS.md** as **mandatory** wherever it adds detail beyond these rules: slice README structure (template and topic table), comment policy, and the workflow for new entity/feature/widget slices. The long-form product and stack rules remain **ARCHITECTURE.md** (section 18, “Rule for everything new”). Human developers follow the same standards.

@@ -12,7 +12,6 @@ import {
 } from 'react'
 import {useTranslations} from 'next-intl'
 
-import {filterSiteNavRegistryForSiteFeatures} from '@entities/site-features'
 import {SITE_NAV_REGISTRY} from '@entities/site-nav'
 import {useGuestSession} from '@features/guest-session'
 import {useSiteCapabilities} from '@features/site-settings/client'
@@ -69,7 +68,10 @@ export function SiteNavigation() {
     const {status: guestSessionStatus} = useGuestSession()
     const {capabilities} = useSiteCapabilities()
     const siteNavEntries = useMemo(() => {
-        let list = filterSiteNavRegistryForSiteFeatures([...SITE_NAV_REGISTRY])
+        let list = [...SITE_NAV_REGISTRY]
+        if (!capabilities.ourStory) {
+            list = list.filter((item) => item.navKey !== 'story')
+        }
         if (!capabilities.scheduleSection) {
             list = list.filter((item) => item.navKey !== 'schedule')
         }
@@ -80,7 +82,12 @@ export function SiteNavigation() {
             list = list.filter((item) => item.navKey !== 'guestSignIn')
         }
         return list
-    }, [guestSessionStatus, capabilities.scheduleSection, capabilities.rsvp])
+    }, [
+        guestSessionStatus,
+        capabilities.ourStory,
+        capabilities.scheduleSection,
+        capabilities.rsvp,
+    ])
     const pathname = usePathname()
     const onHome = pathname === '/'
     const [open, setOpen] = useState(false)

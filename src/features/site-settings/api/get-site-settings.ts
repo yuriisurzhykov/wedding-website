@@ -8,10 +8,20 @@ import {
 import {createPublishableServerClient} from '@shared/api/supabase/publishable-server-client'
 import {unstable_cache} from 'next/cache'
 
+import {mergePublicEnvIntoCapabilities} from '../lib/merge-public-env-capabilities'
+
+function withEnvCapabilityOverlay(settings: SiteSettings): SiteSettings {
+    return {
+        ...settings,
+        capabilities: mergePublicEnvIntoCapabilities(settings.capabilities),
+    }
+}
+
 /** Passed to `revalidateTag` after admin updates so RSC and cached reads refresh. */
 export const SITE_SETTINGS_CACHE_TAG = 'site-settings'
 
-async function readSiteSettingsFromDatabase(): Promise<SiteSettings> {
+/** Normalized row from DB (or code defaults); no `NEXT_PUBLIC_SITE_FEATURES` overlay. */
+async function readNormalizedSiteSettingsFromDatabase(): Promise<SiteSettings> {
     try {
         const supabase = createPublishableServerClient()
         const {data, error} = await supabase
@@ -38,20 +48,25 @@ async function readSiteSettingsFromDatabase(): Promise<SiteSettings> {
 }
 
 /**
- * Loads site settings from Supabase (publishable key, public RLS). Not cached — use for admin or when bypassing Next
- * data cache is required.
+ * Loads site settings from Supabase (publishable key, public RLS). Not cached — **database truth** for admin UI and
+ * writes; does not apply `NEXT_PUBLIC_SITE_FEATURES` (see {@link getSiteSettingsCached} for the guest-facing snapshot).
  */
 export async function getSiteSettings(): Promise<SiteSettings> {
-    return readSiteSettingsFromDatabase()
+    return readNormalizedSiteSettingsFromDatabase()
 }
 
-const getSiteSettingsCachedInner = unstable_cache(readSiteSettingsFromDatabase, ['site-settings'], {
-    revalidate: 60,
-    tags: [SITE_SETTINGS_CACHE_TAG],
-})
+const getSiteSettingsCachedInner = unstable_cache(
+    async () => withEnvCapabilityOverlay(await readNormalizedSiteSettingsFromDatabase()),
+    ['site-settings'],
+    {
+        revalidate: 60,
+        tags: [SITE_SETTINGS_CACHE_TAG],
+    },
+)
 
 /**
- * Cached read for RSC and server components. Invalidated via {@link SITE_SETTINGS_CACHE_TAG} after updates.
+ * Cached read for RSC, public API, and feature gates. Applies `NEXT_PUBLIC_SITE_FEATURES` on top of the DB snapshot so
+ * deploy-time env can override capabilities for guests (see feature README).
  */
 export async function getSiteSettingsCached(): Promise<SiteSettings> {
     return getSiteSettingsCachedInner()

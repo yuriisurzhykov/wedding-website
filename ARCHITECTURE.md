@@ -1,7 +1,7 @@
 # Wedding Website — Master Technical Plan
 
 > Maximum detail. Single source of truth.
-> 
+>
 > Website: https://yuriimariia.wedding
 
 ---
@@ -100,7 +100,11 @@ If something goes down — nobody will fix it. Vercel + R2 + Supabase — each c
 
 ## 3. Project structure
 
-The repo is moving to **Feature-Sliced Design (FSD)** for code under `src/`: layers, one-way imports, and a narrow public API per slice (`index.ts`). Official guide for FSD with Next.js: [feature-sliced.design — Next.js](https://feature-sliced.design/docs/guides/tech/with-nextjs). Import rules and aliases are summarized in **`docs/CODING_STANDARDS.md`** (FSD section) and in **`.cursor/rules/wedding-fsd-layers.mdc`**.
+The repo is moving to **Feature-Sliced Design (FSD)** for code under `src/`: layers, one-way imports, and a narrow
+public API per slice (`index.ts`). Official guide for FSD with
+Next.js: [feature-sliced.design — Next.js](https://feature-sliced.design/docs/guides/tech/with-nextjs). Import rules and
+aliases are summarized in **`docs/CODING_STANDARDS.md`** (FSD section) and in **`.cursor/rules/wedding-fsd-layers.mdc`
+**.
 
 ### 3.1 Target layout: App Router + `src/` (FSD)
 
@@ -143,32 +147,40 @@ wedding/
 └── .env.local                           # Secrets (never in git)
 ```
 
-**Layers (short):** `shared` → `entities` → `features` → `widgets` → `app`. A slice exposes only what its **`index.ts`** exports; do not import deep paths from another slice.
+**Layers (short):** `shared` → `entities` → `features` → `widgets` → `app`. A slice exposes only what its **`index.ts`**
+exports; do not import deep paths from another slice.
 
 ### 3.2 Widget naming (home page and header)
 
-Slice folders under `src/widgets/` use **kebab-case**. The default export surface from `index.ts` uses **PascalCase** component names (e.g. `RsvpSection`).
+Slice folders under `src/widgets/` use **kebab-case**. The default export surface from `index.ts` uses **PascalCase**
+component names (e.g. `RsvpSection`).
 
-| Current legacy file(s) | Widget slice folder |
-|------------------------|---------------------|
-| `Hero.tsx` (+ `Countdown`) | `hero-section` |
-| `Welcome.tsx` | `welcome-section` |
-| `Schedule.tsx` | `schedule-section` |
-| `DressCode.tsx` | `dresscode-section` |
-| `OurStory.tsx` | `our-story-section` |
-| `Navigation.tsx` | `site-navigation` |
+| Current legacy file(s)     | Widget slice folder |
+|----------------------------|---------------------|
+| `Hero.tsx` (+ `Countdown`) | `hero-section`      |
+| `Welcome.tsx`              | `welcome-section`   |
+| `Schedule.tsx`             | `schedule-section`  |
+| `DressCode.tsx`            | `dresscode-section` |
+| `OurStory.tsx`             | `our-story-section` |
+| `Navigation.tsx`           | `site-navigation`   |
 
-Optional alias for the same responsibility: `header-navigation` — pick **one** name per deployment; the table above is the canonical choice unless the team standardizes on the alias.
+Optional alias for the same responsibility: `header-navigation` — pick **one** name per deployment; the table above is
+the canonical choice unless the team standardizes on the alias.
 
 ### 3.3 `lib/config` vs `src/entities`
 
-- **End state:** domain lists and types (schedule, dresscode, nav, payments, RSVP fields, …) live under **`src/entities/<name>/`** (e.g. `model/` or `config/`), exported from that slice’s **`index.ts`**.
-- **Transition:** to avoid a single huge import-rewrite PR, new or moved definitions may be implemented in **`src/entities/...`** and **re-exported** from the existing **`lib/config/*.ts`** files. Callers can keep using `@/lib/config/...` until a dedicated pass switches imports to `@entities/...` and drops the shim.
-- **RSVP:** extend **`@entities/rsvp`** for field config and types; keep **`lib/config/rsvp.ts`** as a thin re-export until migration completes.
+- **End state:** domain lists and types (schedule, dresscode, nav, payments, RSVP fields, …) live under *
+  *`src/entities/<name>/`** (e.g. `model/` or `config/`), exported from that slice’s **`index.ts`**.
+- **Transition:** to avoid a single huge import-rewrite PR, new or moved definitions may be implemented in *
+  *`src/entities/...`** and **re-exported** from the existing **`lib/config/*.ts`** files. Callers can keep using
+  `@/lib/config/...` until a dedicated pass switches imports to `@entities/...` and drops the shim.
+- **RSVP:** extend **`@entities/rsvp`** for field config and types; keep **`lib/config/rsvp.ts`** as a thin re-export
+  until migration completes.
 
 ### 3.4 Legacy and transitional paths
 
-**`components/`** — empty except `components/README.md` (deprecated; do not add code here). Sections and primitives were moved to `src/widgets/*` and `src/shared/ui/`.
+**`components/`** — empty except `components/README.md` (deprecated; do not add code here). Sections and primitives were
+moved to `src/widgets/*` and `src/shared/ui/`.
 
 ```
 wedding/
@@ -181,7 +193,8 @@ wedding/
 └── (no utils/supabase/ — use src/shared/api/supabase)
 ```
 
-Prefer **`@shared/*`**, **`@entities/*`**, **`@features/*`**, **`@widgets/*`** in new code; keep `@/lib/*` only where a shim still exists.
+Prefer **`@shared/*`**, **`@entities/*`**, **`@features/*`**, **`@widgets/*`** in new code; keep `@/lib/*` only where a
+shim still exists.
 
 Env block for local secrets (unchanged):
 
@@ -401,8 +414,8 @@ style = {
 
 /* Change the hero gradient — one line in :root */
 --gradient-hero:
-
 linear-gradient
+
 (
 135
 deg, #EEF2F7
@@ -2451,7 +2464,10 @@ Guest browser
            └─► INSERT INTO photos
 ```
 
-**CORS on the R2 bucket** is required for this flow (browser `PUT` to `*.r2.cloudflarestorage.com`). Apply the JSON in **`docs/r2-cors-dashboard.json`** following **`docs/r2-cors.md`**. If you cannot configure CORS (or hit platform body-size limits), use **`POST /api/upload/server`** and set **`NEXT_PUBLIC_GALLERY_SERVER_UPLOAD=true`** (`@features/gallery-upload`).
+**CORS on the R2 bucket** is required for this flow (browser `PUT` to `*.r2.cloudflarestorage.com`). Apply the JSON in *
+*`docs/r2-cors-dashboard.json`** following **`docs/r2-cors.md`**. If you cannot configure CORS (or hit platform
+body-size limits), use **`POST /api/upload/server`** and set **`NEXT_PUBLIC_GALLERY_SERVER_UPLOAD=true`** (
+`@features/gallery-upload`).
 
 ### `lib/r2.ts`
 
@@ -3568,7 +3584,8 @@ export function Navigation() {
 
 ## 18. Rule for everything new
 
-When adding something new — follow this order (**FSD under `src/`**; `lib/` and `components/` are transitional — see **§3**).
+When adding something new — follow this order (**FSD under `src/`**; `lib/` and `components/` are transitional — see *
+*§3**).
 
 ```
 1. DATA / CONFIG → src/entities/<slice>/ (model or config) + public export from index.ts

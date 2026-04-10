@@ -1,5 +1,5 @@
 -- Site-wide settings: single row (id = default), public read, writes only via service_role (bypasses RLS).
--- Capabilities and schedule_program mirror code defaults in @entities/site-features and day-program.ts.
+-- Capabilities and schedule_program mirror code defaults in @entities/site-settings and day-program.ts.
 
 CREATE TABLE site_settings
 (

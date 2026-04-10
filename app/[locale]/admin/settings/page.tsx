@@ -1,4 +1,4 @@
-import {getSiteSettingsCached} from '@features/site-settings'
+import {getSiteSettings} from '@features/site-settings'
 import {AdminSettingsForm} from '@widgets/admin-settings'
 import type {Metadata} from 'next'
 import {getTranslations} from 'next-intl/server'
@@ -12,7 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AdminSettingsPage() {
-    const settings = await getSiteSettingsCached()
+    const settings = await getSiteSettings()
 
     return <AdminSettingsForm initialSettings={settings}/>
 }

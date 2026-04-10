@@ -4,7 +4,8 @@ Client form for editing `site_settings` (capabilities toggles and day-of schedul
 
 ## Purpose
 
-- Used by `app/[locale]/admin/settings/page.tsx` after the server loads the current snapshot with `getSiteSettingsCached()`.
+- Used by `app/[locale]/admin/settings/page.tsx` after the server loads the current row with `getSiteSettings()` (DB
+  truth, no `NEXT_PUBLIC_SITE_FEATURES` overlay).
 
 ## Approach
 
@@ -19,7 +20,7 @@ Client form for editing `site_settings` (capabilities toggles and day-of schedul
 ## Usage
 
 ```tsx
-const settings = await getSiteSettingsCached();
+const settings = await getSiteSettings();
 return <AdminSettingsForm initialSettings={settings} />;
 ```
 

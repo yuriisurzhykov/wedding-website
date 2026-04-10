@@ -5,7 +5,8 @@ cache with tag invalidation on update.
 
 ## Purpose
 
-- **`getSiteSettings` / `getSiteSettingsCached`:** load the normalized snapshot for RSC, nav, and use-cases.
+- **`getSiteSettings` / `getSiteSettingsCached`:** load the normalized snapshot from Postgres (plus code defaults);
+  cached reads also merge optional `NEXT_PUBLIC_SITE_FEATURES` for guest-facing enforcement (see Configuration).
 - **`updateSiteSettings`:** merge a validated patch and persist (for admin API only).
 
 ## Approach
@@ -17,8 +18,10 @@ cache with tag invalidation on update.
 
 ## Public API
 
-- `getSiteSettings(): Promise<SiteSettings>` — uncached read; fails soft to entity defaults on error (logged in dev).
-- `getSiteSettingsCached(): Promise<SiteSettings>` — use in pages and cached code paths.
+- `getSiteSettings(): Promise<SiteSettings>` — uncached read of **database** values (no `NEXT_PUBLIC_SITE_FEATURES`
+  overlay). Use for admin UI and any code that must reflect what is stored in `site_settings`.
+- `getSiteSettingsCached(): Promise<SiteSettings>` — use for guest-facing RSC, nav provider seed, public API, and
+  use-cases that enforce capabilities; includes the env overlay (below).
 - `updateSiteSettings(patch: unknown): Promise<UpdateSiteSettingsResult>` — validates with `siteSettingsPatchSchema`,
   merges with the current row, upserts, revalidates tag.
 - `SITE_SETTINGS_CACHE_TAG` — import when another feature must invalidate after related changes (rare).
@@ -49,3 +52,30 @@ string.
 
 - Cache: 60s revalidate + tag `site-settings`. Public route `GET /api/site-settings/public` uses `Cache-Control:
   private, no-cache, must-revalidate` so browsers revalidate while Next cache + tag own server freshness.
+
+### `NEXT_PUBLIC_SITE_FEATURES` (optional, merged with DB)
+
+The legacy env toggle is **not** a second source of truth: capabilities in `site_settings` remain authoritative in the
+database. For **guest-facing** behavior only, `getSiteSettingsCached` (and thus the layout provider, home page, public
+GET handler, and feature use-cases that call the cached reader) applies `NEXT_PUBLIC_SITE_FEATURES` **after** the DB
+snapshot.
+
+- **Merge order:** start from normalized DB capabilities (merged with code defaults per key), then for each **known**
+  capability key (`SITE_CAPABILITY_KEYS` in `@entities/site-settings`) present in the env JSON with a **boolean** value,
+  that value overrides the DB.
+- **Invalid JSON:** env overrides are ignored; dev logs a console warning (`[site-settings] NEXT_PUBLIC_SITE_FEATURES…`).
+- **Unknown keys** in the JSON are ignored.
+- **Admin UI** uses `getSiteSettings()` so the form shows what will be persisted; effective guest toggles may still
+  differ if env overrides are set on that deployment.
+
+Example (force Our Story off on a preview deploy regardless of DB):
+
+```bash
+NEXT_PUBLIC_SITE_FEATURES={"ourStory":false}
+```
+
+You can include any capability key in the same object (e.g. `"rsvp":false`) for local or staging overrides.
+
+**Deprecation note:** the old `@entities/site-features` slice was removed; do not add new call sites for env-only
+feature flags — extend `SITE_CAPABILITY_KEYS` / admin capabilities instead, and use this env merge only when you
+need a deploy-time override on top of DB.

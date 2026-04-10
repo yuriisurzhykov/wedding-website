@@ -1,4 +1,3 @@
-import {isSiteFeatureEnabled} from '@entities/site-features'
 import {getViewerRsvpIdFromServerCookies} from '@features/guest-session/server'
 import {FeatureGate} from '@features/site-settings/client'
 import {getSiteSettingsCached} from '@features/site-settings'
@@ -32,7 +31,7 @@ export default async function Home() {
 
     let sectionIndex = 0
     const nextSectionTheme = () => homeSectionThemeAt(sectionIndex++)
-    const showOurStory = isSiteFeatureEnabled('ourStory')
+    const showOurStory = siteSettings.capabilities.ourStory
 
     const themeWelcome = nextSectionTheme()
     const themeSchedule = showScheduleSection ? nextSectionTheme() : null
