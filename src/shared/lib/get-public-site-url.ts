@@ -11,13 +11,20 @@ function toHttpsAbsoluteUrl(hostOrUrl: string): string {
 }
 
 /**
- * Absolute public site URL for transactional emails (CTA links).
+ * Absolute public site URL for transactional emails (CTA links), sitemap, and robots.
  *
- * Order: `NEXT_PUBLIC_SITE_URL`, then Vercel `VERCEL_PROJECT_PRODUCTION_URL` (production
- * hostname; prefers the shortest custom domain), then `VERCEL_URL` as a last resort.
+ * **Priority (first match wins):**
  *
- * `VERCEL_URL` alone points at the deployment host (`*.vercel.app`), so it is not used when
- * `VERCEL_PROJECT_PRODUCTION_URL` is set.
+ * 1. **`NEXT_PUBLIC_SITE_URL`** — explicit canonical base when you need a fixed hostname in
+ *    links (e.g. custom domain, stable `www` vs apex). Optional on Vercel if the Vercel chain
+ *    below already yields the URL you want.
+ * 2. **`VERCEL_PROJECT_PRODUCTION_URL`** — set by Vercel on deployments; production hostname
+ *    (often the primary custom domain when configured).
+ * 3. **`VERCEL_URL`** — set by Vercel for the current deployment (preview or `*.vercel.app`);
+ *    used only when `VERCEL_PROJECT_PRODUCTION_URL` is unset.
+ *
+ * On Vercel, (2) and (3) reflect the platform environment without extra configuration; use (1)
+ * when you must override that with a specific canonical URL.
  */
 export function getPublicSiteUrl(): string | undefined {
     const explicit = process.env.NEXT_PUBLIC_SITE_URL?.trim();
@@ -34,10 +41,13 @@ export function getPublicSiteUrl(): string | undefined {
 }
 
 /**
- * Base URL for links generated during a request (RSVP email, magic link).
+ * Base URL for links generated during a request (RSVP confirmation, magic link, guest flows).
  *
- * Order: {@link getPublicSiteUrl} (env / Vercel), then {@link inferPublicSiteOriginFromRequest} when `request` is set.
- * Production should still set `NEXT_PUBLIC_SITE_URL` so links match the canonical domain.
+ * **Priority:**
+ *
+ * 1. {@link getPublicSiteUrl} — `NEXT_PUBLIC_SITE_URL` or Vercel `VERCEL_*` (see there).
+ * 2. If that returns `undefined` and `request` is provided — {@link inferPublicSiteOriginFromRequest}
+ *    (e.g. local dev or tests where env is empty but the incoming `Host` / `x-forwarded-*` headers are set).
  */
 export function resolvePublicSiteBaseForServerEmail(
     request?: Request,

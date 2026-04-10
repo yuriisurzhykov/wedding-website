@@ -1,21 +1,24 @@
-import {GALLERY_MAX_FILE_BYTES} from "@entities/photo";
+import {GALLERY_MAX_SOURCE_FILE_BYTES,} from "@entities/photo";
 
 import {resolveGalleryImageContentType} from "./gallery-image-content-type";
 
-export type GalleryPhotoFileInvalidReason = "oversize" | "bad_type";
+/** Picker / drop: type must be allowed; raw size capped before browser-side optimization. */
+export type GalleryPhotoFileInvalidReason = "source_oversize" | "bad_type";
 
 export type ValidateGalleryPhotoFileResult =
-    | {ok: true}
-    | {ok: false; reason: GalleryPhotoFileInvalidReason};
+    | { ok: true }
+    | { ok: false; reason: GalleryPhotoFileInvalidReason };
 
 /**
- * Single place for client-side checks before presign / multipart (matches server Zod limits).
+ * Single place for client-side checks before compression / presign / multipart.
+ * Large originals are accepted up to {@link GALLERY_MAX_SOURCE_FILE_BYTES}; uploads must still end
+ * up within `GALLERY_MAX_FILE_BYTES` after `prepareGalleryPhotoFileForUpload`.
  */
 export function validateGalleryPhotoFile(
     file: File,
 ): ValidateGalleryPhotoFileResult {
-    if (file.size > GALLERY_MAX_FILE_BYTES) {
-        return {ok: false, reason: "oversize"};
+    if (file.size > GALLERY_MAX_SOURCE_FILE_BYTES) {
+        return {ok: false, reason: "source_oversize"};
     }
     if (!resolveGalleryImageContentType(file)) {
         return {ok: false, reason: "bad_type"};
@@ -34,7 +37,7 @@ export function partitionGalleryPhotoFiles(files: File[]): {
         const v = validateGalleryPhotoFile(f);
         if (v.ok) {
             accepted.push(f);
-        } else if (!firstReject) {
+        } else if (firstReject === null) {
             firstReject = v.reason;
         }
     }

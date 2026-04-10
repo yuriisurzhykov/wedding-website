@@ -12,7 +12,8 @@ interface TimeLeft {
 
 const ZERO: TimeLeft = {days: 0, hours: 0, minutes: 0, seconds: 0}
 
-const noopSubscribe = () => () => {}
+const noopSubscribe = () => () => {
+}
 
 function useIsClient() {
     return useSyncExternalStore(noopSubscribe, () => true, () => false)
@@ -29,7 +30,7 @@ function calcTimeLeft(target: Date): TimeLeft {
     }
 }
 
-export function Countdown({targetDate}: {targetDate: Date}) {
+export function Countdown({targetDate}: { targetDate: Date }) {
     const t = useTranslations('hero.countdown')
     const mounted = useIsClient()
     const [time, setTime] = useState<TimeLeft>(ZERO)

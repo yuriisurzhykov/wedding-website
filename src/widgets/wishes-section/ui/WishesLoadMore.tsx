@@ -13,11 +13,11 @@ type WishesLoadMoreProps = {
 }
 
 export function WishesLoadMore({
-    hasMore,
-    loading,
-    onLoadMore,
-    className,
-}: WishesLoadMoreProps) {
+                                   hasMore,
+                                   loading,
+                                   onLoadMore,
+                                   className,
+                               }: WishesLoadMoreProps) {
     const t = useTranslations('wishes')
 
     return (

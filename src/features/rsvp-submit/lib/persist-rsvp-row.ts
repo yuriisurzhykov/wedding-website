@@ -4,14 +4,14 @@ import type {RsvpRowInsert} from "@entities/rsvp";
 import type {SupabaseClient} from "@supabase/supabase-js";
 
 export type PersistRsvpRowResult =
-    | {ok: true; id: string}
-    | {ok: false; message: string; code?: string};
+    | { ok: true; id: string }
+    | { ok: false; message: string; code?: string };
 
 async function selectIdByEq(
     supabase: SupabaseClient,
     column: "email" | "phone",
     value: string,
-): Promise<{ok: true; id: string | null} | {ok: false; message: string}> {
+): Promise<{ ok: true; id: string | null } | { ok: false; message: string }> {
     const {data, error} = await supabase
         .from("rsvp")
         .select("id")

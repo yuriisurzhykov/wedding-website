@@ -11,7 +11,7 @@ import {assertR2UploadConfig} from "./r2-config";
  */
 export async function createPresignedPhotoPutUrl(
     contentType: string,
-): Promise<{url: string; key: string}> {
+): Promise<{ url: string; key: string }> {
     const {client, bucket} = assertR2UploadConfig();
     const ext = contentType.split("/")[1]?.replace("jpeg", "jpg") ?? "jpg";
     const key = `photos/${randomUUID()}.${ext}`;

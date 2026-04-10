@@ -1,14 +1,17 @@
 # `shared/lib/wedding-calendar`
 
-Single place for **ceremony/RSVP instants**, **day-of schedule model**, and **locale-aware date strings**. No HTTP or secrets.
+Single place for **ceremony/RSVP instants**, **day-of schedule model**, and **locale-aware date strings**. No HTTP or
+secrets.
 
 ## Why it lives in `shared`
 
-These are site-wide dates and formatting rules, not a single feature’s domain. Entities that need schedule rows can import `getScheduleItems` from here without pulling in widgets or features.
+These are site-wide dates and formatting rules, not a single feature’s domain. Entities that need schedule rows can
+import `getScheduleItems` from here without pulling in widgets or features.
 
 ## Public API
 
-See `index.ts`: `getWeddingCeremonyDate`, `getRsvpDeadlineDate`, `format*` helpers, `getScheduleItems`, `ScheduleItem`.
+See `index.ts`: `getWeddingCeremonyDate`, `getCelebrationStartDate`, `isCelebrationLive`, `getRsvpDeadlineDate`,
+`format*` helpers, `getScheduleItems`, `ScheduleItem`.
 
 ## Server vs client
 

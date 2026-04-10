@@ -44,6 +44,7 @@ async function tryCreateGuestSessionAfterSave(
         snapshot: buildGuestSessionClientSnapshot({
             name: row.name,
             email: row.email,
+            attending: row.attending,
         }),
     };
 }
@@ -58,23 +59,23 @@ async function tryCreateGuestSessionAfterSave(
  * - **`guestSession`** — Present when `guest_sessions` was created after save (`null` if creation failed; RSVP row still saved).
  */
 export type SubmitRsvpResult =
-    | {ok: true; id: string; guestSession: SubmitRsvpGuestSession | null}
+    | { ok: true; id: string; guestSession: SubmitRsvpGuestSession | null }
     | {
-          ok: false;
-          kind: "validation";
-          fieldErrors: Record<string, string[] | undefined>;
-          formErrors: string[];
-      }
-    | {ok: false; kind: "config"; message: string}
-    | {ok: false; kind: "database"; message: string}
+    ok: false;
+    kind: "validation";
+    fieldErrors: Record<string, string[] | undefined>;
+    formErrors: string[];
+}
+    | { ok: false; kind: "config"; message: string }
+    | { ok: false; kind: "database"; message: string }
     | {
-          ok: false;
-          kind: "notification";
-          step: "admin" | "guest";
-          id: string;
-          message: string;
-          guestSession: SubmitRsvpGuestSession | null;
-      };
+    ok: false;
+    kind: "notification";
+    step: "admin" | "guest";
+    id: string;
+    message: string;
+    guestSession: SubmitRsvpGuestSession | null;
+};
 
 /**
  * Validates the payload, upserts into `rsvp` (unique non-null `email` / `phone`), then sends mail **in order**:

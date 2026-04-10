@@ -1,11 +1,7 @@
 'use client'
 
 import {Link} from '@/i18n/navigation'
-import {
-    isRouteNavEntry,
-    isSectionNavEntry,
-    type SiteNavRegistryEntry,
-} from '@entities/site-nav'
+import {isRouteNavEntry, isSectionNavEntry, type SiteNavRegistryEntry,} from '@entities/site-nav'
 import {cn} from '@shared/lib/cn'
 
 type NavLayout = 'bar' | 'drawer'
@@ -35,13 +31,13 @@ type Props = Readonly<{
 }>
 
 export function SiteNavRegistryEntryControl({
-    item,
-    layout,
-    onHome,
-    label,
-    scrollToSectionId,
-    closeDrawer,
-}: Props) {
+                                                item,
+                                                layout,
+                                                onHome,
+                                                label,
+                                                scrollToSectionId,
+                                                closeDrawer,
+                                            }: Props) {
     if (isRouteNavEntry(item)) {
         return (
             <Link

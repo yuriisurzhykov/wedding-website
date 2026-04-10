@@ -1,11 +1,7 @@
 import "server-only";
 
 import type {RsvpRowInsert} from "@entities/rsvp";
-import {
-    createResendClient,
-    getResendApiKey,
-    getTransactionalFromAddress,
-} from "@shared/api/resend";
+import {createResendClient, getResendApiKey, getTransactionalFromAddress,} from "@shared/api/resend";
 import {getPublicSiteUrl} from "@shared/lib/get-public-site-url";
 
 import {buildGuestConfirmationEmail} from "./email/build-guest-confirmation-email";

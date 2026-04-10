@@ -1,11 +1,21 @@
 'use client'
 
-import {type KeyboardEvent as ReactKeyboardEvent, useCallback, useEffect, useId, useMemo, useRef, useState,} from 'react'
+import {
+    type KeyboardEvent as ReactKeyboardEvent,
+    type MouseEvent as ReactMouseEvent,
+    useCallback,
+    useEffect,
+    useId,
+    useMemo,
+    useRef,
+    useState,
+} from 'react'
 import {useTranslations} from 'next-intl'
 
-import {useGuestSession} from '@features/guest-session'
-import {usePathname} from '@/i18n/navigation'
+import {filterSiteNavRegistryForSiteFeatures} from '@entities/site-features'
 import {SITE_NAV_REGISTRY} from '@entities/site-nav'
+import {useGuestSession} from '@features/guest-session'
+import {Link, usePathname} from '@/i18n/navigation'
 import {cn} from '@shared/lib/cn'
 import {LanguageSwitcher} from '@shared/ui'
 
@@ -57,7 +67,7 @@ export function SiteNavigation() {
     const translator = useTranslations('nav')
     const {status: guestSessionStatus} = useGuestSession()
     const siteNavEntries = useMemo(() => {
-        let list = [...SITE_NAV_REGISTRY]
+        let list = filterSiteNavRegistryForSiteFeatures([...SITE_NAV_REGISTRY])
         if (guestSessionStatus !== 'anonymous') {
             list = list.filter((item) => item.navKey !== 'rsvp')
         }
@@ -92,6 +102,23 @@ export function SiteNavigation() {
         window.scrollTo({top: 0, behavior: 'smooth'})
         close()
     }, [close])
+
+    const handleTitleClick = useCallback(
+        (e: ReactMouseEvent<HTMLAnchorElement>) => {
+            if (!onHome) {
+                return
+            }
+            if (e.button !== 0) {
+                return
+            }
+            if (e.metaKey || e.ctrlKey || e.altKey || e.shiftKey) {
+                return
+            }
+            e.preventDefault()
+            scrollToTop()
+        },
+        [onHome, scrollToTop],
+    )
 
     const hashScrollCleanupRef = useRef<(() => void) | undefined>(undefined)
 
@@ -211,10 +238,10 @@ export function SiteNavigation() {
                 aria-label={translator('mainNav')}
             >
                 <div className="max-w-(--max-width) mx-auto px-4 h-16 flex items-center justify-between gap-3 min-w-0">
-                    <button
-                        type="button"
-                        onClick={scrollToTop}
-                        aria-label={translator('scrollToTop')}
+                    <Link
+                        href="/"
+                        onClick={handleTitleClick}
+                        aria-label={onHome ? translator('scrollToTop') : undefined}
                         className={cn(
                             'font-accent text-xl text-primary truncate min-w-0 text-left',
                             'rounded-md transition-opacity duration-fast hover:opacity-90',
@@ -222,7 +249,7 @@ export function SiteNavigation() {
                         )}
                     >
                         {translator('coupleNames')}
-                    </button>
+                    </Link>
 
                     <div className="hidden md:flex items-center gap-6">
                         {siteNavEntries.map((item) => (

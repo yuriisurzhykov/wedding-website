@@ -4,13 +4,15 @@ export interface PaletteColor {
     allowed: boolean
 }
 
-/** Swatches shown in the dress code section; `hex` is display data for the palette UI. */
+/**
+ * Swatches shown in the dress code section; `hex` matches site palette tokens in `app/globals.css`
+ * (`--color-wedding-*`).
+ */
 export const PALETTE: PaletteColor[] = [
-    {key: 'ivory', hex: '#F5F0E8', allowed: true},
-    {key: 'champagne', hex: '#F7E7CE', allowed: true},
-    {key: 'dustyrose', hex: '#C9A69A', allowed: true},
-    {key: 'sage', hex: '#9CAF88', allowed: true},
-    {key: 'ash', hex: '#9E9E9E', allowed: true},
+    {key: 'dustyrose', hex: '#d29e9e', allowed: true},
+    {key: 'sage', hex: '#748469', allowed: true},
+    {key: 'champagne', hex: '#ccb195', allowed: true},
+    {key: 'umber', hex: '#74583e', allowed: true},
     {key: 'white', hex: '#FFFFFF', allowed: false},
     {key: 'black', hex: '#000000', allowed: false},
 ]

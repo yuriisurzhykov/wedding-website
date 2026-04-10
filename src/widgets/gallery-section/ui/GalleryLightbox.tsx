@@ -1,7 +1,7 @@
 'use client'
 
 import Image from 'next/image'
-import {useCallback, useEffect, useRef} from 'react'
+import {useCallback, useEffect, useLayoutEffect, useRef, useState} from 'react'
 import {useTranslations} from 'next-intl'
 
 import type {GalleryPhotoView} from '@entities/photo'
@@ -12,6 +12,21 @@ import {GalleryTrashIcon} from './GalleryTrashIcon'
 /** Horizontal distance (px) before a drag counts as prev/next. */
 const LIGHTBOX_SWIPE_THRESHOLD_PX = 50
 
+/** Slide-in offset when changing slides (motion is disabled via `motion-reduce:`). */
+const LIGHTBOX_SLIDE_OFFSET_CLASS = 'motion-safe:translate-x-10'
+
+type SlideDirection = -1 | 0 | 1
+
+function slideOffsetClassForDirection(dir: SlideDirection): string {
+    if (dir === 0) {
+        return 'translate-x-0'
+    }
+    if (dir === 1) {
+        return LIGHTBOX_SLIDE_OFFSET_CLASS
+    }
+    return 'motion-safe:-translate-x-10'
+}
+
 /**
  * Viewport rectangle of the painted bitmap for `object-fit: contain` inside a box
  * with natural size `nw`×`nh`.
@@ -20,7 +35,7 @@ function getObjectContainPaintedRectViewport(
     containerViewport: DOMRectReadOnly,
     nw: number,
     nh: number,
-): {left: number; top: number; right: number; bottom: number} {
+): { left: number; top: number; right: number; bottom: number } {
     if (nw <= 0 || nh <= 0) {
         const {left, top, right, bottom} = containerViewport
         return {left, top, right, bottom}
@@ -43,7 +58,7 @@ function getObjectContainPaintedRectViewport(
 function isPointInsideRect(
     x: number,
     y: number,
-    r: {left: number; top: number; right: number; bottom: number},
+    r: { left: number; top: number; right: number; bottom: number },
 ): boolean {
     return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom
 }
@@ -109,6 +124,18 @@ export function GalleryLightbox(
     const current = openIndex !== null ? photos[openIndex] : null
     const multi = photos.length > 1
     const canDeleteCurrent = Boolean(current?.canDelete && onRequestDelete)
+
+    const slideEpoch =
+        openIndex !== null && current
+            ? `${openIndex}-${current.publicUrl}`
+            : ''
+
+    const [loadedEpoch, setLoadedEpoch] = useState('')
+    const slideReady = Boolean(slideEpoch) && loadedEpoch === slideEpoch
+
+    const [slideEnterDir, setSlideEnterDir] = useState<SlideDirection>(0)
+    const activeEpochRef = useRef('')
+    const prevNavIndexRef = useRef<number | null>(null)
 
     const photoColumnRef = useRef<HTMLDivElement>(null)
     const photoImgRef = useRef<HTMLImageElement | null>(null)
@@ -196,6 +223,37 @@ export function GalleryLightbox(
         [multi, onNext, onPrev],
     )
 
+    /* useLayoutEffect: sync slide axis and load reset before paint. */
+    useLayoutEffect(() => {
+        /* eslint-disable react-hooks/set-state-in-effect -- intentional layout sync */
+        activeEpochRef.current = slideEpoch
+        if (openIndex === null) {
+            prevNavIndexRef.current = null
+            setLoadedEpoch('')
+            setSlideEnterDir(0)
+            return
+        }
+        const prev = prevNavIndexRef.current
+        if (prev !== null && prev !== openIndex) {
+            setSlideEnterDir((openIndex > prev ? 1 : -1) as SlideDirection)
+        } else {
+            setSlideEnterDir(0)
+        }
+        prevNavIndexRef.current = openIndex
+        /* eslint-enable react-hooks/set-state-in-effect */
+    }, [openIndex, slideEpoch])
+
+    const revealSlideForEpoch = useCallback((epoch: string) => {
+        requestAnimationFrame(() => {
+            setLoadedEpoch((cur) =>
+                epoch === activeEpochRef.current ? epoch : cur,
+            )
+        })
+    }, [])
+
+    const slideKey = slideEpoch
+    const dir = slideEnterDir
+
     return (
         <dialog
             ref={dialogRef}
@@ -268,7 +326,7 @@ export function GalleryLightbox(
                             <div
                                 ref={photoColumnRef}
                                 className={cn(
-                                    'pointer-events-auto relative min-h-0 min-w-0 max-w-full flex-1 touch-pan-y',
+                                    'pointer-events-auto relative min-h-0 min-w-0 max-w-full flex-1 touch-pan-y overflow-hidden',
                                     multi ? 'select-none' : null,
                                 )}
                                 onClick={handlePhotoColumnClick}
@@ -279,23 +337,67 @@ export function GalleryLightbox(
                                 onPointerCancel={
                                     multi ? handleSwipePointerUpOrCancel : undefined
                                 }
+                                role="status"
+                                aria-busy={!slideReady}
+                                aria-label={
+                                    !slideReady
+                                        ? t('lightboxImageLoading')
+                                        : undefined
+                                }
                             >
-                                <Image
-                                    ref={photoImgRef}
-                                    src={current.publicUrl}
-                                    alt={
-                                        current.uploaderName
-                                            ? t('lightboxAltWithName', {
-                                                name: current.uploaderName,
-                                            })
-                                            : t('lightboxAlt')
-                                    }
-                                    fill
-                                    sizes="100vw"
-                                    priority
-                                    quality={80}
-                                    className="object-contain object-center"
-                                />
+                                {!slideReady ? (
+                                    <div
+                                        className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-black/35"
+                                        aria-hidden
+                                    >
+                                        <div
+                                            className={cn(
+                                                'h-[min(55vw,20rem)] w-[min(88vw,36rem)] max-w-full rounded-lg',
+                                                'bg-white/10 animate-pulse',
+                                            )}
+                                        />
+                                    </div>
+                                ) : null}
+                                <div
+                                    key={slideKey}
+                                    className={cn(
+                                        'absolute inset-0',
+                                        slideReady
+                                            ? cn(
+                                                'opacity-100 translate-x-0',
+                                                'transition-[opacity,transform] duration-300 ease-out',
+                                                'motion-reduce:transition-opacity motion-reduce:duration-200',
+                                            )
+                                            : cn(
+                                                'opacity-0 transition-none',
+                                                slideOffsetClassForDirection(dir),
+                                                'motion-reduce:translate-x-0',
+                                            ),
+                                    )}
+                                >
+                                    <Image
+                                        ref={photoImgRef}
+                                        src={current.publicUrl}
+                                        alt={
+                                            current.uploaderName
+                                                ? t('lightboxAltWithName', {
+                                                    name: current.uploaderName,
+                                                })
+                                                : t('lightboxAlt')
+                                        }
+                                        fill
+                                        sizes="100vw"
+                                        priority
+                                        quality={80}
+                                        className="object-contain object-center"
+                                        onLoadingComplete={() =>
+                                            revealSlideForEpoch(slideKey)
+                                        }
+                                        onError={() =>
+                                            revealSlideForEpoch(slideKey)
+                                        }
+                                    />
+                                </div>
                             </div>
                             {multi ? (
                                 <button

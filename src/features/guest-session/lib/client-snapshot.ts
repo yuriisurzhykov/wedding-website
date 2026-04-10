@@ -1,41 +1,19 @@
-/**
- * Safe JSON snapshot for the client after session establishment (plan §4).
- * Never includes the raw session token.
- */
-export type GuestSessionClientSnapshot = {
-    displayName: string;
-    /** Optional masked email for UI subtitle / confirmation. */
-    emailMasked?: string;
-};
+import type {GuestViewerSnapshot} from "@entities/guest-viewer";
+import {buildGuestViewerSnapshot, maskEmailForDisplay} from "@entities/guest-viewer";
 
 /**
- * Masks an email for display (e.g. `j***@example.com`). Returns a short placeholder if parsing fails.
+ * §4 JSON shape for guest session responses — **alias** of {@link GuestViewerSnapshot}.
+ * Prefer importing `GuestViewerSnapshot` from `@entities/guest-viewer` for new code outside this feature.
  */
-export function maskEmailForDisplay(email: string): string {
-    const trimmed = email.trim();
-    const at = trimmed.indexOf("@");
-    if (at <= 0 || at === trimmed.length - 1) {
-        return "***";
-    }
-    const local = trimmed.slice(0, at);
-    const domain = trimmed.slice(at + 1);
-    if (local.length <= 1) {
-        return `*@${domain}`;
-    }
-    return `${local[0]}***@${domain}`;
-}
+export type GuestSessionClientSnapshot = GuestViewerSnapshot;
+
+export {maskEmailForDisplay};
 
 /**
  * Builds the `session` object from RSVP identity fields (no token).
  */
-export function buildGuestSessionClientSnapshot(input: {
-    name: string;
-    email?: string | null;
-}): GuestSessionClientSnapshot {
-    const displayName = input.name.trim();
-    const em = input.email?.trim();
-    return {
-        displayName,
-        ...(em ? {emailMasked: maskEmailForDisplay(em)} : {}),
-    };
+export function buildGuestSessionClientSnapshot(
+    input: Parameters<typeof buildGuestViewerSnapshot>[0],
+): GuestSessionClientSnapshot {
+    return buildGuestViewerSnapshot(input);
 }

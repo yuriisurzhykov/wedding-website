@@ -12,7 +12,7 @@ import {assertR2UploadConfig} from "@shared/api/r2";
 export async function putGalleryPhotoToR2(input: {
     contentType: GalleryAllowedContentType;
     body: Buffer;
-}): Promise<{key: string; publicUrl: string}> {
+}): Promise<{ key: string; publicUrl: string }> {
     const {client, bucket, publicUrlBase} = assertR2UploadConfig();
     const ext =
         input.contentType.split("/")[1]?.replace("jpeg", "jpg") ?? "jpg";

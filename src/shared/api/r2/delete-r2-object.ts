@@ -9,7 +9,7 @@ import {assertR2UploadConfig} from "./r2-config";
  */
 export async function deleteR2Object(
     key: string,
-): Promise<{ok: true} | {ok: false; message: string}> {
+): Promise<{ ok: true } | { ok: false; message: string }> {
     let config;
     try {
         config = assertR2UploadConfig();

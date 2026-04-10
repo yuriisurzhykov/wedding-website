@@ -42,7 +42,7 @@ export async function resolveGuestMagicLinkClaimUrl(
 
     if (!siteBase?.trim()) {
         console.warn(
-            "[rsvp-submit] Magic link token saved but no public site base for email URL (set NEXT_PUBLIC_SITE_URL or POST RSVP from the browser).",
+            "[rsvp-submit] Magic link token saved but no public site base for email URL (set NEXT_PUBLIC_SITE_URL, deploy on Vercel with VERCEL_* URLs, or POST RSVP from the browser).",
         );
         return undefined;
     }

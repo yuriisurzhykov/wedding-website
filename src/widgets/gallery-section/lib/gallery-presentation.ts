@@ -1,7 +1,4 @@
-import {
-    GALLERY_PHOTO_LIMIT_FULL,
-    GALLERY_PHOTO_LIMIT_PREVIEW,
-} from "../config";
+import {GALLERY_PHOTO_LIMIT_FULL, GALLERY_PHOTO_LIMIT_PREVIEW,} from "../config";
 
 export type GalleryPresentation = "preview" | "full";
 

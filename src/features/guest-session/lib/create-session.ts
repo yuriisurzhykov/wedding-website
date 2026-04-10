@@ -12,11 +12,11 @@ import {generateOpaqueToken, hashSessionToken} from "./token";
 
 export type CreateGuestSessionResult =
     | {
-          ok: true;
-          rawToken: string;
-          session: Pick<GuestSessionRow, "id" | "expires_at" | "rsvp_id">;
-      }
-    | {ok: false; kind: "database"; message: string};
+    ok: true;
+    rawToken: string;
+    session: Pick<GuestSessionRow, "id" | "expires_at" | "rsvp_id">;
+}
+    | { ok: false; kind: "database"; message: string };
 
 /**
  * Inserts a new `guest_sessions` row and returns the **raw** opaque token for `Set-Cookie`.

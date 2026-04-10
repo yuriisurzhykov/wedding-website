@@ -9,7 +9,6 @@ export type GuestMagicLinkTokenRow = {
     id: string;
     rsvp_id: string;
     expires_at: string;
-    used_at: string | null;
 };
 
 export type FetchMagicLinkTokenByHashResult =
@@ -26,7 +25,7 @@ export async function fetchMagicLinkTokenByHash(
 ): Promise<FetchMagicLinkTokenByHashResult> {
     const {data, error} = await supabase
         .from("guest_magic_link_tokens")
-        .select("id, rsvp_id, expires_at, used_at")
+        .select("id, rsvp_id, expires_at")
         .eq("token_hash", tokenHash)
         .maybeSingle();
 

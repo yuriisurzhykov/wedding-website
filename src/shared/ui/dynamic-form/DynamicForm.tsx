@@ -16,11 +16,11 @@ import type {FormField, FormValues} from './types'
 type Status = 'idle' | 'submitting' | 'success' | 'error'
 
 function FieldRenderer({
-    field,
-    values,
-    onChange,
-    t,
-}: {
+                           field,
+                           values,
+                           onChange,
+                           t,
+                       }: {
     field: FormField
     values: FormValues
     onChange: (key: string, value: unknown) => void
@@ -149,10 +149,10 @@ function FieldRenderer({
 }
 
 export function DynamicForm({
-    fields,
-    onSubmitAction,
-    namespace,
-}: {
+                                fields,
+                                onSubmitAction,
+                                namespace,
+                            }: {
     fields: FormField[]
     onSubmitAction: (values: FormValues) => Promise<void>
     namespace: string

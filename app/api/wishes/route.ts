@@ -1,6 +1,10 @@
 import {NextResponse} from "next/server";
 import {z} from "zod";
 
+import {
+    buildGuestSessionErrorJson,
+    httpStatusForGuestSessionErrorCode,
+} from "@features/guest-session";
 import {listWishes} from "@features/wish-list";
 import {submitWish} from "@features/wish-submit";
 
@@ -65,6 +69,12 @@ export async function POST(request: Request) {
             },
             {status: 400},
         );
+    }
+
+    if (result.kind === "celebration") {
+        return NextResponse.json(buildGuestSessionErrorJson("celebration_not_live"), {
+            status: httpStatusForGuestSessionErrorCode("celebration_not_live"),
+        });
     }
 
     if (result.kind === "config") {

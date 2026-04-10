@@ -9,6 +9,7 @@ export type {
     ValidateGuestSessionResult,
 } from "./lib/types";
 
+export type {GuestViewerSnapshot} from "@entities/guest-viewer";
 export type {
     GuestSessionClientSnapshot,
 } from "./lib/client-snapshot";

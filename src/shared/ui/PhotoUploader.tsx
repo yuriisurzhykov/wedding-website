@@ -4,11 +4,13 @@ import React, {useCallback, useRef, useState} from 'react'
 import {useTranslations} from 'next-intl'
 import {toast} from 'sonner'
 
+import {GALLERY_MAX_FILE_BYTES, GALLERY_MAX_SOURCE_FILE_BYTES,} from '@entities/photo'
 import {cn} from '@shared/lib/cn'
 import {formatUploadApiErrorResponse} from '@shared/lib/format-upload-api-error'
 import {postMultipartGalleryPhoto} from '@shared/lib/gallery-client-upload'
 import {resolveGalleryImageContentType} from '@shared/lib/gallery-image-content-type'
 import {GALLERY_USE_SERVER_MULTIPART_UPLOAD} from '@shared/lib/gallery-upload-mode'
+import {GalleryPhotoPrepareError, prepareGalleryPhotoFileForUpload,} from '@shared/lib/prepare-gallery-photo-for-upload'
 import {useGalleryAcceptedBatch} from '@shared/lib/use-gallery-accepted-batch'
 
 import {Button} from './Button'
@@ -16,6 +18,10 @@ import {Input} from './Input'
 import {PhotoFileInput} from './PhotoFileInput'
 
 const MAX_PARALLEL = 3
+const UPLOAD_MAX_MB = Math.floor(GALLERY_MAX_FILE_BYTES / (1024 * 1024))
+const SOURCE_MAX_MB = Math.floor(
+    GALLERY_MAX_SOURCE_FILE_BYTES / (1024 * 1024),
+)
 
 type FileStatus = 'pending' | 'uploading' | 'done' | 'error'
 
@@ -29,6 +35,7 @@ export type PhotoUploadAdapter = (
     file: File,
     uploaderName: string,
     onProgress: (p: number) => void,
+    options?: { purpose?: "gallery" | "wish" },
 ) => Promise<void>
 
 /**
@@ -38,8 +45,10 @@ export async function presignedPhotoUploadAdapter(
     file: File,
     uploaderName: string,
     onProgress: (p: number) => void,
+    options?: { purpose?: "gallery" | "wish" },
 ): Promise<void> {
-    const contentType = resolveGalleryImageContentType(file)
+    const uploadFile = await prepareGalleryPhotoFileForUpload(file)
+    const contentType = resolveGalleryImageContentType(uploadFile)
     if (!contentType) {
         throw new Error(
             'Unsupported or unknown image type. Use JPEG, PNG, WebP, or HEIC.',
@@ -50,19 +59,23 @@ export async function presignedPhotoUploadAdapter(
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         credentials: 'same-origin',
-        body: JSON.stringify({contentType, size: file.size}),
+        body: JSON.stringify({
+            contentType,
+            size: uploadFile.size,
+            purpose: options?.purpose ?? "gallery",
+        }),
     })
     if (!presignRes.ok) {
         const detail = await formatUploadApiErrorResponse(presignRes)
         throw new Error(`Presign failed: ${detail}`)
     }
-    const {url, key} = (await presignRes.json()) as {url: string; key: string}
+    const {url, key} = (await presignRes.json()) as { url: string; key: string }
     onProgress(30)
 
     const uploadRes = await fetch(url, {
         method: 'PUT',
         headers: {'Content-Type': contentType},
-        body: file,
+        body: uploadFile,
     })
     if (!uploadRes.ok) {
         const detail = await uploadRes.text().catch(() => uploadRes.statusText)
@@ -76,7 +89,12 @@ export async function presignedPhotoUploadAdapter(
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         credentials: 'same-origin',
-        body: JSON.stringify({key, uploaderName, sizeBytes: file.size}),
+        body: JSON.stringify({
+            key,
+            uploaderName,
+            sizeBytes: uploadFile.size,
+            purpose: options?.purpose ?? "gallery",
+        }),
     })
     if (!confirmRes.ok) {
         const detail = await formatUploadApiErrorResponse(confirmRes)
@@ -90,8 +108,15 @@ export async function serverPhotoUploadAdapter(
     file: File,
     uploaderName: string,
     onProgress: (p: number) => void,
+    options?: { purpose?: "gallery" | "wish" },
 ): Promise<void> {
-    await postMultipartGalleryPhoto(file, uploaderName, onProgress)
+    const uploadFile = await prepareGalleryPhotoFileForUpload(file)
+    await postMultipartGalleryPhoto(
+        uploadFile,
+        uploaderName,
+        onProgress,
+        options,
+    )
 }
 
 /** Default: presigned R2; server multipart if `NEXT_PUBLIC_GALLERY_SERVER_UPLOAD=true`. */
@@ -106,14 +131,15 @@ export const defaultPhotoUploadAdapter: PhotoUploadAdapter =
  * when authenticated, skeleton while loading, prompt when anonymous (plan §3.1).
  */
 export type PhotoUploaderGuestSession =
-    | {status: 'loading'}
-    | {status: 'anonymous'}
-    | {status: 'authenticated'; displayName: string}
+    | { status: 'loading' }
+    | { status: 'anonymous' }
+    | { status: 'authenticated'; displayName: string }
 
 export async function mockPhotoUploadAdapter(
     _file: File,
     _uploaderName: string,
     onProgress: (p: number) => void,
+    _options?: { purpose?: "gallery" | "wish" },
 ): Promise<void> {
     await new Promise((r) => setTimeout(r, 200))
     onProgress(35)
@@ -124,11 +150,13 @@ export async function mockPhotoUploadAdapter(
 }
 
 export function PhotoUploader({
-    uploadAdapter = defaultPhotoUploadAdapter,
-    onUploadSuccess,
-    guestUpload,
-    suppressAnonymousHelpText = false,
-}: {
+                                  uploadAdapter = defaultPhotoUploadAdapter,
+                                  onUploadSuccess,
+                                  guestUpload,
+                                  suppressAnonymousHelpText = false,
+                                  uploadMediaPurpose = "gallery",
+                                  celebrationLocked = false,
+                              }: {
     uploadAdapter?: PhotoUploadAdapter
     /** Called after at least one file uploaded successfully (e.g. refetch gallery list). */
     onUploadSuccess?: () => void | Promise<void>
@@ -136,8 +164,13 @@ export function PhotoUploader({
     guestUpload?: PhotoUploaderGuestSession
     /** When true and guest is anonymous, hide the default “sign in to upload” line (caller shows custom copy). */
     suppressAnonymousHelpText?: boolean
+    /** Presign/confirm `purpose` — gallery shared album vs wish attachment (celebration rules differ). */
+    uploadMediaPurpose?: "gallery" | "wish"
+    /** When true, dropzone and upload are disabled (e.g. before celebration start for the gallery). */
+    celebrationLocked?: boolean
 }) {
     const t = useTranslations('gallery')
+    const tu = useTranslations('upload')
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [files, setFiles] = useState<UploadFile[]>([])
     const [name, setName] = useState('')
@@ -148,7 +181,8 @@ export function PhotoUploader({
     /** UI book / no provider: manual name. With guest session, only `anonymous` uses manual name elsewhere — gallery blocks upload until session exists. */
     const needsManualName = guestUpload === undefined
     const sessionAuthenticated = guestUpload?.status === 'authenticated'
-    const uploadBlocked = guestUpload?.status === 'anonymous'
+    const uploadBlocked =
+        guestUpload?.status === 'anonymous' || celebrationLocked
     const sessionLabel =
         guestUpload?.status === 'authenticated' ? guestUpload.displayName : ''
 
@@ -203,14 +237,36 @@ export function PhotoUploader({
             await Promise.all(
                 batch.map(({file, index}) => {
                     updateFile(index, {status: 'uploading'})
-                    return uploadAdapter(file, labelForAdapter, (p) =>
-                        updateFile(index, {progress: p}),
+                    return uploadAdapter(
+                        file,
+                        labelForAdapter,
+                        (p) => updateFile(index, {progress: p}),
+                        {purpose: uploadMediaPurpose},
                     )
                         .then(() => {
                             updateFile(index, {status: 'done', progress: 100})
                             successCount += 1
                         })
-                        .catch(() => updateFile(index, {status: 'error'}))
+                        .catch((err: unknown) => {
+                            updateFile(index, {status: 'error'})
+                            if (err instanceof GalleryPhotoPrepareError) {
+                                if (err.kind === 'source_too_large') {
+                                    toast.error(
+                                        tu('photoSourceTooLarge', {
+                                            maxMb: SOURCE_MAX_MB,
+                                        }),
+                                    )
+                                } else if (err.kind === 'output_too_large') {
+                                    toast.error(
+                                        tu('photoStillTooLarge', {
+                                            maxMb: UPLOAD_MAX_MB,
+                                        }),
+                                    )
+                                } else {
+                                    toast.error(tu('photoOptimizeFailed'))
+                                }
+                            }
+                        })
                 }),
             )
         }
@@ -235,8 +291,8 @@ export function PhotoUploader({
         <div className="flex flex-col gap-5">
             {showNameSkeleton ? (
                 <div className="flex flex-col gap-2" aria-hidden>
-                    <div className="h-4 w-28 max-w-[40%] animate-pulse rounded bg-bg-section" />
-                    <div className="h-10 w-full animate-pulse rounded-xl bg-bg-section" />
+                    <div className="h-4 w-28 max-w-[40%] animate-pulse rounded bg-bg-section"/>
+                    <div className="h-10 w-full animate-pulse rounded-xl bg-bg-section"/>
                 </div>
             ) : needsManualName ? (
                 <Input
@@ -248,7 +304,9 @@ export function PhotoUploader({
                 <p className="text-small text-text-secondary">{t('signedInAs', {name: sessionLabel})}</p>
             ) : null}
 
-            {guestUpload?.status === 'anonymous' && !suppressAnonymousHelpText ? (
+            {celebrationLocked ? (
+                <p className="text-small text-text-secondary">{t('celebrationLockedHint')}</p>
+            ) : guestUpload?.status === 'anonymous' && !suppressAnonymousHelpText ? (
                 <p className="text-small text-text-secondary">{t('uploadSessionRequired')}</p>
             ) : null}
 
@@ -285,14 +343,16 @@ export function PhotoUploader({
                         ? 'cursor-not-allowed opacity-60'
                         : 'cursor-pointer',
                     !uploadBlocked &&
-                        !showNameSkeleton &&
-                        (isDragging
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border hover:border-primary/50 hover:bg-bg-section'),
+                    !showNameSkeleton &&
+                    (isDragging
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-primary/50 hover:bg-bg-section'),
                 )}
             >
                 <p className="mb-1 text-text-secondary">{t('dropzone')}</p>
-                <p className="text-small text-text-muted">{t('maxSize')}</p>
+                <p className="text-small text-text-muted">
+                    {t('maxSize', {maxMb: UPLOAD_MAX_MB})}
+                </p>
                 <PhotoFileInput
                     ref={fileInputRef}
                     id="gallery-photo-picker"

@@ -2,6 +2,7 @@ import "server-only";
 
 import {createServerClient} from "@shared/api/supabase/server";
 import {type GalleryPhotoView, mapPhotoRowToGalleryView, type PhotoDbRow} from "@entities/photo";
+import {canBrowseGalleryAt} from "@shared/lib/wedding-calendar";
 
 export type ListGalleryPhotosOptions = {
     /** Page size (max rows returned). */
@@ -26,6 +27,10 @@ export async function listGalleryPhotos(
     const limit = options?.limit ?? 48;
     const offset = options?.offset ?? 0;
     const viewerRsvpId = options?.viewerRsvpId;
+
+    if (!canBrowseGalleryAt(new Date())) {
+        return {ok: true, photos: [], hasMore: false};
+    }
 
     let supabase;
     try {

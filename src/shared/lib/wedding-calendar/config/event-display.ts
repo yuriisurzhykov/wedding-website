@@ -11,8 +11,9 @@
 export const EVENT_DISPLAY_TIMEZONE = 'America/Los_Angeles'
 
 export const DISPLAY_FORMATS = {
+    /** Weekday + full date in the event zone — richer than `long` for the hero. */
     heroWeddingLine: {
-        dateStyle: 'long',
+        dateStyle: 'full',
         timeZone: EVENT_DISPLAY_TIMEZONE,
     },
     storyWeddingLine: {

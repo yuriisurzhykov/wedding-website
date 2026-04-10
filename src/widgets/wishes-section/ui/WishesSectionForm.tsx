@@ -6,8 +6,10 @@ import {useTranslations} from "next-intl";
 import {toast} from "sonner";
 
 import {GuestSessionRestoreForm, useGuestSession} from "@features/guest-session";
-import {GALLERY_MAX_FILE_BYTES} from "@entities/photo";
+import {GALLERY_MAX_FILE_BYTES, GALLERY_MAX_SOURCE_FILE_BYTES,} from "@entities/photo";
 import {cn} from "@shared/lib/cn";
+import {GalleryPhotoPrepareError} from "@shared/lib/prepare-gallery-photo-for-upload";
+import {useCelebrationLive} from "@shared/lib/wedding-calendar/use-celebration-live";
 import {isGalleryUploadOversizeMessage} from "@shared/lib/validate-gallery-photo-file";
 import {Button} from "@shared/ui/Button";
 import {Input} from "@shared/ui/Input";
@@ -18,18 +20,23 @@ import {uploadWishAttachment} from "../lib/upload-wish-attachment";
 import type {WishesPresentation} from "../lib/wishes-presentation";
 
 const MAX_MB = Math.floor(GALLERY_MAX_FILE_BYTES / (1024 * 1024));
+const SOURCE_MAX_MB = Math.floor(
+    GALLERY_MAX_SOURCE_FILE_BYTES / (1024 * 1024),
+);
 
 export function WishesSectionForm({
-    presentation = "preview",
-    className,
-}: {
+                                      presentation = "preview",
+                                      className,
+                                  }: {
     presentation?: WishesPresentation;
     className?: string;
 }) {
     const t = useTranslations("wishes");
     const tu = useTranslations("upload");
+    const tGuestErr = useTranslations("guestSession.errors");
     const router = useRouter();
     const {status: guestStatus, session} = useGuestSession();
+    const isCelebrationLive = useCelebrationLive();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [name, setName] = useState("");
     const [message, setMessage] = useState("");
@@ -43,8 +50,16 @@ export function WishesSectionForm({
         guestStatus === "anonymous" && presentation === "full";
     const showHomeAnonymousHint =
         guestStatus === "anonymous" && presentation === "preview";
+    const photoBlockedByCelebration =
+        guestStatus === "authenticated" &&
+        session !== null &&
+        session.attending === true &&
+        !isCelebrationLive;
+
     const photoPickerDisabled =
-        guestStatus === "loading" || guestStatus === "anonymous";
+        guestStatus === "loading" ||
+        guestStatus === "anonymous" ||
+        photoBlockedByCelebration;
 
     useEffect(() => {
         if (photoPickerDisabled) {
@@ -81,7 +96,8 @@ export function WishesSectionForm({
                 photoR2Key = await uploadWishAttachment(
                     photo,
                     uploaderLabel,
-                    () => {},
+                    () => {
+                    },
                 );
             }
 
@@ -104,15 +120,20 @@ export function WishesSectionForm({
 
             if (!res.ok) {
                 let fieldAuthor: string[] | undefined;
+                let celebrationCode: string | undefined;
                 try {
                     const data = (await res.json()) as {
-                        fieldErrors?: {authorName?: string[]};
+                        fieldErrors?: { authorName?: string[] };
+                        error?: { code?: string };
                     };
                     fieldAuthor = data.fieldErrors?.authorName;
+                    celebrationCode = data.error?.code;
                 } catch {
                     /* ignore */
                 }
-                if (fieldAuthor?.length) {
+                if (celebrationCode === "celebration_not_live") {
+                    setError(tGuestErr("celebration_not_live.title"));
+                } else if (fieldAuthor?.length) {
                     setError(t("nameRequired"));
                 } else {
                     setError(t("error"));
@@ -132,6 +153,20 @@ export function WishesSectionForm({
             setSubmitting(false);
         } catch (err) {
             console.error("[WishesSectionForm]", err);
+            if (err instanceof GalleryPhotoPrepareError) {
+                if (err.kind === "source_too_large") {
+                    toast.error(
+                        tu("photoSourceTooLarge", {maxMb: SOURCE_MAX_MB}),
+                    );
+                } else if (err.kind === "output_too_large") {
+                    toast.error(tu("photoStillTooLarge", {maxMb: MAX_MB}));
+                } else {
+                    toast.error(tu("photoOptimizeFailed"));
+                }
+                setError(null);
+                setSubmitting(false);
+                return;
+            }
             const raw =
                 err instanceof Error && err.message.trim()
                     ? err.message
@@ -174,82 +209,87 @@ export function WishesSectionForm({
                 </p>
             ) : null}
             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-            {showNameSkeleton ? (
-                <div className="flex flex-col gap-2" aria-hidden>
-                    <div className="h-4 w-28 max-w-[40%] animate-pulse rounded bg-bg-section"/>
-                    <div className="h-10 w-full animate-pulse rounded-xl bg-bg-section"/>
-                </div>
-            ) : needsNameField ? (
-                <div className="flex flex-col gap-2">
-                    <label htmlFor="wish-name" className="text-small font-medium text-text-primary">
-                        {t("nameLabel")}
-                    </label>
-                    <Input
-                        id="wish-name"
-                        name="authorName"
-                        placeholder={t("namePlaceholder")}
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        autoComplete="name"
-                        required
-                    />
-                </div>
-            ) : session ? (
-                <p className="text-small text-text-secondary">
-                    {t("signedInAs", {name: session.displayName})}
-                </p>
-            ) : null}
-            <div className="flex flex-col gap-2">
-                <label htmlFor="wish-message" className="text-small font-medium text-text-primary">
-                    {t("messageLabel")}
-                </label>
-                <TextArea
-                    id="wish-message"
-                    name="message"
-                    placeholder={t("messagePlaceholder")}
-                    value={message}
-                    onChange={(e) => setMessage(e.target.value)}
-                    rows={4}
-                    required
-                    disabled={showNameSkeleton}
-                />
-            </div>
-            <div
-                className={cn(
-                    "flex flex-col gap-2",
-                    showNameSkeleton && "pointer-events-none opacity-60",
-                )}
-            >
-                <label htmlFor="wish-photo" className="text-small font-medium text-text-primary">
-                    {t("photoLabel")}
-                </label>
-                {photoPickerDisabled && guestStatus === "anonymous" ? (
-                    <p className="text-small text-text-muted" id="wish-photo-hint">
-                        {t("photoGuestSignInHint")}
+                {showNameSkeleton ? (
+                    <div className="flex flex-col gap-2" aria-hidden>
+                        <div className="h-4 w-28 max-w-[40%] animate-pulse rounded bg-bg-section"/>
+                        <div className="h-10 w-full animate-pulse rounded-xl bg-bg-section"/>
+                    </div>
+                ) : needsNameField ? (
+                    <div className="flex flex-col gap-2">
+                        <label htmlFor="wish-name" className="text-small font-medium text-text-primary">
+                            {t("nameLabel")}
+                        </label>
+                        <Input
+                            id="wish-name"
+                            name="authorName"
+                            placeholder={t("namePlaceholder")}
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            autoComplete="name"
+                            required
+                        />
+                    </div>
+                ) : session ? (
+                    <p className="text-small text-text-secondary">
+                        {t("signedInAs", {name: session.displayName})}
                     </p>
                 ) : null}
-                <PhotoFileInput
-                    ref={fileInputRef}
-                    id="wish-photo"
-                    showHint
-                    disabled={photoPickerDisabled}
-                    aria-describedby={
-                        photoPickerDisabled && guestStatus === "anonymous"
-                            ? "wish-photo-hint"
-                            : undefined
-                    }
-                    onFileChange={setPhoto}
-                    className="text-small text-text-secondary file:mr-3 file:rounded-pill file:border-0 file:bg-bg-section file:px-4 file:py-2 file:text-body file:text-text-primary"
-                />
-            </div>
-            {error ? (
-                <p className="text-small text-red-500" role="alert">
-                    {error}
-                </p>
-            ) : null}
-            <Button type="submit" disabled={submitting || showNameSkeleton}>
-                {submitting ? t("submitting") : t("submit")}
-            </Button>
+                <div className="flex flex-col gap-2">
+                    <label htmlFor="wish-message" className="text-small font-medium text-text-primary">
+                        {t("messageLabel")}
+                    </label>
+                    <TextArea
+                        id="wish-message"
+                        name="message"
+                        placeholder={t("messagePlaceholder")}
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        rows={4}
+                        required
+                        disabled={showNameSkeleton}
+                    />
+                </div>
+                <div
+                    className={cn(
+                        "flex flex-col gap-2",
+                        showNameSkeleton && "pointer-events-none opacity-60",
+                    )}
+                >
+                    <label htmlFor="wish-photo" className="text-small font-medium text-text-primary">
+                        {t("photoLabel")}
+                    </label>
+                    {photoBlockedByCelebration ? (
+                        <p className="text-small text-text-muted" id="wish-photo-hint">
+                            {t("photoLockedUntilCelebration")}
+                        </p>
+                    ) : photoPickerDisabled && guestStatus === "anonymous" ? (
+                        <p className="text-small text-text-muted" id="wish-photo-hint">
+                            {t("photoGuestSignInHint")}
+                        </p>
+                    ) : null}
+                    <PhotoFileInput
+                        ref={fileInputRef}
+                        id="wish-photo"
+                        showHint
+                        disabled={photoPickerDisabled}
+                        aria-describedby={
+                            (photoBlockedByCelebration ||
+                                (photoPickerDisabled && guestStatus === "anonymous"))
+                                ? "wish-photo-hint"
+                                : undefined
+                        }
+                        onFileChange={setPhoto}
+                        className="text-small text-text-secondary file:mr-3 file:rounded-pill file:border-0 file:bg-bg-section file:px-4 file:py-2 file:text-body file:text-text-primary"
+                    />
+                </div>
+                {error ? (
+                    <p className="text-small text-red-500" role="alert">
+                        {error}
+                    </p>
+                ) : null}
+                <Button type="submit" disabled={submitting || showNameSkeleton}>
+                    {submitting ? t("submitting") : t("submit")}
+                </Button>
             </form>
         </div>
     );

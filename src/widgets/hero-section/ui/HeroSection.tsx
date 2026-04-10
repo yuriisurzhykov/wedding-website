@@ -1,6 +1,7 @@
 import {getLocale, getTranslations} from "next-intl/server";
 
 import {Countdown} from "@shared/ui";
+import {ExternalLinkIcon} from "@shared/ui/icons/ExternalLinkIcon";
 import {formatHeroWeddingLine, getWeddingCeremonyDate} from "@shared/lib/wedding-calendar";
 import {VENUE} from '@entities/wedding-venue'
 
@@ -11,8 +12,7 @@ export async function HeroSection() {
 
     return (
         <section
-            className="flex min-h-screen flex-col items-center justify-center px-4 text-center"
-            style={{background: "var(--gradient-hero)"}}
+            className="hero-mesh flex min-h-screen flex-col items-center justify-center px-4 text-center"
         >
             <p
                 className="font-accent mb-2 text-[2rem] text-accent"
@@ -25,7 +25,7 @@ export async function HeroSection() {
                 {translator("names")}
             </h1>
 
-            <p className="font-display mb-2 text-h3 text-text-secondary">
+            <p className="font-display mb-3 max-w-2xl text-balance text-h2 text-text-primary">
                 {translator("date", {date: weddingDateLabel})}
             </p>
 
@@ -33,9 +33,11 @@ export async function HeroSection() {
                 href={VENUE.mapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mb-12 text-small text-text-muted underline-offset-4 transition-colors hover:text-primary hover:underline"
+                aria-label={translator("venueLinkAria")}
+                className="mb-12 inline-flex max-w-xl items-center justify-center gap-2 text-center text-small font-medium text-text-secondary underline decoration-primary decoration-2 underline-offset-[5px] transition-colors hover:text-primary hover:decoration-primary-dark"
             >
-                {translator("venue")}
+                <span>{translator("venue")}</span>
+                <ExternalLinkIcon className="h-4 w-4 shrink-0 text-primary opacity-90"/>
             </a>
 
             <Countdown targetDate={getWeddingCeremonyDate()}/>

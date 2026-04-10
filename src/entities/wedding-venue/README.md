@@ -13,4 +13,5 @@ Static venue and contact facts for the site (address, map link, parking note, co
 
 ## Extending
 
-Edit `model/venue.ts`. Keep `src/shared/lib/wedding-calendar/config/day-program.ts` map URL in sync with `VENUE.mapsUrl` (documented there) or consolidate later.
+Edit `model/venue.ts`. Keep `src/shared/lib/wedding-calendar/config/day-program.ts` map URL in sync with
+`VENUE.mapsUrl` (documented there) or consolidate later.

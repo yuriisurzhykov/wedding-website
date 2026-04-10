@@ -1,30 +1,21 @@
 import {getTranslations} from "next-intl/server";
 
-import {
-    DeepLinkButton,
-    PAYMENT_SERVICES,
-    ZELLE_PHONE_NUMBER,
-} from "@entities/payments";
-import {Section, SectionHeader} from "@shared/ui";
+import {DeepLinkButton, isPaymentConfigured, PAYMENT_SERVICES,} from "@entities/payments";
+import {Section, SectionHeader, type SectionTheme} from "@shared/ui";
 
-function isPaymentConfigured(
-    service: (typeof PAYMENT_SERVICES)[number],
-): boolean {
-    if (service.id === "zelle") {
-        return ZELLE_PHONE_NUMBER.length > 0;
-    }
-    return Boolean(service.deepLink || service.fallback);
-}
+type Props = Readonly<{
+    theme?: SectionTheme;
+}>;
 
 /**
  * Gift / donate section with deep-link buttons from `@entities/payments`.
  */
-export async function DonateSection() {
+export async function DonateSection({theme = "alt"}: Props = {}) {
     const t = await getTranslations("donate");
     const services = PAYMENT_SERVICES.filter(isPaymentConfigured);
 
     return (
-        <Section id="donate" theme="base">
+        <Section id="donate" theme={theme}>
             <div className="mx-auto max-w-[var(--content-width)]">
                 <SectionHeader title={t("title")} subtitle={t("subtitle")}/>
                 {services.length > 0 ? (

@@ -1,6 +1,7 @@
 /**
  * Builds `https://host` (or `http://` for localhost) from reverse-proxy / browser request headers.
- * Used when `NEXT_PUBLIC_SITE_URL` is unset (typical local dev) so transactional emails still get absolute links.
+ * Used when `getPublicSiteUrl()` returns nothing (no `NEXT_PUBLIC_SITE_URL` and no Vercel URL env),
+ * e.g. local dev, so transactional emails can still get absolute links when a `Request` is available.
  */
 
 /**
@@ -23,8 +24,8 @@ export function inferPublicSiteOriginFromRequest(request: Request): string | und
         protoRaw === "http" || protoRaw === "https"
             ? protoRaw
             : localhost
-              ? "http"
-              : "https";
+                ? "http"
+                : "https";
 
     try {
         const u = new URL(`${proto}://${hostRaw}`);

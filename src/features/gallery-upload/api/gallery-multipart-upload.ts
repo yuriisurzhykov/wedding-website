@@ -10,7 +10,9 @@ import {GALLERY_ALLOWED_CONTENT_TYPES, GALLERY_MAX_FILE_BYTES,} from "@entities/
 import {createServerClient} from "@shared/api/supabase/server";
 import {resolveGalleryImageContentType} from "@shared/lib/gallery-image-content-type";
 
-import {loadRsvpDisplayNameForUpload} from "../lib/load-rsvp-display-name-for-upload";
+import type {UploadMediaPurpose} from "../lib/assert-upload-celebration-policy";
+import {assertUploadCelebrationPolicy} from "../lib/assert-upload-celebration-policy";
+import {loadRsvpIdentityForUpload} from "../lib/load-rsvp-identity-for-upload";
 import {persistPhotoRow} from "../lib/persist-photo-row";
 import {putGalleryPhotoToR2} from "../lib/put-photo-to-r2";
 import {uploadSessionErrorCode} from "../lib/upload-session-error-code";
@@ -27,7 +29,8 @@ export type MultipartGalleryUploadResult =
     | { ok: false; kind: "config"; message: string }
     | { ok: false; kind: "r2"; message: string }
     | { ok: false; kind: "database"; message: string }
-    | { ok: false; kind: "no_session"; code: GuestSessionPublicErrorCode };
+    | { ok: false; kind: "no_session"; code: GuestSessionPublicErrorCode }
+    | { ok: false; kind: "celebration_closed" };
 
 function validationError(message: string): MultipartGalleryUploadResult {
     return {ok: false, kind: "validation", message};
@@ -54,11 +57,10 @@ export async function uploadGalleryPhotoFromMultipart(
     }
 
     const rsvpId = sessionResult.session.rsvp_id;
-    const nameResult = await loadRsvpDisplayNameForUpload(supabase, rsvpId);
-    if (!nameResult.ok) {
-        return {ok: false, kind: "database", message: nameResult.message};
+    const identity = await loadRsvpIdentityForUpload(supabase, rsvpId);
+    if (!identity.ok) {
+        return {ok: false, kind: "database", message: identity.message};
     }
-    const uploaderName = nameResult.name;
 
     let formData: FormData;
     try {
@@ -71,6 +73,15 @@ export async function uploadGalleryPhotoFromMultipart(
 
     if (!(file instanceof File)) {
         return validationError("Expected file field");
+    }
+
+    const purposeRaw = formData.get("purpose");
+    const purpose: UploadMediaPurpose =
+        purposeRaw === "wish" ? "wish" : "gallery";
+
+    const policy = assertUploadCelebrationPolicy(purpose, identity.attending);
+    if (!policy.ok) {
+        return {ok: false, kind: "celebration_closed"};
     }
 
     const fromBrowser = contentTypeSchema.safeParse(file.type);
@@ -112,7 +123,7 @@ export async function uploadGalleryPhotoFromMultipart(
 
     const saved = await persistPhotoRow(supabase, {
         r2Key: uploaded.key,
-        uploaderName,
+        uploaderName: identity.name,
         publicUrl: uploaded.publicUrl,
         sizeBytes: file.size,
         rsvpId,

@@ -55,8 +55,8 @@ export const rsvpPayloadSchema = z
                     typeof raw === "number"
                         ? raw
                         : typeof raw === "string" && raw.trim() !== ""
-                          ? Number(raw)
-                          : NaN;
+                            ? Number(raw)
+                            : NaN;
                 if (!Number.isInteger(n) || n < 1 || n > 100) {
                     ctx.addIssue({
                         code: z.ZodIssueCode.custom,
@@ -85,7 +85,7 @@ export const rsvpPayloadSchema = z
         }
     })
     .transform(
-        (data): {form: RsvpFormInput; locale: GuestEmailLocale} => {
+        (data): { form: RsvpFormInput; locale: GuestEmailLocale } => {
             const {locale: localeRaw, ...rest} = data;
             const locale = (localeRaw ?? "en") as GuestEmailLocale;
             const phone =
@@ -108,8 +108,8 @@ export const rsvpPayloadSchema = z
     );
 
 export type RsvpPayloadParseResult =
-    | {ok: true; data: RsvpFormInput; locale: GuestEmailLocale}
-    | {ok: false; error: z.ZodError};
+    | { ok: true; data: RsvpFormInput; locale: GuestEmailLocale }
+    | { ok: false; error: z.ZodError };
 
 /**
  * Parses and validates an RSVP JSON body.

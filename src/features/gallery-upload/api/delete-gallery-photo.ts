@@ -12,17 +12,17 @@ import {uploadSessionErrorCode} from "../lib/upload-session-error-code";
 import {parseDeleteGalleryPhotoPayload} from "../lib/validate-delete-photo-payload";
 
 export type DeleteGalleryPhotoResult =
-    | {ok: true}
+    | { ok: true }
     | {
-          ok: false;
-          kind: "validation";
-          fieldErrors: Record<string, string[] | undefined>;
-          formErrors: string[];
-      }
-    | {ok: false; kind: "no_session"; code: GuestSessionPublicErrorCode}
-    | {ok: false; kind: "forbidden"}
-    | {ok: false; kind: "config"; message: string}
-    | {ok: false; kind: "database"; message: string};
+    ok: false;
+    kind: "validation";
+    fieldErrors: Record<string, string[] | undefined>;
+    formErrors: string[];
+}
+    | { ok: false; kind: "no_session"; code: GuestSessionPublicErrorCode }
+    | { ok: false; kind: "forbidden" }
+    | { ok: false; kind: "config"; message: string }
+    | { ok: false; kind: "database"; message: string };
 
 /**
  * Deletes a gallery photo owned by the current guest session (`photos.rsvp_id` matches).

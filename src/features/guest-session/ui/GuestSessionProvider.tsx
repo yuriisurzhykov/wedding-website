@@ -14,19 +14,19 @@ export type ApplyGuestSessionFromApiBody = (body: {
 }) => void;
 
 export type GuestSessionRestoreResult =
-    | {ok: true}
+    | { ok: true }
     | {
-          ok: false;
-          kind: "validation";
-          fieldErrors: Record<string, string[] | undefined>;
-          formErrors: string[];
-      }
+    ok: false;
+    kind: "validation";
+    fieldErrors: Record<string, string[] | undefined>;
+    formErrors: string[];
+}
     | {
-          ok: false;
-          kind: "guest_error";
-          code: GuestSessionPublicErrorCode;
-          retryAfterSec?: number;
-      };
+    ok: false;
+    kind: "guest_error";
+    code: GuestSessionPublicErrorCode;
+    retryAfterSec?: number;
+};
 
 type GuestSessionContextValue = {
     status: GuestSessionStatus;
@@ -63,7 +63,7 @@ export function GuestSessionProvider({children}: { children: ReactNode }) {
     }, []);
 
     const restoreSession = useCallback(
-        async (input: {name: string; email: string}): Promise<GuestSessionRestoreResult> => {
+        async (input: { name: string; email: string }): Promise<GuestSessionRestoreResult> => {
             let res: Response;
             try {
                 res = await fetch("/api/guest/session", {
@@ -129,7 +129,9 @@ export function GuestSessionProvider({children}: { children: ReactNode }) {
                         sessionEstablished?: boolean
                     }).sessionEstablished && (data as { session?: GuestSessionClientSnapshot }).session &&
                     typeof (data as { session: { displayName?: unknown } }).session.displayName ===
-                    "string"
+                    "string" &&
+                    typeof (data as { session: { attending?: unknown } }).session.attending ===
+                    "boolean"
                 ) {
                     applyFromApiBody({
                         sessionEstablished: true,

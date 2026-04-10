@@ -1,6 +1,7 @@
 # Entity: schedule
 
-Day-of timeline for the wedding site: items are derived from the shared wedding calendar (single source for dates and program copy in code).
+Day-of timeline for the wedding site: items are derived from the shared wedding calendar (single source for dates and
+program copy in code).
 
 ## Public API
 
@@ -14,4 +15,5 @@ Day-of timeline for the wedding site: items are derived from the shared wedding 
 
 ## Extending
 
-Add or edit entries in the wedding calendar config; `SCHEDULE` stays a thin derived list. For a new anchor on the home page, also update `@entities/site-nav` if needed.
+Add or edit entries in the wedding calendar config; `SCHEDULE` stays a thin derived list. For a new anchor on the home
+page, also update `@entities/site-nav` if needed.

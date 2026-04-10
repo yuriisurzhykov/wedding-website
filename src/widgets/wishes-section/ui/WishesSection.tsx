@@ -1,7 +1,7 @@
 import {getTranslations} from "next-intl/server";
 
 import {cn} from "@shared/lib/cn";
-import {Section, SectionHeader} from "@shared/ui";
+import {Section, SectionHeader, type SectionTheme} from "@shared/ui";
 
 import {listWishes} from "@features/wish-list";
 
@@ -21,6 +21,8 @@ export type WishesSectionOptions = {
 type WishesSectionProps = {
     /** Home preview vs full wishes page; drives list limits inside the slice. */
     presentation?: WishesPresentation;
+    /** Background band for the section wrapper (defaults to `alt` for standalone wishes page). */
+    theme?: SectionTheme;
     /** Merged into the root `Section`. */
     className?: string;
     /** Merged into the inner content column. */
@@ -34,6 +36,7 @@ type WishesSectionProps = {
 export async function WishesSection(
     {
         presentation = "preview",
+        theme = "alt",
         className,
         contentClassName,
         options,
@@ -52,7 +55,7 @@ export async function WishesSection(
     const {form: formSlot, ...feedSlots} = options?.slots ?? {};
 
     return (
-        <Section id="wishes" theme="alt" className={className}>
+        <Section id="wishes" theme={theme} className={className}>
             <div
                 className={cn(
                     "mx-auto max-w-(--content-width)",

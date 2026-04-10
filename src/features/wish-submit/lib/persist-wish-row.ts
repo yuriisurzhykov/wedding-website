@@ -3,8 +3,8 @@ import "server-only";
 import type {SupabaseClient} from "@supabase/supabase-js";
 
 export type PersistWishResult =
-    | {ok: true}
-    | {ok: false; message: string};
+    | { ok: true }
+    | { ok: false; message: string };
 
 export async function persistWishRow(
     supabase: SupabaseClient,

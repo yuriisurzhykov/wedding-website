@@ -4,7 +4,8 @@ Section `#wishes` (home preview and `/wishes` full page).
 
 ## Public API
 
-- **`WishesSection`**: `presentation?: 'preview' | 'full'` (default `'preview'`). Limits map from `presentation` via `config.ts` (not re-exported).
+- **`WishesSection`**: `presentation?: 'preview' | 'full'` (default `'preview'`). Limits map from `presentation` via
+  `config.ts` (not re-exported).
 - **`className`**: root `Section`.
 - **`contentClassName`**: inner content column.
 - **`options.slots`**: `feed`, `loadMore`, `empty` (feed client), and `form` (wish form root).
@@ -13,19 +14,21 @@ Types: `WishesPresentation`, `WishesSectionOptions`.
 
 ## Layout
 
-| Piece | Role |
-| --- | --- |
-| `WishesSection` | Server: `listWishes` first page, header, wires feed + form order. |
-| `WishesFeedClient` | Client: `form` prop (React node) + feed; if there are no wishes, renders **empty message first**, then the form; if there are wishes, **form first**, then feed + load more. |
-| `WishesFeed` | Card list. |
-| `WishesLoadMore` | “Load more” (`full` only). |
-| `WishesFeedEmpty` | Empty state. |
-| `WishesSectionForm` | `POST /api/wishes` (`@features/wish-submit`). **`presentation`**: on the **full** `/wishes` page, when the guest is **anonymous**, **`GuestSessionRestoreForm`** is shown above the form. On the **home preview**, only a short hint with a link to **`#rsvp`** is shown (`wishes.anonymousSessionHintHome`). With a valid guest session, the name field is hidden and the server fills the author from RSVP; while loading, a skeleton avoids flashing the name field. Optional photo via **`PhotoFileInput`**; copy from **`upload`** + **`wishes`**. |
-| `lib/fetch-wishes-page.ts` | `GET /api/wishes` paging helper (client-only). |
+| Piece                      | Role                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `WishesSection`            | Server: `listWishes` first page, header, wires feed + form order.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| `WishesFeedClient`         | Client: `form` prop (React node) + feed; if there are no wishes, renders **empty message first**, then the form; if there are wishes, **form first**, then feed + load more.                                                                                                                                                                                                                                                                                                                                                                            |
+| `WishesFeed`               | Card list.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `WishesLoadMore`           | “Load more” (`full` only).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `WishesFeedEmpty`          | Empty state.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `WishesSectionForm`        | `POST /api/wishes` (`@features/wish-submit`). **`presentation`**: on the **full** `/wishes` page, when the guest is **anonymous**, **`GuestSessionRestoreForm`** is shown above the form. On the **home preview**, only a short hint with a link to **`#rsvp`** is shown (`wishes.anonymousSessionHintHome`). With a valid guest session, the name field is hidden and the server fills the author from RSVP; while loading, a skeleton avoids flashing the name field. Optional photo via **`PhotoFileInput`**; copy from **`upload`** + **`wishes`**. |
+| `lib/fetch-wishes-page.ts` | `GET /api/wishes` paging helper (client-only).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 
 ## Optional photo
 
-`lib/upload-wish-attachment.ts` uses the same presign / R2 / confirm path as the gallery (`@features/gallery-upload`). Size/type rules match `@entities/photo` and `@shared/lib/validate-gallery-photo-file`. On presign failure (e.g. size), the form surfaces errors and may toast using `upload` strings.
+`lib/upload-wish-attachment.ts` uses the same presign / R2 / confirm path as the gallery (`@features/gallery-upload`).
+Size/type rules match `@entities/photo` and `@shared/lib/validate-gallery-photo-file`. On presign failure (e.g. size),
+the form surfaces errors and may toast using `upload` strings.
 
 ## Errors & edge cases
 

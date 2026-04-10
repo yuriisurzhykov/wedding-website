@@ -4,6 +4,6 @@
 
 ## Public API
 
-| Export          | Role                         |
-|-----------------|------------------------------|
-| `WelcomeSection` | Async server component.      |
+| Export           | Role                    |
+|------------------|-------------------------|
+| `WelcomeSection` | Async server component. |

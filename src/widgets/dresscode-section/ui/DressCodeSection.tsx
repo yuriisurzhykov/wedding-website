@@ -3,18 +3,22 @@
 import {useState} from "react";
 import {useTranslations} from "next-intl";
 
-import {Section, SectionHeader} from "@shared/ui";
+import {Section, SectionHeader, type SectionTheme} from "@shared/ui";
 import {cn} from "@shared/lib/cn";
 import {PALETTE} from "@entities/dresscode";
 
-export function DressCodeSection() {
+type Props = Readonly<{
+    theme?: SectionTheme;
+}>;
+
+export function DressCodeSection({theme = "base"}: Props = {}) {
     const t = useTranslations("dresscode");
     const [selected, setSelected] = useState<string | null>(null);
 
     const selectedColor = PALETTE.find((c) => c.hex === selected);
 
     return (
-        <Section id="dresscode">
+        <Section id="dresscode" theme={theme}>
             <SectionHeader title={t("title")} subtitle={t("subtitle")}/>
 
             <div className="mb-10 grid grid-cols-4 justify-items-center gap-4 sm:grid-cols-7">
@@ -53,14 +57,11 @@ export function DressCodeSection() {
                     style={{background: selectedColor.hex}}
                 >
                     <p
-                        className="font-display text-h3"
-                        style={{
-                            color: selectedColor.allowed ? "#2C2420" : "#991B1B",
-                        }}
+                        className={`font-display text-h3 ${selectedColor.allowed ? "text-text-primary" : "text-red-700"}`}
                     >
                         {selectedColor.allowed ? t("yourColor") : t("notYourColor")}
                     </p>
-                    <p className="mt-1 text-small" style={{color: "#6B5C54"}}>
+                    <p className="mt-1 text-small text-text-secondary">
                         {t(`colors.${selectedColor.key}`)}
                     </p>
                 </div>

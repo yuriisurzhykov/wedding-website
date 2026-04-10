@@ -57,7 +57,7 @@ CREATE TABLE guest_sessions
 );
 
 -- =============================================
--- Magic link tokens (opaque hash; one-time via used_at; not session cookies)
+-- Magic link tokens (opaque hash; valid until expires_at; reusable for session restore; used_at is legacy)
 -- =============================================
 CREATE TABLE guest_magic_link_tokens
 (
@@ -65,6 +65,7 @@ CREATE TABLE guest_magic_link_tokens
     rsvp_id      UUID        NOT NULL REFERENCES rsvp (id) ON DELETE CASCADE,
     token_hash   TEXT        NOT NULL,
     expires_at   TIMESTAMPTZ NOT NULL,
+    -- Legacy (see migration 20260409120000): claim flow no longer sets this; eligibility is expires_at only.
     used_at      TIMESTAMPTZ,
     created_at   TIMESTAMPTZ          DEFAULT now()
 );

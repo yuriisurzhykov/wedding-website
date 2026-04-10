@@ -17,7 +17,9 @@ export type GuestSessionPublicErrorCode =
     | "upload_confirm_failed"
     | "upload_no_session"
     | "photo_delete_forbidden"
-    | "magic_link_invalid";
+    | "magic_link_invalid"
+    /** Gallery / wish photo uploads before celebration start (policy); attending guests only after start. */
+    | "celebration_not_live";
 
 export type GuestSessionErrorPayload = {
     code: GuestSessionPublicErrorCode;
@@ -58,6 +60,7 @@ export function httpStatusForGuestSessionErrorCode(
         case "restore_credentials_no_match":
             return 401;
         case "photo_delete_forbidden":
+        case "celebration_not_live":
             return 403;
         case "magic_link_invalid":
             return 400;

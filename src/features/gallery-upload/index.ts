@@ -19,6 +19,6 @@ export {
     type MultipartGalleryUploadResult,
 } from "./api/gallery-multipart-upload";
 export {
-    loadRsvpDisplayNameForUpload,
-    type LoadRsvpDisplayNameResult,
-} from "./lib/load-rsvp-display-name-for-upload";
+    loadRsvpIdentityForUpload,
+    type LoadRsvpIdentityForUploadResult,
+} from "./lib/load-rsvp-identity-for-upload";

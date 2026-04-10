@@ -7,14 +7,12 @@ import {toast} from 'sonner'
 import type {GalleryPhotoView} from '@entities/photo'
 import {GuestSessionRestoreForm, useGuestSession} from '@features/guest-session'
 import {Link} from '@/i18n/navigation'
+import {useCelebrationLive} from '@shared/lib/wedding-calendar/use-celebration-live'
 import {PhotoUploader} from '@shared/ui'
 
 import {deleteGalleryPhotoRequest} from '../lib/delete-gallery-photo-client'
 import {fetchGalleryPhotosPage} from '../lib/fetch-gallery-page'
-import {
-    galleryListLimitForPresentation,
-    type GalleryPresentation,
-} from '../lib/gallery-presentation'
+import {galleryListLimitForPresentation, type GalleryPresentation,} from '../lib/gallery-presentation'
 import {GalleryDeleteConfirmDialog} from './GalleryDeleteConfirmDialog'
 import {GalleryEmptyState} from './GalleryEmptyState'
 import {GalleryLightbox} from './GalleryLightbox'
@@ -40,12 +38,13 @@ type GalleryPhotosClientProps = {
  * Client island: upload, refetch list from API after success, thumbnails + lightbox.
  */
 export function GalleryPhotosClient({
-    initialPhotos,
-    initialHasMore,
-    presentation,
-    slots,
-}: GalleryPhotosClientProps) {
+                                        initialPhotos,
+                                        initialHasMore,
+                                        presentation,
+                                        slots,
+                                    }: GalleryPhotosClientProps) {
     const {status: guestStatus, session} = useGuestSession()
+    const isCelebrationLive = useCelebrationLive()
     const t = useTranslations('gallery')
     const tErr = useTranslations('guestSession.errors')
     const pageSize = galleryListLimitForPresentation(presentation)
@@ -89,6 +88,15 @@ export function GalleryPhotosClient({
         }
         void refetchPhotos()
     }, [guestStatus, refetchPhotos])
+
+    const prevCelebrationLiveRef = useRef(isCelebrationLive)
+    useEffect(() => {
+        const was = prevCelebrationLiveRef.current
+        prevCelebrationLiveRef.current = isCelebrationLive
+        if (isCelebrationLive && !was) {
+            void refetchPhotos()
+        }
+    }, [isCelebrationLive, refetchPhotos])
 
     const loadMore = useCallback(async () => {
         if (!hasMore || loadingMore || presentation !== 'full') {
@@ -200,6 +208,8 @@ export function GalleryPhotosClient({
             message = tErr('request_failed.title')
         } else if (code === 'server_error') {
             message = tErr('server_error.title')
+        } else if (code === 'celebration_not_live') {
+            message = tErr('celebration_not_live.title')
         }
         toast.error(message)
     }, [pendingDeleteId, hasMore, t, tErr])
@@ -214,15 +224,34 @@ export function GalleryPhotosClient({
         }
     }, [openIndex, photos, requestDeleteById])
 
+    if (!isCelebrationLive) {
+        const pendingOnly = (
+            <p className="mx-auto max-w-[min(36rem,var(--content-width))] text-center font-display text-body leading-relaxed text-text-secondary">
+                {t('celebrationPending')}
+            </p>
+        )
+        const pendingBlock =
+            presentation === 'full' ? (
+                <div className="mx-auto w-full max-w-xl">{pendingOnly}</div>
+            ) : (
+                pendingOnly
+            )
+        return slots?.uploader ? (
+            <div className={slots.uploader}>{pendingBlock}</div>
+        ) : (
+            pendingBlock
+        )
+    }
+
     const guestUpload =
         guestStatus === 'loading'
             ? {status: 'loading' as const}
             : guestStatus === 'authenticated' && session
-              ? {
+                ? {
                     status: 'authenticated' as const,
                     displayName: session.displayName,
                 }
-              : {status: 'anonymous' as const}
+                : {status: 'anonymous' as const}
 
     const showRestoreForm =
         guestStatus === 'anonymous' && presentation === 'full'
@@ -255,6 +284,7 @@ export function GalleryPhotosClient({
                 guestUpload={guestUpload}
                 onUploadSuccess={refetchPhotos}
                 suppressAnonymousHelpText={showHomeAnonymousHint}
+                uploadMediaPurpose="gallery"
             />
         </>
     )
@@ -273,17 +303,18 @@ export function GalleryPhotosClient({
             ) : (
                 uploader
             )}
-            {photos.length === 0 ? (
+            {isCelebrationLive && photos.length === 0 ? (
                 <GalleryEmptyState className={slots?.empty}/>
-            ) : (
+            ) : null}
+            {isCelebrationLive && photos.length > 0 ? (
                 <GalleryPhotoGrid
                     photos={photos}
                     onOpenPhoto={setOpenIndex}
                     onRequestDelete={requestDeleteById}
                     className={slots?.grid}
                 />
-            )}
-            {presentation === 'full' && photos.length > 0 ? (
+            ) : null}
+            {presentation === 'full' && isCelebrationLive && photos.length > 0 ? (
                 <GalleryLoadMore
                     hasMore={hasMore}
                     loading={loadingMore}
@@ -292,7 +323,7 @@ export function GalleryPhotosClient({
                 />
             ) : null}
             <GalleryLightbox
-                photos={photos}
+                photos={isCelebrationLive ? photos : []}
                 openIndex={openIndex}
                 onClose={handleCloseLightbox}
                 onPrev={goPrev}

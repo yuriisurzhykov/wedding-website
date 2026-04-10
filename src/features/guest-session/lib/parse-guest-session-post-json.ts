@@ -70,7 +70,8 @@ export function parseGuestSessionPostJson(data: unknown):
     if (
         data.sessionEstablished === true &&
         isRecord(data.session) &&
-        typeof data.session.displayName === "string"
+        typeof data.session.displayName === "string" &&
+        typeof data.session.attending === "boolean"
     ) {
         return {
             kind: "success",

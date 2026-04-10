@@ -8,35 +8,38 @@ import {GALLERY_PHOTOS_LIST_CACHE_TAG} from "@features/gallery-list";
 import {createServerClient} from "@shared/api/supabase/server";
 import {assertR2UploadConfig, createPresignedPhotoPutUrl} from "@shared/api/r2";
 
-import {loadRsvpDisplayNameForUpload} from "../lib/load-rsvp-display-name-for-upload";
+import {assertUploadCelebrationPolicy} from "../lib/assert-upload-celebration-policy";
+import {loadRsvpIdentityForUpload} from "../lib/load-rsvp-identity-for-upload";
 import {uploadSessionErrorCode} from "../lib/upload-session-error-code";
 import {parseGalleryConfirmPayload} from "../lib/validate-confirm-payload";
 import {parseGalleryPresignPayload} from "../lib/validate-presign-payload";
 import {persistPhotoRow} from "../lib/persist-photo-row";
 
 export type PresignGalleryUploadResult =
-    | {ok: true; url: string; key: string}
+    | { ok: true; url: string; key: string }
     | {
-          ok: false;
-          kind: "validation";
-          fieldErrors: Record<string, string[] | undefined>;
-          formErrors: string[];
-      }
-    | {ok: false; kind: "config"; message: string}
-    | {ok: false; kind: "r2"; message: string}
-    | {ok: false; kind: "no_session"; code: GuestSessionPublicErrorCode};
+    ok: false;
+    kind: "validation";
+    fieldErrors: Record<string, string[] | undefined>;
+    formErrors: string[];
+}
+    | { ok: false; kind: "config"; message: string }
+    | { ok: false; kind: "r2"; message: string }
+    | { ok: false; kind: "no_session"; code: GuestSessionPublicErrorCode }
+    | { ok: false; kind: "celebration_closed" };
 
 export type ConfirmGalleryUploadResult =
-    | {ok: true; publicUrl: string}
+    | { ok: true; publicUrl: string }
     | {
-          ok: false;
-          kind: "validation";
-          fieldErrors: Record<string, string[] | undefined>;
-          formErrors: string[];
-      }
-    | {ok: false; kind: "config"; message: string}
-    | {ok: false; kind: "database"; message: string}
-    | {ok: false; kind: "no_session"; code: GuestSessionPublicErrorCode};
+    ok: false;
+    kind: "validation";
+    fieldErrors: Record<string, string[] | undefined>;
+    formErrors: string[];
+}
+    | { ok: false; kind: "config"; message: string }
+    | { ok: false; kind: "database"; message: string }
+    | { ok: false; kind: "no_session"; code: GuestSessionPublicErrorCode }
+    | { ok: false; kind: "celebration_closed" };
 
 /**
  * Validates body, then returns a presigned PUT URL and object key for R2.
@@ -59,6 +62,14 @@ export async function presignGalleryUpload(
         return {ok: false, kind: "no_session", code: uploadSessionErrorCode(sessionResult)};
     }
 
+    const identity = await loadRsvpIdentityForUpload(
+        supabase,
+        sessionResult.session.rsvp_id,
+    );
+    if (!identity.ok) {
+        return {ok: false, kind: "config", message: identity.message};
+    }
+
     const parsed = parseGalleryPresignPayload(rawBody);
     if (!parsed.ok) {
         const flat = parsed.error.flatten();
@@ -68,6 +79,14 @@ export async function presignGalleryUpload(
             fieldErrors: flat.fieldErrors,
             formErrors: flat.formErrors,
         };
+    }
+
+    const policy = assertUploadCelebrationPolicy(
+        parsed.data.purpose,
+        identity.attending,
+    );
+    if (!policy.ok) {
+        return {ok: false, kind: "celebration_closed"};
     }
 
     try {
@@ -109,9 +128,9 @@ export async function confirmGalleryUpload(
     }
 
     const rsvpId = sessionResult.session.rsvp_id;
-    const nameResult = await loadRsvpDisplayNameForUpload(supabase, rsvpId);
-    if (!nameResult.ok) {
-        return {ok: false, kind: "database", message: nameResult.message};
+    const identity = await loadRsvpIdentityForUpload(supabase, rsvpId);
+    if (!identity.ok) {
+        return {ok: false, kind: "database", message: identity.message};
     }
 
     const parsed = parseGalleryConfirmPayload(rawBody);
@@ -123,6 +142,14 @@ export async function confirmGalleryUpload(
             fieldErrors: flat.fieldErrors,
             formErrors: flat.formErrors,
         };
+    }
+
+    const policy = assertUploadCelebrationPolicy(
+        parsed.data.purpose,
+        identity.attending,
+    );
+    if (!policy.ok) {
+        return {ok: false, kind: "celebration_closed"};
     }
 
     let publicUrlBase: string;
@@ -138,7 +165,7 @@ export async function confirmGalleryUpload(
 
     const saved = await persistPhotoRow(supabase, {
         r2Key: key,
-        uploaderName: nameResult.name,
+        uploaderName: identity.name,
         publicUrl,
         sizeBytes,
         rsvpId,

@@ -3,9 +3,9 @@ import "server-only";
 import {createServerClient} from "@shared/api/supabase/server";
 
 export type CountWishesResult =
-    | {ok: true; total: number}
-    | {ok: false; kind: "config"; message: string}
-    | {ok: false; kind: "database"; message: string};
+    | { ok: true; total: number }
+    | { ok: false; kind: "config"; message: string }
+    | { ok: false; kind: "database"; message: string };
 
 /**
  * Exact row count for `wishes` (service-role). Use for SSR copy such as “all (N)” without paginating the table.

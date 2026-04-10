@@ -1,6 +1,8 @@
 export {
     GALLERY_ALLOWED_CONTENT_TYPES,
     GALLERY_MAX_FILE_BYTES,
+    GALLERY_MAX_IMAGE_EDGE_PX,
+    GALLERY_MAX_SOURCE_FILE_BYTES,
     GALLERY_PHOTO_FILE_ACCEPT,
     type GalleryAllowedContentType,
 } from "./model/constants";

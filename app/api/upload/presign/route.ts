@@ -40,6 +40,12 @@ export async function POST(request: Request) {
         );
     }
 
+    if (result.kind === "celebration_closed") {
+        return NextResponse.json(buildGuestSessionErrorJson("celebration_not_live"), {
+            status: httpStatusForGuestSessionErrorCode("celebration_not_live"),
+        });
+    }
+
     if (result.kind === "config") {
         console.error("[api/upload/presign] config", result.message);
         return NextResponse.json(buildGuestSessionErrorJson("server_error"), {status: 500});

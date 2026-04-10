@@ -1,23 +1,25 @@
 import "server-only";
 
-import {loadRsvpDisplayNameForUpload} from "@features/gallery-upload";
+import {loadRsvpIdentityForUpload} from "@features/gallery-upload";
 import {validateGuestSessionFromRequest} from "@features/guest-session/server";
 import {createServerClient} from "@shared/api/supabase/server";
 import {assertR2UploadConfig} from "@shared/api/r2";
+import {canAttachWishPhotoAt} from "@shared/lib/wedding-calendar";
 
 import {parseWishSubmitPayload} from "../lib/validate-wish-payload";
 import {persistWishRow} from "../lib/persist-wish-row";
 
 export type SubmitWishResult =
-    | {ok: true}
+    | { ok: true }
     | {
-          ok: false;
-          kind: "validation";
-          fieldErrors: Record<string, string[] | undefined>;
-          formErrors: string[];
-      }
-    | {ok: false; kind: "config"; message: string}
-    | {ok: false; kind: "database"; message: string};
+    ok: false;
+    kind: "validation";
+    fieldErrors: Record<string, string[] | undefined>;
+    formErrors: string[];
+}
+    | { ok: false; kind: "config"; message: string }
+    | { ok: false; kind: "database"; message: string }
+    | { ok: false; kind: "celebration"; message: string };
 
 /**
  * Validates JSON and inserts into `wishes` (service role). Optional `photoR2Key` must
@@ -55,14 +57,28 @@ export async function submitWish(
 
     let authorName: string;
     if (sessionResult.ok) {
-        const nameResult = await loadRsvpDisplayNameForUpload(
+        const identity = await loadRsvpIdentityForUpload(
             supabase,
             sessionResult.session.rsvp_id,
         );
-        if (!nameResult.ok) {
-            return {ok: false, kind: "database", message: nameResult.message};
+        if (!identity.ok) {
+            return {ok: false, kind: "database", message: identity.message};
         }
-        authorName = nameResult.name;
+        authorName = identity.name;
+
+        if (
+            photoR2Key &&
+            !canAttachWishPhotoAt(new Date(), {
+                kind: "session",
+                attending: identity.attending,
+            })
+        ) {
+            return {
+                ok: false,
+                kind: "celebration",
+                message: "Wish photos are available after the celebration begins.",
+            };
+        }
     } else {
         const fromClient = authorNameRaw?.trim() ?? "";
         if (!fromClient) {
@@ -74,6 +90,17 @@ export async function submitWish(
             };
         }
         authorName = fromClient;
+
+        if (
+            photoR2Key &&
+            !canAttachWishPhotoAt(new Date(), {kind: "anonymous"})
+        ) {
+            return {
+                ok: false,
+                kind: "celebration",
+                message: "Wish photos are available after the celebration begins.",
+            };
+        }
     }
 
     let photoUrl: string | null = null;

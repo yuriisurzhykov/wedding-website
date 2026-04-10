@@ -3,14 +3,12 @@ import {Suspense} from "react";
 import {getTranslations} from "next-intl/server";
 
 import {cn} from "@shared/lib/cn";
-import {Section, SectionHeader} from "@shared/ui";
+import {isCelebrationLive} from "@shared/lib/wedding-calendar";
+import {Section, SectionHeader, type SectionTheme} from "@shared/ui";
 
 import {type GalleryPresentation} from "../lib/gallery-presentation";
 import {GalleryPhotosStreamFallback} from "./GalleryPhotosStreamFallback";
-import {
-    GallerySectionPhotosIsland,
-    type GalleryPhotosClientSlots,
-} from "./GallerySectionPhotosIsland";
+import {type GalleryPhotosClientSlots, GallerySectionPhotosIsland,} from "./GallerySectionPhotosIsland";
 
 export type {GalleryPresentation};
 
@@ -22,6 +20,8 @@ export type GallerySectionOptions = {
 type GallerySectionProps = {
     /** Home preview vs full gallery page; drives list limits inside the slice. */
     presentation?: GalleryPresentation;
+    /** Background band for the section wrapper (defaults to `alt` for standalone gallery page). */
+    theme?: SectionTheme;
     /** Merged into the root `Section` (padding/background wrapper). */
     className?: string;
     /** Merged into the inner content column (`max-w` + header + island). */
@@ -35,15 +35,17 @@ type GallerySectionProps = {
 export async function GallerySection(
     {
         presentation = "preview",
+        theme = "alt",
         className,
         contentClassName,
         options,
     }: GallerySectionProps = {}
 ) {
     const t = await getTranslations("gallery");
+    const celebrationLive = isCelebrationLive(new Date());
 
     return (
-        <Section id="gallery" theme="alt" className={className}>
+        <Section id="gallery" theme={theme} className={className}>
             <div
                 className={cn(
                     "mx-auto max-w-(--content-width)",
@@ -53,7 +55,10 @@ export async function GallerySection(
                 <SectionHeader title={t("title")} subtitle={t("subtitle")}/>
                 <Suspense
                     fallback={
-                        <GalleryPhotosStreamFallback presentation={presentation}/>
+                        <GalleryPhotosStreamFallback
+                            presentation={presentation}
+                            celebrationLive={celebrationLive}
+                        />
                     }
                 >
                     <GallerySectionPhotosIsland

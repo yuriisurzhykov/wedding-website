@@ -5,7 +5,7 @@
  *
  * | Area | Path | Change when |
  * |------|------|-------------|
- * | Ceremony & RSVP instants | `config/instants.ts` | The real date/time of those events changes |
+ * | Ceremony, celebration start & RSVP instants | `config/instants.ts` | The real date/time of those events changes |
  * | Locale display (zone, 12h, date style) | `config/event-display.ts` | How you want dates/times to *look* |
  * | Day-of schedule rows | `config/day-program.ts` | Program order, times, venues, i18n keys |
  *
@@ -21,7 +21,18 @@
  * `locale` from `useLocale()` / `getLocale()` into the formatters.
  */
 
-export {getRsvpDeadlineDate, getWeddingCeremonyDate} from './internal/resolve-instants'
+export {
+    getCelebrationStartDate,
+    getRsvpDeadlineDate,
+    getWeddingCeremonyDate,
+    isCelebrationLive,
+} from './internal/resolve-instants'
+
+export {
+    canAttachWishPhotoAt,
+    canBrowseGalleryAt,
+    canUploadToGalleryAt,
+} from './celebration-gates'
 
 export {
     formatHeroWeddingLine,

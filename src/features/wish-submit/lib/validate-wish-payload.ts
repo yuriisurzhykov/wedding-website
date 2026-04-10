@@ -23,8 +23,8 @@ export type WishSubmitPayload = z.infer<typeof wishSubmitPayloadSchema>;
 export function parseWishSubmitPayload(
     raw: unknown,
 ):
-    | {ok: true; data: WishSubmitPayload}
-    | {ok: false; error: z.ZodError} {
+    | { ok: true; data: WishSubmitPayload }
+    | { ok: false; error: z.ZodError } {
     const result = wishSubmitPayloadSchema.safeParse(raw);
     if (!result.success) {
         return {ok: false, error: result.error};

@@ -1,8 +1,5 @@
 import {DISPLAY_FORMATS} from '../config/event-display'
-import {
-    getRsvpDeadlineDate,
-    getWeddingCeremonyDate,
-} from './resolve-instants'
+import {getRsvpDeadlineDate, getWeddingCeremonyDate,} from './resolve-instants'
 
 export function formatHeroWeddingLine(locale: string): string {
     return new Intl.DateTimeFormat(locale, DISPLAY_FORMATS.heroWeddingLine).format(

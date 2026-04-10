@@ -1,11 +1,13 @@
 # feature: wish-list
 
-Read-only fetch of `wishes` (service role). Used by `@widgets/wishes-section` for the **SSR first page**. Further pages use the same contract over HTTP (no duplicated query logic in the route handler beyond Zod).
+Read-only fetch of `wishes` (service role). Used by `@widgets/wishes-section` for the **SSR first page**. Further pages
+use the same contract over HTTP (no duplicated query logic in the route handler beyond Zod).
 
 ## `countWishes()`
 
 - **Returns**: `{ ok: true, total }` or `{ ok: false, kind, message }` (same error kinds as list).
-- **Use**: SSR-only totals (e.g. “All wishes (N)”); keep off the default public GET path unless you add an explicit opt-in query later.
+- **Use**: SSR-only totals (e.g. “All wishes (N)”); keep off the default public GET path unless you add an explicit
+  opt-in query later.
 
 ## `listWishes(options?)`
 
@@ -18,6 +20,7 @@ Read-only fetch of `wishes` (service role). Used by `@widgets/wishes-section` fo
 
 ## HTTP mirror (unified with gallery)
 
-`GET /api/wishes?limit=&offset=` — Zod-validated; **400** `invalid_query`; **500** `server_error`. JSON: `{ wishes, hasMore }`.
+`GET /api/wishes?limit=&offset=` — Zod-validated; **400** `invalid_query`; **500** `server_error`. JSON:
+`{ wishes, hasMore }`.
 
 `POST /api/wishes` remains handled by `@features/wish-submit` in the same route file.

@@ -2,14 +2,14 @@ import type {ReactNode} from 'react'
 
 import {cn} from '@shared/lib/cn'
 
-type SectionTheme = 'base' | 'alt' | 'dark'
+export type SectionTheme = 'base' | 'alt' | 'dark'
 
 export function Section({
-    id,
-    theme = 'base',
-    className,
-    children,
-}: {
+                            id,
+                            theme = 'base',
+                            className,
+                            children,
+                        }: {
     id?: string
     theme?: SectionTheme
     className?: string

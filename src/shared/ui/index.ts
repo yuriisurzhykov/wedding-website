@@ -17,6 +17,7 @@ export {
 } from './PhotoUploader'
 export type {PhotoUploadAdapter, PhotoUploaderGuestSession} from './PhotoUploader'
 export {Section} from './Section'
+export type {SectionTheme} from './Section'
 export {SectionHeader} from './SectionHeader'
 export {Surface} from './Surface'
 export type {SurfaceVariant} from './Surface'

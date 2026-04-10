@@ -15,9 +15,9 @@ const VENUE_MAPS_URL =
 export const DAY_PROGRAM_TIMELINE = [
     {
         id: 'gathering',
+        iconId: 'gathering',
         hour: 14,
         minute: 0,
-        icon: '🏛️',
         titleKey: 'schedule.items.gathering.title',
         descKey: 'schedule.items.gathering.desc',
         location: 'WGBC Battle Ground — welcome area',
@@ -25,9 +25,9 @@ export const DAY_PROGRAM_TIMELINE = [
     },
     {
         id: 'ceremony',
+        iconId: 'ceremony',
         hour: 15,
         minute: 0,
-        icon: '💍',
         titleKey: 'schedule.items.ceremony.title',
         descKey: 'schedule.items.ceremony.desc',
         location: 'WGBC Battle Ground — ceremony',
@@ -35,9 +35,9 @@ export const DAY_PROGRAM_TIMELINE = [
     },
     {
         id: 'reception',
+        iconId: 'reception',
         hour: 17,
         minute: 0,
-        icon: '🚗',
         titleKey: 'schedule.items.reception.title',
         descKey: 'schedule.items.reception.desc',
         location: 'WGBC Battle Ground — reception',
@@ -45,9 +45,9 @@ export const DAY_PROGRAM_TIMELINE = [
     },
     {
         id: 'dinner',
+        iconId: 'dinner',
         hour: 18,
         minute: 0,
-        icon: '🥂',
         titleKey: 'schedule.items.dinner.title',
         descKey: 'schedule.items.dinner.desc',
         location: 'WGBC Battle Ground — celebration',

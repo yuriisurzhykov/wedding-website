@@ -1,7 +1,4 @@
-import {
-    GALLERY_ALLOWED_CONTENT_TYPES,
-    type GalleryAllowedContentType,
-} from "@entities/photo";
+import {GALLERY_ALLOWED_CONTENT_TYPES, type GalleryAllowedContentType,} from "@entities/photo";
 
 const EXT_TO_TYPE: Record<string, GalleryAllowedContentType> = {
     jpg: "image/jpeg",

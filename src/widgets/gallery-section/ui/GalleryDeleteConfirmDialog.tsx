@@ -17,11 +17,11 @@ type GalleryDeleteConfirmDialogProps = {
  * Native `<dialog>` confirmation — matches site tokens (`rounded-lg`, `shadow-modal`, `bg-bg-card`).
  */
 export function GalleryDeleteConfirmDialog({
-    open,
-    isDeleting,
-    onConfirm,
-    onCancel,
-}: GalleryDeleteConfirmDialogProps) {
+                                               open,
+                                               isDeleting,
+                                               onConfirm,
+                                               onCancel,
+                                           }: GalleryDeleteConfirmDialogProps) {
     const t = useTranslations('gallery')
     const dialogRef = useRef<HTMLDialogElement>(null)
 

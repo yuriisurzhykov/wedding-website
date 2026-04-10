@@ -4,6 +4,6 @@ Timeline of the wedding day from `@entities/schedule` with localized times via `
 
 ## Public API
 
-| Export           | Role                    |
-|------------------|-------------------------|
+| Export            | Role                    |
+|-------------------|-------------------------|
 | `ScheduleSection` | Async server component. |

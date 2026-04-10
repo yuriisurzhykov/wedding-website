@@ -11,10 +11,10 @@ Opaque guest sessions after RSVP: **raw token only in HttpOnly cookie**, **SHA-2
 
 ## Entry points
 
-| Module                           | Use when                                                                                                                                                                                                                                                                                                                                                                                   |
-|----------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `@features/guest-session`        | **Client-safe**: shared types, §4 `buildGuestSessionClientSnapshot`, §5 `buildGuestSessionErrorJson`, `httpStatusForGuestSessionErrorCode`, `mapValidateGuestSessionFailureToCode`, **`GuestSessionProvider` / `useGuestSession`** (hydrate from `GET /api/guest/session`, **`restoreSession({ name, email })`** → `POST /api/guest/session`, apply §4 snapshot on success), **`GuestSessionRestoreForm`** (reusable name+email UI; `layout: 'page' \| 'embedded'`). Safe to import from client components (no `server-only` chain). |
-| `@features/guest-session/server` | **Server only**: `createGuestSession`, `validateGuestSession`, `validateGuestSessionFromRequest`, cookie extractors/descriptors, `getGuestSessionRuntimeConfig`, `hashSessionToken`, restore helpers (see HTTP routes below).                                                                                                                                                              |
+| Module                           | Use when                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+|----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `@features/guest-session`        | **Client-safe**: shared types, §4 snapshot via `buildGuestSessionClientSnapshot` (alias of `@entities/guest-viewer` `buildGuestViewerSnapshot`), §5 `buildGuestSessionErrorJson`, `httpStatusForGuestSessionErrorCode`, `mapValidateGuestSessionFailureToCode`, **`GuestSessionProvider` / `useGuestSession`** (hydrate from `GET /api/guest/session`, **`restoreSession({ name, email })`** → `POST /api/guest/session`, apply §4 snapshot on success), **`GuestSessionRestoreForm`** (reusable name+email UI; `layout: 'page' \| 'embedded'`). Safe to import from client components (no `server-only` chain). |
+| `@features/guest-session/server` | **Server only**: `createGuestSession`, `validateGuestSession`, `validateGuestSessionFromRequest`, cookie extractors/descriptors, `getGuestSessionRuntimeConfig`, `hashSessionToken`, restore helpers (see HTTP routes below).                                                                                                                                                                                                                                                                                                                                                                                    |
 
 ## HTTP: `POST /api/rsvp`
 
@@ -27,9 +27,11 @@ same `session` / `sessionEstablished` fields when a session was created before m
 Wrap the app (e.g. `[locale]/layout`) with **`GuestSessionProvider`**; the RSVP widget passes `applyFromApiBody` into
 `submitRsvpFetch` so the UI updates in the same tick as the response (plan §3.3).
 
-**Restore shell (plan §3, §8.3):** localized page `app/[locale]/guest/sign-in/page.tsx` renders **`GuestSessionRestoreForm`** with
+**Restore shell (plan §3, §8.3):** localized page `app/[locale]/guest/sign-in/page.tsx` renders *
+*`GuestSessionRestoreForm`** with
 `layout="page"`. Gallery and wishes embed the same form with `layout="embedded"` when the user is anonymous so they can
-restore without hunting for a link. Main nav includes **`guestSignIn`** (label `nav.guestSignIn`) whenever the session is
+restore without hunting for a link. Main nav includes **`guestSignIn`** (label `nav.guestSignIn`) whenever the session
+is
 not `authenticated` (hidden after sign-in). Copy for the form lives under **`guestSession.restore.*`** in `messages/*`.
 
 ## HTTP: `GET` / `POST` `/api/guest/session`
@@ -45,15 +47,16 @@ Thin handlers in `app/api/guest/session/route.ts`.
 
 Query: **`token`** (opaque, required), **`locale`** (`ru` \| `en`, optional, default `en`).
 
-| Outcome                                                       | Response                                                                                         |
-|---------------------------------------------------------------|--------------------------------------------------------------------------------------------------|
-| Valid unused token, not expired                               | **302** to localized home with **Set-Cookie** (`guest_sessions`).                                |
-| Missing/invalid/expired/used token                            | **302** to `/{locale}/guest/claim?error=magic_link_invalid` (default-locale path has no prefix). |
-| DB / session insert failure                                   | **302** to `…/guest/claim?error=server_error`.                                                   |
-| Missing public site URL (`NEXT_PUBLIC_SITE_URL` / Vercel URL) | **500** + `error.code: server_error` (misconfiguration).                                         |
+| Outcome                                                                                                                                                                                 | Response                                                                                              |
+|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
+| Valid token, not past `expires_at`                                                                                                                                                      | **302** to localized home with **Set-Cookie** (`guest_sessions`). Same link works again until expiry. |
+| Missing/invalid/expired token                                                                                                                                                           | **302** to `/{locale}/guest/claim?error=magic_link_invalid` (default-locale path has no prefix).      |
+| DB / session insert failure                                                                                                                                                             | **302** to `…/guest/claim?error=server_error`.                                                        |
+| Missing public site URL (no `getPublicSiteUrl()` / `resolvePublicSiteBaseForServerEmail` result — set `NEXT_PUBLIC_SITE_URL` or rely on Vercel `VERCEL_*`; see `@shared/lib/README.md`) | **500** + `error.code: server_error` (misconfiguration).                                              |
 
-Implementation: `claimMagicLink` in `@features/guest-session/server` (marks `guest_magic_link_tokens.used_at` after
-session create).
+Implementation: `claimMagicLink` in `@features/guest-session/server` validates the opaque token against
+`guest_magic_link_tokens` by hash and `expires_at` only (session **restore** semantics; the DB column `used_at` is
+legacy and is not updated on claim).
 
 ## Rate limiting (restore `POST`, plan §13)
 
@@ -128,15 +131,20 @@ Use **`buildGuestSessionErrorJson(code, { retryAfterSec })`** for the body and *
 | `upload_confirm_failed`        | Confirm step failed                                                                       | 400            | `…upload_confirm_failed.…`                                                     |
 | `upload_no_session`            | Upload requires guest session                                                             | 400            | `…upload_no_session.…`                                                         |
 | `photo_delete_forbidden`       | Delete not allowed (e.g. not owner / IDOR-safe wording)                                   | 403            | `…photo_delete_forbidden.…`                                                    |
-| `magic_link_invalid`           | Magic-link claim failed (bad, expired, or already used token — same UX wording)           | 400            | `guestClaim.*` (claim error page after redirect)                               |
+| `magic_link_invalid`           | Magic-link claim failed (bad or expired token)                                            | 400            | `guestClaim.*` (claim error page after redirect)                               |
 
 All user-visible copy must live in **`messages/en.json`** and **`messages/ru.json`**; the client chooses strings by
 `error.code`.
 
 ## §4 Client snapshot
 
-`buildGuestSessionClientSnapshot({ name, email })` returns `{ displayName, emailMasked? }` for JSON bodies after RSVP /
-restore / magic link. **Never** put the raw session token in JSON.
+Canonical type: **`GuestViewerSnapshot`** in `@entities/guest-viewer` (re-exported as **`GuestSessionClientSnapshot`**
+here for §4 / API stability).
+
+`buildGuestSessionClientSnapshot({ name, email, attending })` returns `{ displayName, emailMasked?, attending }` for
+JSON bodies after RSVP /
+restore / magic link. **`attending`** comes from the persisted `rsvp` row and is the app’s policy hook (e.g. gallery /
+wishes); **Never** put the raw session token in JSON.
 
 ## Extending
 

@@ -1,8 +1,8 @@
 import type {GuestSessionPublicErrorCode} from '@features/guest-session'
 
 export type DeleteGalleryPhotoClientResult =
-    | {ok: true}
-    | {ok: false; code: GuestSessionPublicErrorCode | 'validation' | 'unknown'}
+    | { ok: true }
+    | { ok: false; code: GuestSessionPublicErrorCode | 'validation' | 'unknown' }
 
 /**
  * Calls `DELETE /api/gallery/photos` with the guest session cookie.
@@ -40,11 +40,11 @@ export async function deleteGalleryPhotoRequest(
         body.error &&
         typeof body.error === 'object' &&
         'code' in body.error &&
-        typeof (body.error as {code: unknown}).code === 'string'
+        typeof (body.error as { code: unknown }).code === 'string'
     ) {
         return {
             ok: false,
-            code: (body.error as {code: GuestSessionPublicErrorCode}).code,
+            code: (body.error as { code: GuestSessionPublicErrorCode }).code,
         }
     }
 

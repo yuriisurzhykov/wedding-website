@@ -21,7 +21,12 @@ function extractGuestSessionFromRsvpJson(data: unknown): Parameters<
         return {sessionEstablished: false};
     }
     const displayName = (s as Record<string, unknown>).displayName;
-    if (typeof displayName !== "string" || !displayName.trim()) {
+    const attending = (s as Record<string, unknown>).attending;
+    if (
+        typeof displayName !== "string" ||
+        !displayName.trim() ||
+        typeof attending !== "boolean"
+    ) {
         return {sessionEstablished: false};
     }
     return {
@@ -49,7 +54,7 @@ export class RsvpNotificationError extends Error {
 
 function isNotificationFailurePayload(
     data: unknown,
-): data is {error: string; step: "admin" | "guest"; id: string} {
+): data is { error: string; step: "admin" | "guest"; id: string } {
     if (!data || typeof data !== "object") return false;
     const o = data as Record<string, unknown>;
     return (

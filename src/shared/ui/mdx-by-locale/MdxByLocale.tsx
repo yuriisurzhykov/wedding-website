@@ -18,13 +18,13 @@ const storyByLocale: Record<string, ComponentType> = {
 }
 
 export function MdxByLocale({
-    part,
-    locale,
-}: {
+                                part,
+                                locale,
+                            }: {
     part: 'welcome' | 'story'
     locale: string
 }) {
     const map = part === 'welcome' ? welcomeByLocale : storyByLocale
     const Content = map[locale] ?? map.ru
-    return <Content />
+    return <Content/>
 }

@@ -98,7 +98,7 @@ export function GuestSessionRestoreForm({
         if (result.ok) {
             toast.success(t("successToast"));
             if (layout === "page") {
-                router.refresh();
+                router.push("/");
             }
             await onSuccess?.();
             setName("");

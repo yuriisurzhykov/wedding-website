@@ -11,9 +11,9 @@ export type ListWishesOptions = {
 };
 
 export type ListWishesResult =
-    | {ok: true; wishes: WishView[]; hasMore: boolean}
-    | {ok: false; kind: "config"; message: string}
-    | {ok: false; kind: "database"; message: string};
+    | { ok: true; wishes: WishView[]; hasMore: boolean }
+    | { ok: false; kind: "config"; message: string }
+    | { ok: false; kind: "database"; message: string };
 
 /**
  * Loads wishes (service-role read). Fetches `limit + 1` rows to set `hasMore` without a separate count.

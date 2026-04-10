@@ -1,20 +1,11 @@
 'use client'
 
-import {
-    useCallback,
-    useEffect,
-    useRef,
-    useState,
-    type ReactNode,
-} from 'react'
+import {type ReactNode, useCallback, useEffect, useRef, useState,} from 'react'
 
 import type {WishView} from '@entities/wish'
 
 import {fetchWishesPage} from '../lib/fetch-wishes-page'
-import {
-    type WishesPresentation,
-    wishesListLimitForPresentation,
-} from '../lib/wishes-presentation'
+import {wishesListLimitForPresentation, type WishesPresentation,} from '../lib/wishes-presentation'
 import {WishesFeed} from './WishesFeed'
 import {WishesFeedEmpty} from './WishesFeedEmpty'
 import {WishesLoadMore} from './WishesLoadMore'
@@ -38,12 +29,12 @@ type WishesFeedClientProps = {
  * Client island: paginated feed on the full wishes page; preview uses SSR slice only.
  */
 export function WishesFeedClient({
-    form,
-    initialWishes,
-    initialHasMore,
-    presentation,
-    slots,
-}: WishesFeedClientProps) {
+                                     form,
+                                     initialWishes,
+                                     initialHasMore,
+                                     presentation,
+                                     slots,
+                                 }: WishesFeedClientProps) {
     const pageSize = wishesListLimitForPresentation(presentation)
     const serverSigRef = useRef(
         `${initialWishes.map((w) => w.id).join(',')}:${initialHasMore}`,

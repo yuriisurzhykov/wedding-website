@@ -1,7 +1,4 @@
-import {
-    getScheduleItems,
-    type ScheduleItem,
-} from '@shared/lib/wedding-calendar'
+import {getScheduleItems, type ScheduleItem,} from '@shared/lib/wedding-calendar'
 
 export type {ScheduleItem}
 

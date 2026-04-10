@@ -5,10 +5,7 @@ import {z} from "zod";
 
 import {mapRsvpFormToRow} from "@entities/rsvp";
 
-import {
-    buildGuestSessionClientSnapshot,
-    type GuestSessionClientSnapshot,
-} from "./client-snapshot";
+import {buildGuestSessionClientSnapshot, type GuestSessionClientSnapshot,} from "./client-snapshot";
 import {createGuestSession} from "./create-session";
 import {getGuestSessionRuntimeConfig} from "./get-guest-session-config";
 
@@ -21,8 +18,8 @@ const restoreCredentialsSchema = z
     .strict();
 
 export type ParseGuestSessionRestoreBodyResult =
-    | {ok: true; name: string; email: string}
-    | {ok: false; error: z.ZodError};
+    | { ok: true; name: string; email: string }
+    | { ok: false; error: z.ZodError };
 
 /**
  * Parses `POST /api/guest/session` JSON. Field rules align with RSVP payload normalization via
@@ -40,12 +37,12 @@ export function parseGuestSessionRestoreBody(
 
 export type RestoreGuestSessionByCredentialsResult =
     | {
-          ok: true;
-          rawToken: string;
-          session: GuestSessionClientSnapshot;
-      }
-    | {ok: false; kind: "no_match"}
-    | {ok: false; kind: "database"; message: string};
+    ok: true;
+    rawToken: string;
+    session: GuestSessionClientSnapshot;
+}
+    | { ok: false; kind: "no_match" }
+    | { ok: false; kind: "database"; message: string };
 
 /**
  * Finds an `rsvp` row using the same normalization as RSVP persistence, creates a new
@@ -69,7 +66,7 @@ export async function restoreGuestSessionByCredentials(
 
     const {data, error} = await supabase
         .from("rsvp")
-        .select("id, name, email")
+        .select("id, name, email, attending")
         .eq("email", row.email)
         .eq("name", row.name)
         .maybeSingle();
@@ -92,9 +89,11 @@ export async function restoreGuestSessionByCredentials(
         return {ok: false, kind: "database", message: created.message};
     }
 
+    const rsvpRow = data as { name: string; email: string | null; attending: boolean };
     const session = buildGuestSessionClientSnapshot({
-        name: data.name,
-        email: data.email,
+        name: rsvpRow.name,
+        email: rsvpRow.email,
+        attending: rsvpRow.attending,
     });
 
     return {
@@ -105,9 +104,9 @@ export async function restoreGuestSessionByCredentials(
 }
 
 export type LoadGuestSessionSnapshotResult =
-    | {ok: true; snapshot: GuestSessionClientSnapshot}
-    | {ok: false; kind: "not_found"}
-    | {ok: false; kind: "database"; message: string};
+    | { ok: true; snapshot: GuestSessionClientSnapshot }
+    | { ok: false; kind: "not_found" }
+    | { ok: false; kind: "database"; message: string };
 
 /**
  * Loads display fields for §4 JSON after a validated `guest_sessions` row.
@@ -118,7 +117,7 @@ export async function loadGuestSessionClientSnapshotForRsvp(
 ): Promise<LoadGuestSessionSnapshotResult> {
     const {data, error} = await supabase
         .from("rsvp")
-        .select("name, email")
+        .select("name, email, attending")
         .eq("id", rsvpId)
         .maybeSingle();
 
@@ -130,12 +129,13 @@ export async function loadGuestSessionClientSnapshotForRsvp(
         return {ok: false, kind: "not_found"};
     }
 
-    const row = data as {name: string; email: string | null};
+    const row = data as { name: string; email: string | null; attending: boolean };
     return {
         ok: true,
         snapshot: buildGuestSessionClientSnapshot({
             name: row.name,
             email: row.email,
+            attending: row.attending,
         }),
     };
 }

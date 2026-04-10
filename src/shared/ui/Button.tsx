@@ -20,12 +20,12 @@ const sizes: Record<Size, string> = {
 }
 
 export function Button({
-    variant = 'primary',
-    size = 'md',
-    className,
-    type = 'button',
-    ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & {
+                           variant = 'primary',
+                           size = 'md',
+                           className,
+                           type = 'button',
+                           ...props
+                       }: ButtonHTMLAttributes<HTMLButtonElement> & {
     variant?: Variant
     size?: Size
 }) {

@@ -24,11 +24,11 @@ type SurfaceProps = {
  * Prefer this over ad-hoc `rounded-* border bg-*` on each screen.
  */
 export function Surface({
-    variant = "raised",
-    className,
-    children,
-    ...rest
-}: SurfaceProps) {
+                            variant = "raised",
+                            className,
+                            children,
+                            ...rest
+                        }: SurfaceProps) {
     return (
         <div className={cn(variantClass[variant], className)} {...rest}>
             {children}

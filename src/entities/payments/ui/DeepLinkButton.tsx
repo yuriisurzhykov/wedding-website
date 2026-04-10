@@ -17,12 +17,14 @@ export function DeepLinkButton({service}: { service: PaymentConfig }) {
     }, [])
 
     async function handleClick() {
+        const zellePhone = service.zellePhone ?? ZELLE_PHONE_NUMBER
+
         if (!service.deepLink) {
             try {
-                await navigator.clipboard.writeText(ZELLE_PHONE_NUMBER)
+                await navigator.clipboard.writeText(zellePhone)
                 setFeedback(translator('zelleCopied'))
             } catch {
-                setFeedback(`${translator('zelleCopyFailed')} ${ZELLE_PHONE_NUMBER}`)
+                setFeedback(`${translator('zelleCopyFailed')} ${zellePhone}`)
             }
             clearFeedbackLater()
             return

@@ -2,6 +2,7 @@ import {formatUploadApiErrorResponse} from "@shared/lib/format-upload-api-error"
 import {postMultipartGalleryPhoto} from "@shared/lib/gallery-client-upload";
 import {resolveGalleryImageContentType} from "@shared/lib/gallery-image-content-type";
 import {GALLERY_USE_SERVER_MULTIPART_UPLOAD} from "@shared/lib/gallery-upload-mode";
+import {prepareGalleryPhotoFileForUpload} from "@shared/lib/prepare-gallery-photo-for-upload";
 
 /**
  * Returns the R2 object `key` for `POST /api/wishes` (`photoR2Key`).
@@ -13,14 +14,15 @@ export async function uploadWishAttachment(
     uploaderName: string,
     onProgress: (p: number) => void,
 ): Promise<string> {
-    const contentType = resolveGalleryImageContentType(file);
+    const uploadFile = await prepareGalleryPhotoFileForUpload(file);
+    const contentType = resolveGalleryImageContentType(uploadFile);
     if (!contentType) {
         const msg =
             "Unsupported or unknown image type. Use JPEG, PNG, WebP, or HEIC.";
         console.error("[uploadWishAttachment]", msg, {
-            name: file.name,
-            type: file.type,
-            size: file.size,
+            name: uploadFile.name,
+            type: uploadFile.type,
+            size: uploadFile.size,
         });
         throw new Error(msg);
     }
@@ -29,7 +31,11 @@ export async function uploadWishAttachment(
         const presignRes = await fetch("/api/upload/presign", {
             method: "POST",
             headers: {"Content-Type": "application/json"},
-            body: JSON.stringify({contentType, size: file.size}),
+            body: JSON.stringify({
+                contentType,
+                size: uploadFile.size,
+                purpose: "wish",
+            }),
         });
         if (!presignRes.ok) {
             const detail = await formatUploadApiErrorResponse(presignRes);
@@ -42,7 +48,7 @@ export async function uploadWishAttachment(
         const uploadRes = await fetch(url, {
             method: "PUT",
             headers: {"Content-Type": contentType},
-            body: file,
+            body: uploadFile,
         });
         if (!uploadRes.ok) {
             const detail = await uploadRes.text().catch(() => uploadRes.statusText);
@@ -59,7 +65,8 @@ export async function uploadWishAttachment(
             body: JSON.stringify({
                 key,
                 uploaderName,
-                sizeBytes: file.size,
+                sizeBytes: uploadFile.size,
+                purpose: "wish",
             }),
         });
         if (!confirmRes.ok) {
@@ -72,7 +79,14 @@ export async function uploadWishAttachment(
         return key;
     }
 
-    const {key} = await postMultipartGalleryPhoto(file, uploaderName, onProgress);
+    const {key} = await postMultipartGalleryPhoto(
+        uploadFile,
+        uploaderName,
+        onProgress,
+        {
+            purpose: "wish",
+        },
+    );
     return key;
 }
 

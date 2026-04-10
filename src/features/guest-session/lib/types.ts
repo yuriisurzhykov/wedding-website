@@ -12,17 +12,17 @@ export type GuestSessionRow = {
 
 export type ValidateGuestSessionResult =
     | {
-          ok: true;
-          session: GuestSessionRow;
-      }
+    ok: true;
+    session: GuestSessionRow;
+}
     | {
-          ok: false;
-          reason: "missing" | "invalid" | "expired" | "database";
-          message?: string;
-      };
+    ok: false;
+    reason: "missing" | "invalid" | "expired" | "database";
+    message?: string;
+};
 
 /** Failed validation branch; use with {@link mapValidateGuestSessionFailureToCode}. */
 export type GuestSessionValidateFailure = Extract<
     ValidateGuestSessionResult,
-    {ok: false}
+    { ok: false }
 >;

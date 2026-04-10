@@ -17,7 +17,8 @@ Internal defaults for guest counts live only inside `model/map-form-to-row.ts` (
 ## When to use
 
 - **Features / API routes:** after validating JSON with Zod, call `mapRsvpFormToRow` before inserting into Postgres.
-- **UI:** import `RSVP_FIELDS` (and form types if needed) from `@entities/rsvp`; transitional `lib/config/rsvp` re-exports the same. Submit payload should align with `RsvpFormInput` (camelCase, `attending` required).
+- **UI:** import `RSVP_FIELDS` (and form types if needed) from `@entities/rsvp`; transitional `lib/config/rsvp`
+  re-exports the same. Submit payload should align with `RsvpFormInput` (camelCase, `attending` required).
 
 ## Invariants encoded in the mapper
 

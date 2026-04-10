@@ -13,11 +13,11 @@ type GalleryLoadMoreProps = {
 }
 
 export function GalleryLoadMore({
-    hasMore,
-    loading,
-    onLoadMore,
-    className,
-}: GalleryLoadMoreProps) {
+                                    hasMore,
+                                    loading,
+                                    onLoadMore,
+                                    className,
+                                }: GalleryLoadMoreProps) {
     const t = useTranslations('gallery')
 
     return (

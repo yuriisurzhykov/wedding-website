@@ -7,7 +7,6 @@ import {createGuestSession} from "./create-session";
 import {fetchMagicLinkTokenByHash} from "./fetch-magic-link-token-by-hash";
 import {getGuestSessionRuntimeConfig} from "./get-guest-session-config";
 import {getMagicLinkClaimEligibility, trimMagicLinkTokenInput,} from "./magic-link-token-pure";
-import {markMagicLinkTokenUsed} from "./mark-magic-link-token-used";
 import {loadGuestSessionClientSnapshotForRsvp} from "./restore-guest-session-by-credentials";
 import {hashSessionToken} from "./token";
 
@@ -18,14 +17,14 @@ export type ClaimMagicLinkResult =
     kind:
         | "invalid_token"
         | "expired"
-        | "used"
         | "session_failed"
         | "database";
     message?: string;
 };
 
 /**
- * End-to-end magic-link claim: resolve token → validate row → create session → mark used → load §4 snapshot.
+ * End-to-end magic-link claim: resolve token → validate row (not past `expires_at`) → create session → load §4 snapshot.
+ * The magic-link token remains valid until expiry so guests can restore the session again from the same email link.
  * Each step delegates to a dedicated helper.
  */
 export async function claimMagicLink(
@@ -55,9 +54,6 @@ export async function claimMagicLink(
 
     const nowMs = Date.now();
     const eligibility = getMagicLinkClaimEligibility(fetched.row, nowMs);
-    if (eligibility === "used") {
-        return {ok: false, kind: "used"};
-    }
     if (eligibility === "expired") {
         return {ok: false, kind: "expired"};
     }
@@ -74,13 +70,6 @@ export async function claimMagicLink(
             kind: "session_failed",
             message: created.message,
         };
-    }
-
-    const marked = await markMagicLinkTokenUsed(supabase, fetched.row.id);
-    if (!marked.ok) {
-        console.error(
-            `[guest-session] magic link mark used failed (rsvp_id=${fetched.row.rsvp_id}): ${marked.message}`,
-        );
     }
 
     const loaded = await loadGuestSessionClientSnapshotForRsvp(

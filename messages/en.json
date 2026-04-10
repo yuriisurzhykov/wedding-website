@@ -15,14 +15,18 @@
     "scrollToTop": "Back to top"
   },
   "upload": {
-    "photoSizeHint": "JPEG, PNG, WebP, or HEIC — up to {maxMb} MB.",
+    "photoSizeHint": "JPEG, PNG, WebP, or HEIC — large photos are resized in your browser; up to {maxMb} MB per upload.",
     "photoTooLarge": "This photo is too large. Maximum size is {maxMb} MB.",
+    "photoSourceTooLarge": "This file is too large to open in the browser (about {maxMb} MB max). Try another photo.",
+    "photoStillTooLarge": "We could not shrink this photo below {maxMb} MB. Try a different image.",
+    "photoOptimizeFailed": "We could not process this image. Try a JPEG or PNG.",
     "photoInvalidType": "Please choose a JPEG, PNG, WebP, or HEIC image."
   },
   "hero": {
     "names": "Yurii & Mariia",
     "date": "{date}",
     "venue": "WGBC Battle Ground — open in Maps",
+    "venueLinkAria": "Open venue location in Google Maps in a new tab",
     "countdown": {
       "days": "days",
       "hours": "hours",
@@ -64,11 +68,10 @@
     "yourColor": "This color fits our palette",
     "notYourColor": "We would prefer a different shade",
     "colors": {
-      "ivory": "Ivory",
-      "champagne": "Champagne",
       "dustyrose": "Dusty rose",
       "sage": "Sage",
-      "ash": "Ash",
+      "champagne": "Champagne",
+      "umber": "Warm umber",
       "white": "White",
       "black": "Black"
     }
@@ -130,7 +133,7 @@
     "upload": "Upload",
     "uploaderName": "Your name",
     "dropzone": "Drag photos here or click to choose",
-    "maxSize": "Up to 5 MB per file",
+    "maxSize": "Large photos are resized in your browser — up to {maxMb} MB per upload",
     "done": "Photos uploaded! Thank you 🎉",
     "empty": "No photos yet. Be the first!",
     "gridLabel": "Uploaded photos",
@@ -141,6 +144,7 @@
     "lightboxAlt": "Guest photo",
     "lightboxAltWithName": "Photo from {name}",
     "lightboxCounter": "{current} of {total}",
+    "lightboxImageLoading": "Loading photo",
     "loadMore": "Load more",
     "loadMoreLoading": "Loading…",
     "signedInAs": "Uploading as {name} (from your RSVP).",
@@ -154,7 +158,9 @@
     "deleteConfirmDescription": "It will be removed from the gallery for everyone. This cannot be undone.",
     "deleteConfirmCancel": "Keep it",
     "deleteConfirmSubmit": "Delete",
-    "deleteDeleting": "Deleting…"
+    "deleteDeleting": "Deleting…",
+    "celebrationPending": "The shared gallery will be available during the celebration — you can browse and upload photos once it begins.",
+    "celebrationLockedHint": "Uploads open when the celebration begins."
   },
   "wishes": {
     "title": "Wishes",
@@ -167,6 +173,7 @@
     "messagePlaceholder": "Write your message…",
     "photoLabel": "Optional photo",
     "photoGuestSignInHint": "Sign in as a guest (RSVP on this site or the link in your email) to attach a photo.",
+    "photoLockedUntilCelebration": "Photo attachments for guests who are attending open when the celebration begins. You can still send your message now.",
     "submit": "Send wish",
     "submitting": "Sending…",
     "success": "Thank you! Your wish was posted 💌",
@@ -260,8 +267,13 @@
       },
       "magic_link_invalid": {
         "title": "This link is invalid or expired",
-        "description": "The sign-in link may have been used already, expired, or copied incorrectly. Open the wedding site and sign in with the name and email from your RSVP, or ask the hosts for a new link.",
+        "description": "The sign-in link may have expired or been copied incorrectly. Open the wedding site and sign in with the name and email from your RSVP, or ask the hosts for a new link.",
         "action": "Go to the site"
+      },
+      "celebration_not_live": {
+        "title": "Photos open when the celebration begins",
+        "description": "The gallery and wish photos for attending guests are available from the start of the celebration. You can still send a text wish.",
+        "action": "OK"
       }
     }
   },

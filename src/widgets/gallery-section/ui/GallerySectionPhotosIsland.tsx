@@ -1,14 +1,8 @@
 import {getViewerRsvpIdFromServerCookies} from "@features/guest-session/server";
 import {listGalleryPhotosCached} from "@features/gallery-list";
 
-import {
-    galleryListLimitForPresentation,
-    type GalleryPresentation,
-} from "../lib/gallery-presentation";
-import {
-    GalleryPhotosClient,
-    type GalleryPhotosClientSlots,
-} from "./GalleryPhotosClient";
+import {galleryListLimitForPresentation, type GalleryPresentation,} from "../lib/gallery-presentation";
+import {GalleryPhotosClient, type GalleryPhotosClientSlots,} from "./GalleryPhotosClient";
 
 export type {GalleryPhotosClientSlots};
 

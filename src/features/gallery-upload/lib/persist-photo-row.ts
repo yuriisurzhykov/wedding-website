@@ -3,8 +3,8 @@ import "server-only";
 import type {SupabaseClient} from "@supabase/supabase-js";
 
 export type PersistPhotoResult =
-    | {ok: true; publicUrl: string}
-    | {ok: false; message: string};
+    | { ok: true; publicUrl: string }
+    | { ok: false; message: string };
 
 /**
  * Inserts a `photos` row after a successful R2 PUT (service-role client).

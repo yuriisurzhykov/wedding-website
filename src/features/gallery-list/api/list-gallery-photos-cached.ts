@@ -2,11 +2,9 @@ import "server-only";
 
 import {unstable_cache} from "next/cache";
 
-import {
-    listGalleryPhotos,
-    type ListGalleryPhotosOptions,
-    type ListGalleryPhotosResult,
-} from "./list-gallery-photos";
+import {canBrowseGalleryAt} from "@shared/lib/wedding-calendar";
+
+import {listGalleryPhotos, type ListGalleryPhotosOptions, type ListGalleryPhotosResult,} from "./list-gallery-photos";
 
 /** Passed to `revalidateTag` after a new gallery photo is persisted so RSC lists refresh. */
 export const GALLERY_PHOTOS_LIST_CACHE_TAG = "gallery-photos-list";
@@ -21,6 +19,10 @@ export async function listGalleryPhotosCached(
     const limit = options?.limit ?? 48;
     const offset = options?.offset ?? 0;
     const viewerRsvpId = options?.viewerRsvpId;
+
+    if (!canBrowseGalleryAt(new Date())) {
+        return {ok: true, photos: [], hasMore: false};
+    }
 
     if (viewerRsvpId) {
         return listGalleryPhotos({limit, offset, viewerRsvpId});
