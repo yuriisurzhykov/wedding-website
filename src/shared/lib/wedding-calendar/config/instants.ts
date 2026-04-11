@@ -8,7 +8,7 @@
  */
 
 export const WEDDING_INSTANTS = {
-    weddingCeremony: '2026-06-13T15:00:00-07:00',
+    weddingCeremony: '2026-04-10T21:00:00-07:00',
     /** When the celebration segment begins; aligns with `day-program` dinner row. */
     celebrationStart: '2026-06-13T18:00:00-07:00',
     rsvpDeadline: '2026-05-15T23:59:59-07:00',

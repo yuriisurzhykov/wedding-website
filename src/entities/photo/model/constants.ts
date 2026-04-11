@@ -24,4 +24,4 @@ export const GALLERY_MAX_IMAGE_EDGE_PX = 2560;
 
 /** `accept` for `<input type="file">` — MIME + extensions (OS may filter by type only). */
 export const GALLERY_PHOTO_FILE_ACCEPT =
-    "image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif";
+    "image/jpeg,image/jpg,image/png,image/webp,image/heic,image/heif,.jpg,.jpeg,.png,.webp,.heic,.heif,.dng";

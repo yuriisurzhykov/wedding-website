@@ -190,6 +190,8 @@ export function WishesSectionForm({
                     );
                 } else if (err.kind === "output_too_large") {
                     toast.error(tu("photoStillTooLarge", {maxMb: MAX_MB}));
+                } else if (err.kind === "raw_embed_failed") {
+                    toast.error(tu("photoRawNotSupported"));
                 } else {
                     toast.error(tu("photoOptimizeFailed"));
                 }

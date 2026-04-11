@@ -1,8 +1,9 @@
 import {GALLERY_MAX_SOURCE_FILE_BYTES,} from "@entities/photo";
 
+import {isDngFileName} from "./extract-embedded-jpeg-from-dng";
 import {resolveGalleryImageContentType} from "./gallery-image-content-type";
 
-/** Picker / drop: type must be allowed; raw size capped before browser-side optimization. */
+/** Picker / drop: type must be allowed (or `.dng` for embedded-JPEG extraction); raw size capped before optimization. */
 export type GalleryPhotoFileInvalidReason = "source_oversize" | "bad_type";
 
 export type ValidateGalleryPhotoFileResult =
@@ -19,6 +20,9 @@ export function validateGalleryPhotoFile(
 ): ValidateGalleryPhotoFileResult {
     if (file.size > GALLERY_MAX_SOURCE_FILE_BYTES) {
         return {ok: false, reason: "source_oversize"};
+    }
+    if (isDngFileName(file.name)) {
+        return {ok: true};
     }
     if (!resolveGalleryImageContentType(file)) {
         return {ok: false, reason: "bad_type"};

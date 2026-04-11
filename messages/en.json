@@ -20,6 +20,7 @@
     "photoSourceTooLarge": "This file is too large to open in the browser (about {maxMb} MB max). Try another photo.",
     "photoStillTooLarge": "We could not shrink this photo below {maxMb} MB. Try a different image.",
     "photoOptimizeFailed": "We could not process this image. Try a JPEG or PNG.",
+    "photoRawNotSupported": "We couldn’t read this RAW (DNG) file. Export a JPEG or HEIF from your Photos app, or use the camera’s standard (non-RAW) mode, then try again.",
     "photoInvalidType": "Please choose a JPEG, PNG, WebP, or HEIC image."
   },
   "hero": {

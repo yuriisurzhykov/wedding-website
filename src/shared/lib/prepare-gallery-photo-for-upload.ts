@@ -2,12 +2,14 @@
 
 import {GALLERY_MAX_FILE_BYTES, GALLERY_MAX_IMAGE_EDGE_PX, GALLERY_MAX_SOURCE_FILE_BYTES,} from "@entities/photo";
 
+import {tryExtractEmbeddedJpegFromDng, isDngFileName,} from "./extract-embedded-jpeg-from-dng";
 import {resolveGalleryImageContentType} from "./gallery-image-content-type";
 
 export type GalleryPhotoPrepareFailureReason =
     | "source_too_large"
     | "unreadable"
-    | "output_too_large";
+    | "output_too_large"
+    | "raw_embed_failed";
 
 export class GalleryPhotoPrepareError extends Error {
     readonly kind: GalleryPhotoPrepareFailureReason;
@@ -67,21 +69,33 @@ function canvasToJpegBlob(
  *
  * If decoding fails but the file is already within the upload cap and has an allowed type,
  * the original file is returned (e.g. HEIC on browsers that cannot decode for canvas).
+ *
+ * DNG (phone RAW): tries to extract an embedded JPEG preview first; if none, throws
+ * {@link GalleryPhotoPrepareError} with kind `raw_embed_failed`.
  */
 export async function prepareGalleryPhotoFileForUpload(file: File): Promise<File> {
-    if (!resolveGalleryImageContentType(file)) {
-        throw new GalleryPhotoPrepareError("unreadable");
-    }
-
     if (file.size > GALLERY_MAX_SOURCE_FILE_BYTES) {
         throw new GalleryPhotoPrepareError("source_too_large");
+    }
+
+    let sourceFile = file;
+    if (isDngFileName(file.name)) {
+        const extracted = await tryExtractEmbeddedJpegFromDng(file);
+        if (!extracted) {
+            throw new GalleryPhotoPrepareError("raw_embed_failed");
+        }
+        sourceFile = extracted;
+    }
+
+    if (!resolveGalleryImageContentType(sourceFile)) {
+        throw new GalleryPhotoPrepareError("unreadable");
     }
 
     let revoke: (() => void) | undefined;
     let bitmap: ImageBitmap | undefined;
 
     try {
-        const {drawable, revoke: r} = await decodeToDrawable(file);
+        const {drawable, revoke: r} = await decodeToDrawable(sourceFile);
         revoke = r;
         if (drawable instanceof ImageBitmap) {
             bitmap = drawable;
@@ -94,10 +108,10 @@ export async function prepareGalleryPhotoFileForUpload(file: File): Promise<File
 
         const maxEdge = Math.max(srcW, srcH);
         if (
-            file.size <= GALLERY_MAX_FILE_BYTES &&
+            sourceFile.size <= GALLERY_MAX_FILE_BYTES &&
             maxEdge <= GALLERY_MAX_IMAGE_EDGE_PX
         ) {
-            return file;
+            return sourceFile;
         }
 
         let targetW = srcW;
@@ -132,7 +146,7 @@ export async function prepareGalleryPhotoFileForUpload(file: File): Promise<File
                     continue;
                 }
                 if (blob.size <= GALLERY_MAX_FILE_BYTES) {
-                    const outName = `${baseNameWithoutExt(file.name) || "photo"}.jpg`;
+                    const outName = `${baseNameWithoutExt(sourceFile.name) || "photo"}.jpg`;
                     return new File([blob], outName, {
                         type: "image/jpeg",
                         lastModified: Date.now(),
@@ -152,10 +166,10 @@ export async function prepareGalleryPhotoFileForUpload(file: File): Promise<File
             throw e;
         }
         if (
-            file.size <= GALLERY_MAX_FILE_BYTES &&
-            resolveGalleryImageContentType(file)
+            sourceFile.size <= GALLERY_MAX_FILE_BYTES &&
+            resolveGalleryImageContentType(sourceFile)
         ) {
-            return file;
+            return sourceFile;
         }
         throw new GalleryPhotoPrepareError("unreadable");
     } finally {

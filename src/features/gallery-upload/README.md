@@ -17,6 +17,10 @@
   ** (Zod on presign `size`, multipart `file.size`, confirm `sizeBytes`).
 - Run **`validateGalleryPhotoFile`** / **`partitionGalleryPhotoFiles`** (`@shared/lib/validate-gallery-photo-file`) when
   accepting files so users get toasts for oversize originals or bad types before optimization.
+- **DNG (phone RAW):** allowed by `.dng` filename; **`prepareGalleryPhotoFileForUpload`** pulls an embedded JPEG preview
+  when possible (`@shared/lib/extract-embedded-jpeg-from-dng`). If none, **`GalleryPhotoPrepareError`** with kind
+  `raw_embed_failed` — map to **`upload.photoRawNotSupported`** on the client (toast). The stored object remains a
+  normalized raster within **`GALLERY_MAX_FILE_BYTES`**.
 - Multipart resolves `Content-Type` with **`resolveGalleryImageContentType`** when `File.type` is empty (same idea as
   presign body on the client).
 

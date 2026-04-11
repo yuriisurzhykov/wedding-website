@@ -22,7 +22,7 @@ export async function HeroSection() {
                     className="font-accent mb-2 text-[2rem] text-accent"
                     aria-hidden
                 >
-                    two became one
+                    two become one
                 </p>
 
                 <h1 className="font-display mb-4 text-hero text-text-primary">

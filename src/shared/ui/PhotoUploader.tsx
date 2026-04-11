@@ -262,6 +262,8 @@ export function PhotoUploader({
                                             maxMb: UPLOAD_MAX_MB,
                                         }),
                                     )
+                                } else if (err.kind === 'raw_embed_failed') {
+                                    toast.error(tu('photoRawNotSupported'))
                                 } else {
                                     toast.error(tu('photoOptimizeFailed'))
                                 }
