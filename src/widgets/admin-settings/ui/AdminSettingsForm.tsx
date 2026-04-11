@@ -2,17 +2,20 @@
 
 import {useRouter} from '@/i18n/navigation'
 import {
+    FEATURE_STATE_VALUES,
     getCatalogEntryBySegmentId,
     SCHEDULE_I18N_CATALOG,
     SCHEDULE_PROGRAM_ICON_IDS,
+    type FeatureState,
     type ScheduleProgramItem,
-    SITE_CAPABILITY_KEYS,
+    SITE_FEATURE_KEYS,
     type SiteCapabilities,
     type SiteSettings,
 } from '@entities/site-settings'
 import {cn} from '@shared/lib/cn'
 import {Button} from '@shared/ui/Button'
 import {Input} from '@shared/ui/Input'
+import {Select} from '@shared/ui/Select'
 import {useSearchParams} from 'next/navigation'
 import {useTranslations} from 'next-intl'
 import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
@@ -91,7 +94,7 @@ export function AdminSettingsForm({initialSettings}: Props) {
         }
     }, [searchParams])
 
-    function setCapability(key: (typeof SITE_CAPABILITY_KEYS)[number], value: boolean) {
+    function setCapability(key: (typeof SITE_FEATURE_KEYS)[number], value: FeatureState) {
         setCapabilities((prev) => ({...prev, [key]: value}))
     }
 
@@ -249,21 +252,34 @@ export function AdminSettingsForm({initialSettings}: Props) {
                 <section className="rounded-card border border-border bg-bg-card p-6 shadow-sm">
                     <h2 className="font-display text-h3 text-text-primary">{t('capabilities.title')}</h2>
                     <ul className="mt-4 flex flex-col gap-4">
-                        {SITE_CAPABILITY_KEYS.map((key) => (
+                        {SITE_FEATURE_KEYS.map((key) => (
                             <li
                                 key={key}
-                                className="flex items-center justify-between gap-4 border-b border-border/60 pb-4 last:border-0 last:pb-0"
+                                className="flex flex-col gap-2 border-b border-border/60 pb-4 last:border-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
                             >
                                 <span className="text-body text-text-primary">{t(`capabilities.labels.${key}`)}</span>
-                                <label className="inline-flex cursor-pointer items-center gap-2">
-                                    <span className="text-small text-text-secondary">{t('capabilities.toggle')}</span>
-                                    <input
-                                        type="checkbox"
-                                        className="h-5 w-5 rounded border-border text-primary focus:ring-2 focus:ring-primary"
-                                        checked={capabilities[key]}
-                                        onChange={(ev) => setCapability(key, ev.target.checked)}
-                                    />
-                                </label>
+                                <div className="inline-flex flex-col gap-1 sm:items-end">
+                                    <label
+                                        className="text-small text-text-secondary"
+                                        htmlFor={`admin-feature-state-${key}`}
+                                    >
+                                        {t('capabilities.state')}
+                                    </label>
+                                    <Select
+                                        id={`admin-feature-state-${key}`}
+                                        className="min-w-[12rem] rounded-pill"
+                                        value={capabilities[key]}
+                                        onChange={(ev) =>
+                                            setCapability(key, ev.target.value as FeatureState)
+                                        }
+                                    >
+                                        {FEATURE_STATE_VALUES.map((state) => (
+                                            <option key={state} value={state}>
+                                                {t(`capabilities.stateLabels.${state}`)}
+                                            </option>
+                                        ))}
+                                    </Select>
+                                </div>
                             </li>
                         ))}
                     </ul>

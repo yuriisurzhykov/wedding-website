@@ -1,6 +1,7 @@
 import "server-only";
 
 import {mapRsvpFormToRow, type RsvpRowInsert} from "@entities/rsvp";
+import {isFeatureEnabled} from "@entities/site-settings";
 import {buildGuestSessionClientSnapshot, type GuestSessionClientSnapshot} from "@features/guest-session";
 import {createGuestSession} from "@features/guest-session/server";
 import {getSiteSettingsCached} from "@features/site-settings";
@@ -58,7 +59,7 @@ async function tryCreateGuestSessionAfterSave(
  * - **`database`** — Supabase persist failed; treat as **500** (log `message`, generic body to client).
  * - **`notification`** — Row was saved (insert or update), but admin or guest email failed; treat as **502** (RSVP is saved; client should toast and avoid implying the full mail pipeline succeeded).
  * - **`guestSession`** — Present when `guest_sessions` was created after save (`null` if creation failed; RSVP row still saved).
- * - **`feature_disabled`** — `site_settings.capabilities.rsvp` is false; treat as **403** (`feature_disabled` in JSON).
+ * - **`feature_disabled`** — `rsvp` feature state is not `enabled`; treat as **403** (`feature_disabled` in JSON).
  */
 export type SubmitRsvpResult =
     | { ok: true; id: string; guestSession: SubmitRsvpGuestSession | null }
@@ -104,7 +105,7 @@ export async function submitRsvp(
     }
 
     const siteSettings = await getSiteSettingsCached();
-    if (!siteSettings.capabilities.rsvp) {
+    if (!isFeatureEnabled(siteSettings.capabilities.rsvp)) {
         return {ok: false, kind: "feature_disabled"};
     }
 

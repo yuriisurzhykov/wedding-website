@@ -11,7 +11,9 @@ type Props = Readonly<{
     theme?: SectionTheme;
 }>;
 
-const DEFAULT_PALETTE_CLASS_NAME = "mb-10 grid grid-cols-4 justify-items-center gap-4"
+/** Two columns on narrow screens; four equal slots on `sm+`. `justify-center` centers a short last row. */
+const SWATCH_FLEX_BASIS =
+    "flex-[0_0_calc(50%-0.5rem)] sm:flex-[0_0_calc((100%_-_3rem)/4)]"
 
 export function DressCodeSection({theme = "base"}: Props = {}) {
     const t = useTranslations("dresscode");
@@ -23,13 +25,16 @@ export function DressCodeSection({theme = "base"}: Props = {}) {
         <Section id="dresscode" theme={theme}>
             <SectionHeader title={t("title")} subtitle={t("subtitle")}/>
 
-            <div className={cn(DEFAULT_PALETTE_CLASS_NAME, `sm:grid-cols-${PALETTE.length}`)}>
+            <div className="mb-10 flex max-w-(--content-width) flex-wrap justify-center gap-4 mx-auto px-0">
                 {PALETTE.map((color) => (
                     <button
                         key={color.hex}
                         type="button"
                         onClick={() => setSelected(selected === color.hex ? null : color.hex)}
-                        className="group flex flex-col items-center gap-2"
+                        className={cn(
+                            "group flex flex-col items-center gap-2",
+                            SWATCH_FLEX_BASIS,
+                        )}
                         title={t(`colors.${color.key}`)}
                     >
                         <div

@@ -14,7 +14,7 @@ export function getWeddingCeremonyDate(): Date {
     return (cachedCeremony ??= parseWeddingInstant('weddingCeremony'))
 }
 
-/** Start of the celebration segment — feature gating (e.g. gallery). Cached (immutable config). */
+/** Start of the celebration segment (timeline / hero). Cached (immutable config). */
 export function getCelebrationStartDate(): Date {
     return (cachedCelebrationStart ??= parseWeddingInstant('celebrationStart'))
 }

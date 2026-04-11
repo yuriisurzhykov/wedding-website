@@ -4,10 +4,15 @@ import {useCallback, useEffect, useRef, useState} from 'react'
 import {useTranslations} from 'next-intl'
 import {toast} from 'sonner'
 
+import {
+    isFeatureEnabled,
+    isFeatureHidden,
+    isFeaturePreview,
+    type FeatureState,
+} from '@entities/site-settings'
 import type {GalleryPhotoView} from '@entities/photo'
 import {GuestSessionRestoreForm, useGuestSession} from '@features/guest-session'
 import {Link} from '@/i18n/navigation'
-import {useCelebrationLive} from '@shared/lib/wedding-calendar/use-celebration-live'
 import {PhotoUploader} from '@shared/ui'
 
 import {deleteGalleryPhotoRequest} from '../lib/delete-gallery-photo-client'
@@ -31,6 +36,9 @@ type GalleryPhotosClientProps = {
     /** From SSR `listGalleryPhotos`; used for “load more” in `full` presentation. */
     initialHasMore: boolean
     presentation: GalleryPresentation
+    galleryBrowse: FeatureState
+    galleryUpload: FeatureState
+    galleryPhotoDelete: FeatureState
     slots?: GalleryPhotosClientSlots
 }
 
@@ -41,10 +49,17 @@ export function GalleryPhotosClient({
                                         initialPhotos,
                                         initialHasMore,
                                         presentation,
+                                        galleryBrowse,
+                                        galleryUpload,
+                                        galleryPhotoDelete,
                                         slots,
                                     }: GalleryPhotosClientProps) {
     const {status: guestStatus, session} = useGuestSession()
-    const isCelebrationLive = useCelebrationLive()
+    const browseEnabled = isFeatureEnabled(galleryBrowse)
+    const deleteInteractive = isFeatureEnabled(galleryPhotoDelete)
+    const uploadHidden = isFeatureHidden(galleryUpload)
+    const uploadPreviewOnly = isFeaturePreview(galleryUpload)
+    const uploadInteractive = isFeatureEnabled(galleryUpload)
     const t = useTranslations('gallery')
     const tErr = useTranslations('guestSession.errors')
     const pageSize = galleryListLimitForPresentation(presentation)
@@ -88,15 +103,6 @@ export function GalleryPhotosClient({
         }
         void refetchPhotos()
     }, [guestStatus, refetchPhotos])
-
-    const prevCelebrationLiveRef = useRef(isCelebrationLive)
-    useEffect(() => {
-        const was = prevCelebrationLiveRef.current
-        prevCelebrationLiveRef.current = isCelebrationLive
-        if (isCelebrationLive && !was) {
-            void refetchPhotos()
-        }
-    }, [isCelebrationLive, refetchPhotos])
 
     const loadMore = useCallback(async () => {
         if (!hasMore || loadingMore || presentation !== 'full') {
@@ -215,19 +221,19 @@ export function GalleryPhotosClient({
     }, [pendingDeleteId, hasMore, t, tErr])
 
     const handleRequestDeleteFromLightbox = useCallback(() => {
-        if (openIndex === null) {
+        if (!deleteInteractive || openIndex === null) {
             return
         }
         const p = photos[openIndex]
         if (p?.canDelete) {
             requestDeleteById(p.id)
         }
-    }, [openIndex, photos, requestDeleteById])
+    }, [deleteInteractive, openIndex, photos, requestDeleteById])
 
-    if (!isCelebrationLive) {
+    if (!browseEnabled) {
         const pendingOnly = (
             <p className="mx-auto max-w-[min(36rem,var(--content-width))] text-center font-display text-body leading-relaxed text-text-secondary">
-                {t('celebrationPending')}
+                {t('previewNotice')}
             </p>
         )
         const pendingBlock =
@@ -254,11 +260,19 @@ export function GalleryPhotosClient({
                 : {status: 'anonymous' as const}
 
     const showRestoreForm =
-        guestStatus === 'anonymous' && presentation === 'full'
+        uploadInteractive &&
+        guestStatus === 'anonymous' &&
+        presentation === 'full'
     const showHomeAnonymousHint =
-        guestStatus === 'anonymous' && presentation === 'preview'
+        uploadInteractive &&
+        guestStatus === 'anonymous' &&
+        presentation === 'preview'
 
-    const uploaderInner = (
+    const uploadBlock = uploadHidden ? null : uploadPreviewOnly ? (
+        <p className="mx-auto max-w-[min(36rem,var(--content-width))] text-center font-display text-body leading-relaxed text-text-secondary">
+            {t('uploadPreviewNotice')}
+        </p>
+    ) : (
         <>
             {showRestoreForm ? (
                 <GuestSessionRestoreForm
@@ -290,31 +304,33 @@ export function GalleryPhotosClient({
     )
 
     const uploader =
-        presentation === 'full' ? (
-            <div className="mx-auto w-full max-w-xl">{uploaderInner}</div>
+        uploadBlock === null ? null : presentation === 'full' ? (
+            <div className="mx-auto w-full max-w-xl">{uploadBlock}</div>
         ) : (
-            uploaderInner
+            uploadBlock
         )
 
     return (
         <>
-            {slots?.uploader ? (
+            {uploader === null ? null : slots?.uploader ? (
                 <div className={slots.uploader}>{uploader}</div>
             ) : (
                 uploader
             )}
-            {isCelebrationLive && photos.length === 0 ? (
+            {photos.length === 0 ? (
                 <GalleryEmptyState className={slots?.empty}/>
             ) : null}
-            {isCelebrationLive && photos.length > 0 ? (
+            {photos.length > 0 ? (
                 <GalleryPhotoGrid
                     photos={photos}
                     onOpenPhoto={setOpenIndex}
-                    onRequestDelete={requestDeleteById}
+                    onRequestDelete={
+                        deleteInteractive ? requestDeleteById : undefined
+                    }
                     className={slots?.grid}
                 />
             ) : null}
-            {presentation === 'full' && isCelebrationLive && photos.length > 0 ? (
+            {presentation === 'full' && photos.length > 0 ? (
                 <GalleryLoadMore
                     hasMore={hasMore}
                     loading={loadingMore}
@@ -323,12 +339,14 @@ export function GalleryPhotosClient({
                 />
             ) : null}
             <GalleryLightbox
-                photos={isCelebrationLive ? photos : []}
+                photos={photos}
                 openIndex={openIndex}
                 onClose={handleCloseLightbox}
                 onPrev={goPrev}
                 onNext={goNext}
-                onRequestDelete={handleRequestDeleteFromLightbox}
+                onRequestDelete={
+                    deleteInteractive ? handleRequestDeleteFromLightbox : undefined
+                }
             />
             <GalleryDeleteConfirmDialog
                 open={pendingDeleteId !== null}

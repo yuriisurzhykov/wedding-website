@@ -155,7 +155,7 @@ export function PhotoUploader({
                                   guestUpload,
                                   suppressAnonymousHelpText = false,
                                   uploadMediaPurpose = "gallery",
-                                  celebrationLocked = false,
+                                  uploadsLocked = false,
                               }: {
     uploadAdapter?: PhotoUploadAdapter
     /** Called after at least one file uploaded successfully (e.g. refetch gallery list). */
@@ -164,10 +164,10 @@ export function PhotoUploader({
     guestUpload?: PhotoUploaderGuestSession
     /** When true and guest is anonymous, hide the default “sign in to upload” line (caller shows custom copy). */
     suppressAnonymousHelpText?: boolean
-    /** Presign/confirm `purpose` — gallery shared album vs wish attachment (celebration rules differ). */
+    /** Presign/confirm `purpose` — gallery shared album vs wish attachment. */
     uploadMediaPurpose?: "gallery" | "wish"
-    /** When true, dropzone and upload are disabled (e.g. before celebration start for the gallery). */
-    celebrationLocked?: boolean
+    /** When true, dropzone and upload are disabled (e.g. feature off in site settings). */
+    uploadsLocked?: boolean
 }) {
     const t = useTranslations('gallery')
     const tu = useTranslations('upload')
@@ -182,7 +182,7 @@ export function PhotoUploader({
     const needsManualName = guestUpload === undefined
     const sessionAuthenticated = guestUpload?.status === 'authenticated'
     const uploadBlocked =
-        guestUpload?.status === 'anonymous' || celebrationLocked
+        guestUpload?.status === 'anonymous' || uploadsLocked
     const sessionLabel =
         guestUpload?.status === 'authenticated' ? guestUpload.displayName : ''
 
@@ -304,8 +304,8 @@ export function PhotoUploader({
                 <p className="text-small text-text-secondary">{t('signedInAs', {name: sessionLabel})}</p>
             ) : null}
 
-            {celebrationLocked ? (
-                <p className="text-small text-text-secondary">{t('celebrationLockedHint')}</p>
+            {uploadsLocked ? (
+                <p className="text-small text-text-secondary">{t('uploadsLockedHint')}</p>
             ) : guestUpload?.status === 'anonymous' && !suppressAnonymousHelpText ? (
                 <p className="text-small text-text-secondary">{t('uploadSessionRequired')}</p>
             ) : null}

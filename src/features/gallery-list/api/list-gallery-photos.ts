@@ -1,8 +1,9 @@
 import "server-only";
 
+import {isFeatureEnabled} from "@entities/site-settings";
 import {createServerClient} from "@shared/api/supabase/server";
 import {type GalleryPhotoView, mapPhotoRowToGalleryView, type PhotoDbRow} from "@entities/photo";
-import {canBrowseGalleryAt} from "@shared/lib/wedding-calendar";
+import {getSiteSettingsCached} from "@features/site-settings";
 
 export type ListGalleryPhotosOptions = {
     /** Page size (max rows returned). */
@@ -28,7 +29,8 @@ export async function listGalleryPhotos(
     const offset = options?.offset ?? 0;
     const viewerRsvpId = options?.viewerRsvpId;
 
-    if (!canBrowseGalleryAt(new Date())) {
+    const siteSettings = await getSiteSettingsCached();
+    if (!isFeatureEnabled(siteSettings.capabilities.galleryBrowse)) {
         return {ok: true, photos: [], hasMore: false};
     }
 

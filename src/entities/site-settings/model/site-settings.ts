@@ -7,7 +7,7 @@ import {
 } from './schedule-program'
 import {
     type SiteCapabilities,
-    parseCapabilitiesFromDb,
+    parseFeatureStatesFromDb,
     siteCapabilitiesSchema,
 } from './site-capabilities'
 
@@ -44,22 +44,22 @@ export function getDefaultSiteSettings(): SiteSettings {
     return {
         id: 'default',
         updated_at: new Date(0).toISOString(),
-        capabilities: parseCapabilitiesFromDb(undefined),
+        capabilities: parseFeatureStatesFromDb(undefined),
         schedule_program: parseScheduleProgramFromDb(undefined),
     }
 }
 
 /**
- * Maps a Supabase row (or null) to a normalized {@link SiteSettings}. Null or invalid fragments fall back to code
- * defaults (see migration seed and `day-program.ts`).
+ * Maps Supabase `site_settings` plus optional `site_feature_states` rows to {@link SiteSettings}. Null or invalid
+ * fragments fall back to code defaults (see migration seed and `day-program.ts`).
  */
 export function normalizeSiteSettingsRow(
     row: {
         id: string
         updated_at: string
-        capabilities: unknown
         schedule_program: unknown
     } | null,
+    featureStatesFromDb?: unknown,
 ): SiteSettings {
     if (!row || row.id !== 'default') {
         return getDefaultSiteSettings()
@@ -67,7 +67,7 @@ export function normalizeSiteSettingsRow(
     return {
         id: 'default',
         updated_at: row.updated_at,
-        capabilities: parseCapabilitiesFromDb(row.capabilities),
+        capabilities: parseFeatureStatesFromDb(featureStatesFromDb),
         schedule_program: parseScheduleProgramFromDb(row.schedule_program),
     }
 }

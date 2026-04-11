@@ -13,6 +13,7 @@ import {
 import {useTranslations} from 'next-intl'
 
 import {SITE_NAV_REGISTRY} from '@entities/site-nav'
+import {isFeatureNavVisible} from '@entities/site-settings'
 import {useGuestSession} from '@features/guest-session'
 import {useSiteCapabilities} from '@features/site-settings/client'
 import {Link, usePathname} from '@/i18n/navigation'
@@ -69,14 +70,20 @@ export function SiteNavigation() {
     const {capabilities} = useSiteCapabilities()
     const siteNavEntries = useMemo(() => {
         let list = [...SITE_NAV_REGISTRY]
-        if (!capabilities.ourStory) {
+        if (!isFeatureNavVisible(capabilities.ourStory)) {
             list = list.filter((item) => item.navKey !== 'story')
         }
-        if (!capabilities.scheduleSection) {
+        if (!isFeatureNavVisible(capabilities.scheduleSection)) {
             list = list.filter((item) => item.navKey !== 'schedule')
         }
-        if (guestSessionStatus !== 'anonymous' || !capabilities.rsvp) {
+        if (guestSessionStatus !== 'anonymous' || !isFeatureNavVisible(capabilities.rsvp)) {
             list = list.filter((item) => item.navKey !== 'rsvp')
+        }
+        if (!isFeatureNavVisible(capabilities.galleryBrowse)) {
+            list = list.filter((item) => item.navKey !== 'gallery')
+        }
+        if (!isFeatureNavVisible(capabilities.wishSubmit)) {
+            list = list.filter((item) => item.navKey !== 'wishes')
         }
         if (guestSessionStatus === 'authenticated') {
             list = list.filter((item) => item.navKey !== 'guestSignIn')
@@ -87,6 +94,8 @@ export function SiteNavigation() {
         capabilities.ourStory,
         capabilities.scheduleSection,
         capabilities.rsvp,
+        capabilities.galleryBrowse,
+        capabilities.wishSubmit,
     ])
     const pathname = usePathname()
     const onHome = pathname === '/'

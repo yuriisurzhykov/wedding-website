@@ -2,8 +2,9 @@ import {Suspense} from "react";
 
 import {getTranslations} from "next-intl/server";
 
+import {isFeatureEnabled} from "@entities/site-settings";
+import {getSiteSettingsCached} from "@features/site-settings";
 import {cn} from "@shared/lib/cn";
-import {isCelebrationLive} from "@shared/lib/wedding-calendar";
 import {Section, SectionHeader, type SectionTheme} from "@shared/ui";
 
 import {type GalleryPresentation} from "../lib/gallery-presentation";
@@ -42,7 +43,11 @@ export async function GallerySection(
     }: GallerySectionProps = {}
 ) {
     const t = await getTranslations("gallery");
-    const celebrationLive = isCelebrationLive(new Date());
+    const siteSettings = await getSiteSettingsCached();
+    const galleryBrowse = siteSettings.capabilities.galleryBrowse;
+    const galleryUpload = siteSettings.capabilities.galleryUpload;
+    const galleryPhotoDelete = siteSettings.capabilities.galleryPhotoDelete;
+    const galleryBrowseEnabled = isFeatureEnabled(galleryBrowse);
 
     return (
         <Section id="gallery" theme={theme} className={className}>
@@ -57,12 +62,15 @@ export async function GallerySection(
                     fallback={
                         <GalleryPhotosStreamFallback
                             presentation={presentation}
-                            celebrationLive={celebrationLive}
+                            galleryBrowseEnabled={galleryBrowseEnabled}
                         />
                     }
                 >
                     <GallerySectionPhotosIsland
                         presentation={presentation}
+                        galleryBrowse={galleryBrowse}
+                        galleryUpload={galleryUpload}
+                        galleryPhotoDelete={galleryPhotoDelete}
                         slots={options?.slots}
                     />
                 </Suspense>

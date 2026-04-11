@@ -29,12 +29,6 @@ export {
 } from './internal/resolve-instants'
 
 export {
-    canAttachWishPhotoAt,
-    canBrowseGalleryAt,
-    canUploadToGalleryAt,
-} from './celebration-gates'
-
-export {
     formatHeroWeddingLine,
     formatRsvpDeadlineLine,
     formatScheduleClock,

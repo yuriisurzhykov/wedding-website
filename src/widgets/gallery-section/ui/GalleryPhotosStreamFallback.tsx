@@ -5,7 +5,7 @@ import {galleryListLimitForPresentation, type GalleryPresentation,} from "../lib
 type Props = {
     presentation: GalleryPresentation;
     /** When false, only a short text placeholder — no upload/grid skeletons. */
-    celebrationLive?: boolean;
+    galleryBrowseEnabled?: boolean;
 };
 
 /**
@@ -13,9 +13,9 @@ type Props = {
  */
 export function GalleryPhotosStreamFallback({
                                                 presentation,
-                                                celebrationLive = true,
+                                                galleryBrowseEnabled = true,
                                             }: Props) {
-    if (!celebrationLive) {
+    if (!galleryBrowseEnabled) {
         return (
             <div aria-busy className="w-full">
                 <div

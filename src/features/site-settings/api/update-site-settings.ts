@@ -2,6 +2,7 @@ import 'server-only'
 
 import {
     normalizeSiteSettingsRow,
+    SITE_FEATURE_KEYS,
     siteSettingsPatchSchema,
     siteSettingsSchema,
     type SiteSettings,
@@ -19,7 +20,10 @@ export type UpdateSiteSettingsResult =
 function mergePatch(current: SiteSettings, patch: SiteSettingsPatch): SiteSettings {
     const next: SiteSettings = {
         ...current,
-        capabilities: {...current.capabilities, ...patch.capabilities},
+        capabilities:
+            patch.capabilities !== undefined
+                ? {...current.capabilities, ...patch.capabilities}
+                : current.capabilities,
         schedule_program:
             patch.schedule_program !== undefined ? patch.schedule_program : current.schedule_program,
     }
@@ -27,8 +31,8 @@ function mergePatch(current: SiteSettings, patch: SiteSettingsPatch): SiteSettin
 }
 
 /**
- * Persists a partial update to `site_settings` (service role). Validates patch, merges with the current row, then
- * revalidates the site-settings cache tag.
+ * Persists a partial update: `site_settings` row and `site_feature_states` rows (service role). Validates patch, merges
+ * with the current snapshot, then revalidates the site-settings cache tag.
  *
  * Call only from trusted server code (e.g. authenticated admin API).
  */
@@ -41,17 +45,20 @@ export async function updateSiteSettings(patch: unknown): Promise<UpdateSiteSett
     try {
         const supabase = createServerClient()
 
-        const {data: row, error: readError} = await supabase
-            .from('site_settings')
-            .select('id,updated_at,capabilities,schedule_program')
-            .eq('id', 'default')
-            .maybeSingle()
+        const [siteRead, featuresRead] = await Promise.all([
+            supabase
+                .from('site_settings')
+                .select('id,updated_at,schedule_program')
+                .eq('id', 'default')
+                .maybeSingle(),
+            supabase.from('site_feature_states').select('feature_key,state'),
+        ])
 
-        if (readError) {
-            return {ok: false, error: readError.message}
+        if (siteRead.error) {
+            return {ok: false, error: siteRead.error.message}
         }
 
-        const current = normalizeSiteSettingsRow(row)
+        const current = normalizeSiteSettingsRow(siteRead.data, featuresRead.data ?? undefined)
         const merged = mergePatch(current, parsed.data)
 
         const validated = siteSettingsSchema.safeParse({
@@ -64,26 +71,47 @@ export async function updateSiteSettings(patch: unknown): Promise<UpdateSiteSett
             return {ok: false, error: validated.error.message}
         }
 
-        const {data: updated, error: writeError} = await supabase
-            .from('site_settings')
-            .upsert(
-                {
-                    id: 'default',
-                    capabilities: validated.data.capabilities,
-                    schedule_program: validated.data.schedule_program,
-                },
-                {onConflict: 'id'},
-            )
-            .select('id,updated_at,capabilities,schedule_program')
-            .single()
+        const featureUpserts = SITE_FEATURE_KEYS.map((feature_key) => ({
+            feature_key,
+            state: validated.data.capabilities[feature_key],
+        }))
 
-        if (writeError) {
-            return {ok: false, error: writeError.message}
+        const {error: settingsWriteError} = await supabase.from('site_settings').upsert(
+            {
+                id: 'default',
+                schedule_program: validated.data.schedule_program,
+            },
+            {onConflict: 'id'},
+        )
+
+        if (settingsWriteError) {
+            return {ok: false, error: settingsWriteError.message}
+        }
+
+        const {error: featuresWriteError} = await supabase
+            .from('site_feature_states')
+            .upsert(featureUpserts, {onConflict: 'feature_key'})
+
+        if (featuresWriteError) {
+            return {ok: false, error: featuresWriteError.message}
+        }
+
+        const [siteUpdated, featuresUpdated] = await Promise.all([
+            supabase
+                .from('site_settings')
+                .select('id,updated_at,schedule_program')
+                .eq('id', 'default')
+                .single(),
+            supabase.from('site_feature_states').select('feature_key,state'),
+        ])
+
+        if (siteUpdated.error) {
+            return {ok: false, error: siteUpdated.error.message}
         }
 
         revalidateTag(SITE_SETTINGS_CACHE_TAG, 'max')
 
-        const settings = normalizeSiteSettingsRow(updated)
+        const settings = normalizeSiteSettingsRow(siteUpdated.data, featuresUpdated.data ?? undefined)
 
         return {ok: true, settings}
     } catch (e) {

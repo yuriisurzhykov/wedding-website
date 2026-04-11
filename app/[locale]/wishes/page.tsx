@@ -1,8 +1,9 @@
 import type {Metadata} from 'next'
 import {getTranslations} from 'next-intl/server'
+import {notFound} from 'next/navigation'
 
-import {FeatureGate} from '@features/site-settings/client'
 import {getSiteSettingsCached} from '@features/site-settings'
+import {SectionFeaturePreview} from '@features/site-settings/client'
 import {WishesSection} from '@widgets/wishes-section'
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -16,12 +17,18 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function WishesPage() {
     const siteSettings = await getSiteSettingsCached()
-    if (!siteSettings.capabilities.wishSubmit) {
-        return null
+    const state = siteSettings.capabilities.wishSubmit
+    if (state === 'hidden') {
+        notFound()
     }
-    return (
-        <FeatureGate capability="wishSubmit">
-            <WishesSection presentation="full"/>
-        </FeatureGate>
-    )
+    if (state === 'preview') {
+        return (
+            <SectionFeaturePreview
+                sectionId="wishes"
+                theme="alt"
+                messageNamespace="wishes"
+            />
+        )
+    }
+    return <WishesSection presentation="full"/>
 }

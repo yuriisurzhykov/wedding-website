@@ -7,7 +7,7 @@ export type LoadRsvpIdentityForUploadResult =
     | { ok: false; message: string };
 
 /**
- * Loads `rsvp.name` and `attending` for celebration / wish-photo policy (same source as uploader display name).
+ * Loads `rsvp.name` and `attending` (same source as uploader display name).
  */
 export async function loadRsvpIdentityForUpload(
     supabase: SupabaseClient,

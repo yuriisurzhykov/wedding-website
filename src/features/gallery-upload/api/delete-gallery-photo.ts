@@ -1,5 +1,6 @@
 import "server-only";
 
+import {isFeatureEnabled} from "@entities/site-settings";
 import {revalidateTag} from "next/cache";
 
 import type {GuestSessionPublicErrorCode} from "@features/guest-session";
@@ -43,7 +44,7 @@ export async function deleteGalleryPhoto(
     }
 
     const siteSettings = await getSiteSettingsCached();
-    if (!siteSettings.capabilities.galleryPhotoDelete) {
+    if (!isFeatureEnabled(siteSettings.capabilities.galleryPhotoDelete)) {
         return {ok: false, kind: "feature_disabled"};
     }
 

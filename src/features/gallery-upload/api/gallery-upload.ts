@@ -1,5 +1,7 @@
 import "server-only";
 
+import {isFeatureEnabled, isWishPhotoAttachmentAllowedForGuest} from "@entities/site-settings";
+
 import {revalidateTag} from "next/cache";
 
 import type {GuestSessionPublicErrorCode} from "@features/guest-session";
@@ -9,7 +11,6 @@ import {getSiteSettingsCached} from "@features/site-settings";
 import {createServerClient} from "@shared/api/supabase/server";
 import {assertR2UploadConfig, createPresignedPhotoPutUrl} from "@shared/api/r2";
 
-import {assertUploadCelebrationPolicy} from "../lib/assert-upload-celebration-policy";
 import {loadRsvpIdentityForUpload} from "../lib/load-rsvp-identity-for-upload";
 import {uploadSessionErrorCode} from "../lib/upload-session-error-code";
 import {parseGalleryConfirmPayload} from "../lib/validate-confirm-payload";
@@ -27,7 +28,6 @@ export type PresignGalleryUploadResult =
     | { ok: false; kind: "config"; message: string }
     | { ok: false; kind: "r2"; message: string }
     | { ok: false; kind: "no_session"; code: GuestSessionPublicErrorCode }
-    | { ok: false; kind: "celebration_closed" }
     | { ok: false; kind: "feature_disabled" };
 
 export type ConfirmGalleryUploadResult =
@@ -41,7 +41,6 @@ export type ConfirmGalleryUploadResult =
     | { ok: false; kind: "config"; message: string }
     | { ok: false; kind: "database"; message: string }
     | { ok: false; kind: "no_session"; code: GuestSessionPublicErrorCode }
-    | { ok: false; kind: "celebration_closed" }
     | { ok: false; kind: "feature_disabled" };
 
 /**
@@ -86,19 +85,16 @@ export async function presignGalleryUpload(
 
     const siteSettings = await getSiteSettingsCached();
     const {purpose} = parsed.data;
-    if (purpose === "gallery" && !siteSettings.capabilities.galleryUpload) {
+    if (purpose === "gallery" && !isFeatureEnabled(siteSettings.capabilities.galleryUpload)) {
         return {ok: false, kind: "feature_disabled"};
     }
-    if (purpose === "wish" && !siteSettings.capabilities.wishPhotoAttach) {
+    if (
+        purpose === "wish" &&
+        !isWishPhotoAttachmentAllowedForGuest(siteSettings.capabilities, {
+            attending: identity.attending,
+        })
+    ) {
         return {ok: false, kind: "feature_disabled"};
-    }
-
-    const policy = assertUploadCelebrationPolicy(
-        parsed.data.purpose,
-        identity.attending,
-    );
-    if (!policy.ok) {
-        return {ok: false, kind: "celebration_closed"};
     }
 
     try {
@@ -158,19 +154,16 @@ export async function confirmGalleryUpload(
 
     const siteSettings = await getSiteSettingsCached();
     const {purpose} = parsed.data;
-    if (purpose === "gallery" && !siteSettings.capabilities.galleryUpload) {
+    if (purpose === "gallery" && !isFeatureEnabled(siteSettings.capabilities.galleryUpload)) {
         return {ok: false, kind: "feature_disabled"};
     }
-    if (purpose === "wish" && !siteSettings.capabilities.wishPhotoAttach) {
+    if (
+        purpose === "wish" &&
+        !isWishPhotoAttachmentAllowedForGuest(siteSettings.capabilities, {
+            attending: identity.attending,
+        })
+    ) {
         return {ok: false, kind: "feature_disabled"};
-    }
-
-    const policy = assertUploadCelebrationPolicy(
-        parsed.data.purpose,
-        identity.attending,
-    );
-    if (!policy.ok) {
-        return {ok: false, kind: "celebration_closed"};
     }
 
     let publicUrlBase: string;

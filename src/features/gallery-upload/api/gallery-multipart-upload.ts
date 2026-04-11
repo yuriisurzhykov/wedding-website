@@ -1,5 +1,6 @@
 import "server-only";
 
+import {isFeatureEnabled} from "@entities/site-settings";
 import {revalidateTag} from "next/cache";
 import {z} from "zod";
 
@@ -11,8 +12,6 @@ import {GALLERY_ALLOWED_CONTENT_TYPES, GALLERY_MAX_FILE_BYTES,} from "@entities/
 import {createServerClient} from "@shared/api/supabase/server";
 import {resolveGalleryImageContentType} from "@shared/lib/gallery-image-content-type";
 
-import type {UploadMediaPurpose} from "../lib/assert-upload-celebration-policy";
-import {assertUploadCelebrationPolicy} from "../lib/assert-upload-celebration-policy";
 import {loadRsvpIdentityForUpload} from "../lib/load-rsvp-identity-for-upload";
 import {persistPhotoRow} from "../lib/persist-photo-row";
 import {putGalleryPhotoToR2} from "../lib/put-photo-to-r2";
@@ -31,7 +30,6 @@ export type MultipartGalleryUploadResult =
     | { ok: false; kind: "r2"; message: string }
     | { ok: false; kind: "database"; message: string }
     | { ok: false; kind: "no_session"; code: GuestSessionPublicErrorCode }
-    | { ok: false; kind: "celebration_closed" }
     | { ok: false; kind: "feature_disabled" };
 
 function validationError(message: string): MultipartGalleryUploadResult {
@@ -39,8 +37,8 @@ function validationError(message: string): MultipartGalleryUploadResult {
 }
 
 /**
- * Accepts `multipart/form-data` with `file` (image). Requires a guest session; `uploader_name`
- * and `photos.rsvp_id` come from RSVP. Uploads to R2 from the server — no browser→R2 CORS.
+ * Accepts `multipart/form-data` with `file` (image) for the **shared gallery** only. Wish photos use presign + confirm
+ * (`purpose: "wish"` is rejected). Requires a guest session; `photos.rsvp_id` comes from RSVP. Server → R2 (no CORS).
  */
 export async function uploadGalleryPhotoFromMultipart(
     request: Request,
@@ -78,20 +76,15 @@ export async function uploadGalleryPhotoFromMultipart(
     }
 
     const purposeRaw = formData.get("purpose");
-    const purpose: UploadMediaPurpose =
-        purposeRaw === "wish" ? "wish" : "gallery";
+    if (purposeRaw === "wish") {
+        return validationError(
+            "Wish photo uploads use the presigned API only (/api/upload/presign).",
+        );
+    }
 
     const siteSettings = await getSiteSettingsCached();
-    if (purpose === "gallery" && !siteSettings.capabilities.galleryUpload) {
+    if (!isFeatureEnabled(siteSettings.capabilities.galleryUpload)) {
         return {ok: false, kind: "feature_disabled"};
-    }
-    if (purpose === "wish" && !siteSettings.capabilities.wishPhotoAttach) {
-        return {ok: false, kind: "feature_disabled"};
-    }
-
-    const policy = assertUploadCelebrationPolicy(purpose, identity.attending);
-    if (!policy.ok) {
-        return {ok: false, kind: "celebration_closed"};
     }
 
     const fromBrowser = contentTypeSchema.safeParse(file.type);

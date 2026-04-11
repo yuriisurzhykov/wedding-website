@@ -1,11 +1,11 @@
 import "server-only";
 
+import {isFeatureEnabled, isWishPhotoAttachmentAllowedForGuest} from "@entities/site-settings";
 import {loadRsvpIdentityForUpload} from "@features/gallery-upload";
 import {validateGuestSessionFromRequest} from "@features/guest-session/server";
 import {getSiteSettingsCached} from "@features/site-settings";
 import {createServerClient} from "@shared/api/supabase/server";
 import {assertR2UploadConfig} from "@shared/api/r2";
-import {canAttachWishPhotoAt} from "@shared/lib/wedding-calendar";
 
 import {parseWishSubmitPayload} from "../lib/validate-wish-payload";
 import {persistWishRow} from "../lib/persist-wish-row";
@@ -20,7 +20,6 @@ export type SubmitWishResult =
 }
     | { ok: false; kind: "config"; message: string }
     | { ok: false; kind: "database"; message: string }
-    | { ok: false; kind: "celebration"; message: string }
     | { ok: false; kind: "feature_disabled" };
 
 /**
@@ -30,7 +29,9 @@ export type SubmitWishResult =
  * When the request carries a valid guest session cookie, `authorName` in the body is
  * ignored and `rsvp.name` is used (same source as gallery uploads).
  *
- * `feature_disabled` — `wishSubmit` off, or `photoR2Key` with `wishPhotoAttach` off (HTTP **403**).
+ * `feature_disabled` — `wishSubmit` not `enabled`, or `photoR2Key` when wish photos are not allowed for this caller
+ * (see {@link isWishPhotoAttachmentAllowedForGuest}: not-attending guests may attach when `wishSubmit` is `enabled`
+ * even if `wishPhotoAttach` is off) (HTTP **403**).
  */
 export async function submitWish(
     rawBody: unknown,
@@ -50,10 +51,7 @@ export async function submitWish(
     const {authorName: authorNameRaw, message, photoR2Key} = parsed.data;
 
     const siteSettings = await getSiteSettingsCached();
-    if (!siteSettings.capabilities.wishSubmit) {
-        return {ok: false, kind: "feature_disabled"};
-    }
-    if (photoR2Key && !siteSettings.capabilities.wishPhotoAttach) {
+    if (!isFeatureEnabled(siteSettings.capabilities.wishSubmit)) {
         return {ok: false, kind: "feature_disabled"};
     }
 
@@ -68,6 +66,10 @@ export async function submitWish(
     const sessionResult = await validateGuestSessionFromRequest(supabase, request);
 
     let authorName: string;
+    let photoAttachAllowed = isWishPhotoAttachmentAllowedForGuest(
+        siteSettings.capabilities,
+        null,
+    );
     if (sessionResult.ok) {
         const identity = await loadRsvpIdentityForUpload(
             supabase,
@@ -77,20 +79,10 @@ export async function submitWish(
             return {ok: false, kind: "database", message: identity.message};
         }
         authorName = identity.name;
-
-        if (
-            photoR2Key &&
-            !canAttachWishPhotoAt(new Date(), {
-                kind: "session",
-                attending: identity.attending,
-            })
-        ) {
-            return {
-                ok: false,
-                kind: "celebration",
-                message: "Wish photos are available after the celebration begins.",
-            };
-        }
+        photoAttachAllowed = isWishPhotoAttachmentAllowedForGuest(
+            siteSettings.capabilities,
+            {attending: identity.attending},
+        );
     } else {
         const fromClient = authorNameRaw?.trim() ?? "";
         if (!fromClient) {
@@ -102,17 +94,10 @@ export async function submitWish(
             };
         }
         authorName = fromClient;
+    }
 
-        if (
-            photoR2Key &&
-            !canAttachWishPhotoAt(new Date(), {kind: "anonymous"})
-        ) {
-            return {
-                ok: false,
-                kind: "celebration",
-                message: "Wish photos are available after the celebration begins.",
-            };
-        }
+    if (photoR2Key && !photoAttachAllowed) {
+        return {ok: false, kind: "feature_disabled"};
     }
 
     let photoUrl: string | null = null;

@@ -1,11 +1,12 @@
 # Widget: admin-settings
 
-Client form for editing `site_settings` (capabilities toggles and day-of schedule rows) via `PATCH /api/admin/site-settings`.
+Client form for editing `site_settings` and per-feature states (hidden / preview / enabled) plus day-of schedule rows via
+`PATCH /api/admin/site-settings`.
 
 ## Purpose
 
-- Used by `app/[locale]/admin/settings/page.tsx` after the server loads the current row with `getSiteSettings()` (DB
-  truth, no `NEXT_PUBLIC_SITE_FEATURES` overlay).
+- Used by `app/[locale]/admin/settings/page.tsx` after the server loads the current snapshot with `getSiteSettings()`
+  (database truth).
 
 ## Approach
 

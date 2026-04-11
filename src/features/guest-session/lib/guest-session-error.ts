@@ -18,7 +18,7 @@ export type GuestSessionPublicErrorCode =
     | "upload_no_session"
     | "photo_delete_forbidden"
     | "magic_link_invalid"
-    /** Gallery / wish photo uploads before celebration start (policy); attending guests only after start. */
+    /** Legacy upload error code; prefer feature flags for new behavior. */
     | "celebration_not_live";
 
 export type GuestSessionErrorPayload = {

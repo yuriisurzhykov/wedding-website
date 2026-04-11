@@ -41,6 +41,7 @@
   "schedule": {
     "title": "Schedule",
     "subtitle": "How the day unfolds",
+    "previewNotice": "The full schedule will appear here soon — during and after the celebration you’ll see the full timeline.",
     "items": {
       "gathering": {
         "title": "Guest arrival",
@@ -78,7 +79,9 @@
   },
   "story": {
     "title": "Our story",
-    "vowsLead": "On {date}, we will say our vows surrounded by the people who shaped our path. We cannot wait to celebrate with you."
+    "subtitle": "A little about us",
+    "vowsLead": "On {date}, we will say our vows surrounded by the people who shaped our path. We cannot wait to celebrate with you.",
+    "previewNotice": "The full story will appear here soon — during and after the celebration you’ll be able to read it here."
   },
   "rsvp": {
     "title": "RSVP",
@@ -125,7 +128,8 @@
         "admin": "Your RSVP was saved, but we couldn't notify the hosts. Please contact us directly.",
         "guest": "Your RSVP was saved, but we couldn't send the confirmation email. We still have your response — reach out if you need anything."
       }
-    }
+    },
+    "previewNotice": "RSVP isn’t open here yet. It will be available during and after the celebration — please check back later."
   },
   "gallery": {
     "title": "Gallery",
@@ -159,8 +163,9 @@
     "deleteConfirmCancel": "Keep it",
     "deleteConfirmSubmit": "Delete",
     "deleteDeleting": "Deleting…",
-    "celebrationPending": "The shared gallery will be available during the celebration — you can browse and upload photos once it begins.",
-    "celebrationLockedHint": "Uploads open when the celebration begins."
+    "uploadsLockedHint": "Gallery uploads are turned off in site settings.",
+    "previewNotice": "The shared photo gallery isn’t available yet. It will open during and after the celebration — you’ll be able to browse and upload photos then.",
+    "uploadPreviewNotice": "Photo uploads aren’t available yet. They will open during and after the celebration — you can still browse the album when viewing is enabled."
   },
   "wishes": {
     "title": "Wishes",
@@ -173,7 +178,7 @@
     "messagePlaceholder": "Write your message…",
     "photoLabel": "Optional photo",
     "photoGuestSignInHint": "Sign in as a guest (RSVP on this site or the link in your email) to attach a photo.",
-    "photoLockedUntilCelebration": "Photo attachments for guests who are attending open when the celebration begins. You can still send your message now.",
+    "photoFeatureOff": "Photo attachments are turned off in site settings. You can still send your message.",
     "submit": "Send wish",
     "submitting": "Sending…",
     "success": "Thank you! Your wish was posted 💌",
@@ -181,7 +186,10 @@
     "empty": "No wishes yet. Be the first!",
     "loadMore": "Load more",
     "loadMoreLoading": "Loading…",
-    "anonymousSessionHintHome": "To add a photo to your wish or post under your RSVP name without retyping it, <rsvp>sign in via RSVP</rsvp> on this site or use the sign-in link from your confirmation email."
+    "anonymousSessionHintHome": "To add a photo to your wish or post under your RSVP name without retyping it, <rsvp>sign in via RSVP</rsvp> on this site or use the sign-in link from your confirmation email.",
+    "anonymousSessionHintHomeNameOnly": "To post under your RSVP name without retyping it, <rsvp>sign in via RSVP</rsvp> on this site or use the sign-in link from your confirmation email.",
+    "photoPreviewNotice": "Photo attachments will be available during and after the celebration. You can send your message now.",
+    "previewNotice": "Wishes aren’t open yet. You’ll be able to leave messages and photos during and after the celebration."
   },
   "guestSession": {
     "signInPage": {
@@ -306,11 +314,18 @@
       },
       "capabilities": {
         "title": "Features",
+        "state": "Visibility",
+        "stateLabels": {
+          "hidden": "Hidden",
+          "preview": "Preview (teaser only)",
+          "enabled": "Enabled"
+        },
         "toggle": "Enabled",
         "labels": {
           "ourStory": "Our story section",
           "scheduleSection": "Schedule section",
           "rsvp": "RSVP and guest sign-in",
+          "galleryBrowse": "Browse shared gallery",
           "galleryUpload": "Gallery photo uploads",
           "wishSubmit": "Guest wishes (text)",
           "galleryPhotoDelete": "Delete own gallery photos",

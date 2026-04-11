@@ -6,6 +6,9 @@ export type {SiteCapabilitiesContextValue} from './ui/SiteCapabilitiesProvider'
 export {
     FeatureGate,
 } from './ui/FeatureGate'
+export {GalleryHomeGate} from './ui/GalleryHomeGate'
+export type {FeaturePreviewMessageNamespace} from './ui/SectionFeaturePreview'
+export {SectionFeaturePreview} from './ui/SectionFeaturePreview'
 export {
     SITE_SETTINGS_PUBLIC_API_PATH,
     SiteCapabilitiesProvider,

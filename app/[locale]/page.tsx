@@ -1,5 +1,9 @@
 import {getViewerRsvpIdFromServerCookies} from '@features/guest-session/server'
-import {FeatureGate} from '@features/site-settings/client'
+import {
+    FeatureGate,
+    GalleryHomeGate,
+    SectionFeaturePreview,
+} from '@features/site-settings/client'
 import {getSiteSettingsCached} from '@features/site-settings'
 import {
     alignHomeThemesAfterSkippedRsvpBand,
@@ -22,30 +26,31 @@ export default async function Home() {
     const rsvpSlotSkippedOnHome = viewerRsvpId !== null
 
     const siteSettings = await getSiteSettingsCached()
-    const showScheduleSection = siteSettings.capabilities.scheduleSection
-    const showRsvpSection = siteSettings.capabilities.rsvp
-    const showWishesSection = siteSettings.capabilities.wishSubmit
+    const showScheduleSection = siteSettings.capabilities.scheduleSection !== 'hidden'
+    const showRsvpSection = siteSettings.capabilities.rsvp !== 'hidden'
+    const showGallerySection = siteSettings.capabilities.galleryBrowse !== 'hidden'
+    const showWishesSection = siteSettings.capabilities.wishSubmit !== 'hidden'
     const scheduleItems = showScheduleSection
         ? resolveScheduleItems(siteSettings.schedule_program)
         : []
 
     let sectionIndex = 0
     const nextSectionTheme = () => homeSectionThemeAt(sectionIndex++)
-    const showOurStory = siteSettings.capabilities.ourStory
+    const showOurStory = siteSettings.capabilities.ourStory !== 'hidden'
 
     const themeWelcome = nextSectionTheme()
     const themeSchedule = showScheduleSection ? nextSectionTheme() : null
     const themeDress = nextSectionTheme()
     const themeOurStory = showOurStory ? nextSectionTheme() : null
     const themeRsvp = showRsvpSection ? nextSectionTheme() : null
-    const themeGallery = nextSectionTheme()
+    const themeGallery = showGallerySection ? nextSectionTheme() : null
     const themeWishes = showWishesSection ? nextSectionTheme() : null
     const themeDonate = nextSectionTheme()
     const postRsvp = alignHomeThemesAfterSkippedRsvpBand(
         rsvpSlotSkippedOnHome || !showRsvpSection,
         {
-            gallery: themeGallery,
-            wishes: themeWishes ?? themeGallery,
+            gallery: themeGallery ?? themeWishes ?? themeDonate,
+            wishes: themeWishes ?? themeGallery ?? themeDonate,
             donate: themeDonate,
         },
     )
@@ -55,25 +60,69 @@ export default async function Home() {
             <HeroSection/>
             <WelcomeSection theme={themeWelcome}/>
             {showScheduleSection && themeSchedule !== null ? (
-                <FeatureGate capability="scheduleSection">
+                <FeatureGate
+                    capability="scheduleSection"
+                    preview={
+                        <SectionFeaturePreview
+                            sectionId="schedule"
+                            theme={themeSchedule}
+                            messageNamespace="schedule"
+                        />
+                    }
+                >
                     <ScheduleSection items={scheduleItems} theme={themeSchedule}/>
                 </FeatureGate>
             ) : null}
             <DressCodeSection theme={themeDress}/>
-            {showOurStory ? <OurStorySection theme={themeOurStory!}/> : null}
+            {showOurStory && themeOurStory !== null ? (
+                <FeatureGate
+                    capability="ourStory"
+                    preview={
+                        <SectionFeaturePreview
+                            sectionId="story"
+                            theme={themeOurStory}
+                            messageNamespace="story"
+                        />
+                    }
+                >
+                    <OurStorySection theme={themeOurStory}/>
+                </FeatureGate>
+            ) : null}
             {showRsvpSection && themeRsvp !== null ? (
-                <FeatureGate capability="rsvp">
+                <FeatureGate
+                    capability="rsvp"
+                    preview={
+                        <SectionFeaturePreview
+                            sectionId="rsvp"
+                            theme={themeRsvp}
+                            messageNamespace="rsvp"
+                        />
+                    }
+                >
                     <RsvpSectionGate>
                         <RsvpSection theme={themeRsvp}/>
                     </RsvpSectionGate>
                 </FeatureGate>
             ) : null}
-            <GallerySection
-                presentation="preview"
-                theme={postRsvp.gallery}
-            />
-            {showWishesSection ? (
-                <FeatureGate capability="wishSubmit">
+            {showGallerySection && themeGallery !== null ? (
+                <GalleryHomeGate theme={postRsvp.gallery}>
+                    <GallerySection
+                        presentation="preview"
+                        theme={postRsvp.gallery}
+                    />
+                </GalleryHomeGate>
+            ) : null}
+            {showWishesSection && themeWishes !== null ? (
+                <FeatureGate
+                    capability="wishSubmit"
+                    preview={
+                        <SectionFeaturePreview
+                            sectionId="wishes"
+                            theme={postRsvp.wishes}
+                            messageNamespace="wishes"
+                        />
+                    }
+                >
                     <WishesSection
                         presentation="preview"
                         theme={postRsvp.wishes}

@@ -14,7 +14,7 @@ export const galleryPresignPayloadSchema = z
             .int()
             .positive()
             .max(GALLERY_MAX_FILE_BYTES, "File too large"),
-        /** `gallery` — shared album; `wish` — attachment to a wish (not attending may upload before celebration). */
+        /** `gallery` — shared album; `wish` — attachment to a wish. */
         purpose: z.enum(["gallery", "wish"]).optional().default("gallery"),
     })
     .strict();

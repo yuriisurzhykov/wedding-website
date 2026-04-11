@@ -8,36 +8,36 @@ import {
 import {createPublishableServerClient} from '@shared/api/supabase/publishable-server-client'
 import {unstable_cache} from 'next/cache'
 
-import {mergePublicEnvIntoCapabilities} from '../lib/merge-public-env-capabilities'
-
-function withEnvCapabilityOverlay(settings: SiteSettings): SiteSettings {
-    return {
-        ...settings,
-        capabilities: mergePublicEnvIntoCapabilities(settings.capabilities),
-    }
-}
-
 /** Passed to `revalidateTag` after admin updates so RSC and cached reads refresh. */
 export const SITE_SETTINGS_CACHE_TAG = 'site-settings'
 
-/** Normalized row from DB (or code defaults); no `NEXT_PUBLIC_SITE_FEATURES` overlay. */
+/** Normalized settings from DB (or code defaults). */
 async function readNormalizedSiteSettingsFromDatabase(): Promise<SiteSettings> {
     try {
         const supabase = createPublishableServerClient()
-        const {data, error} = await supabase
-            .from('site_settings')
-            .select('id,updated_at,capabilities,schedule_program')
-            .eq('id', 'default')
-            .maybeSingle()
+        const [siteResult, featuresResult] = await Promise.all([
+            supabase
+                .from('site_settings')
+                .select('id,updated_at,schedule_program')
+                .eq('id', 'default')
+                .maybeSingle(),
+            supabase.from('site_feature_states').select('feature_key,state'),
+        ])
 
-        if (error) {
+        if (siteResult.error) {
             if (process.env.NODE_ENV === 'development') {
-                console.warn('[site-settings] read failed:', error.message)
+                console.warn('[site-settings] site_settings read failed:', siteResult.error.message)
             }
             return getDefaultSiteSettings()
         }
 
-        return normalizeSiteSettingsRow(data)
+        if (featuresResult.error) {
+            if (process.env.NODE_ENV === 'development') {
+                console.warn('[site-settings] site_feature_states read failed:', featuresResult.error.message)
+            }
+        }
+
+        return normalizeSiteSettingsRow(siteResult.data, featuresResult.data ?? undefined)
     } catch (e) {
         const message = e instanceof Error ? e.message : String(e)
         if (process.env.NODE_ENV === 'development') {
@@ -49,14 +49,14 @@ async function readNormalizedSiteSettingsFromDatabase(): Promise<SiteSettings> {
 
 /**
  * Loads site settings from Supabase (publishable key, public RLS). Not cached — **database truth** for admin UI and
- * writes; does not apply `NEXT_PUBLIC_SITE_FEATURES` (see {@link getSiteSettingsCached} for the guest-facing snapshot).
+ * writes.
  */
 export async function getSiteSettings(): Promise<SiteSettings> {
     return readNormalizedSiteSettingsFromDatabase()
 }
 
 const getSiteSettingsCachedInner = unstable_cache(
-    async () => withEnvCapabilityOverlay(await readNormalizedSiteSettingsFromDatabase()),
+    async () => readNormalizedSiteSettingsFromDatabase(),
     ['site-settings'],
     {
         revalidate: 60,
@@ -65,8 +65,7 @@ const getSiteSettingsCachedInner = unstable_cache(
 )
 
 /**
- * Cached read for RSC, public API, and feature gates. Applies `NEXT_PUBLIC_SITE_FEATURES` on top of the DB snapshot so
- * deploy-time env can override capabilities for guests (see feature README).
+ * Cached read for RSC, public API, and feature gates. Same DB snapshot as {@link getSiteSettings}.
  */
 export async function getSiteSettingsCached(): Promise<SiteSettings> {
     return getSiteSettingsCachedInner()

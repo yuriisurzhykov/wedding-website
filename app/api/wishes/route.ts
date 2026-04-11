@@ -75,12 +75,6 @@ export async function POST(request: Request) {
         );
     }
 
-    if (result.kind === "celebration") {
-        return NextResponse.json(buildGuestSessionErrorJson("celebration_not_live"), {
-            status: httpStatusForGuestSessionErrorCode("celebration_not_live"),
-        });
-    }
-
     if (result.kind === "config") {
         console.error("[api/wishes] config", result.message);
         return NextResponse.json({error: "server_error"}, {status: 500});

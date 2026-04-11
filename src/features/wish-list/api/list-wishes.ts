@@ -1,7 +1,9 @@
 import "server-only";
 
+import {isFeatureEnabled} from "@entities/site-settings";
 import {createServerClient} from "@shared/api/supabase/server";
 import {mapWishRowToView, type WishDbRow, type WishView} from "@entities/wish";
+import {getSiteSettingsCached} from "@features/site-settings";
 
 export type ListWishesOptions = {
     /** Page size (max rows returned). */
@@ -23,6 +25,11 @@ export async function listWishes(
 ): Promise<ListWishesResult> {
     const limit = options?.limit ?? 50;
     const offset = options?.offset ?? 0;
+
+    const siteSettings = await getSiteSettingsCached();
+    if (!isFeatureEnabled(siteSettings.capabilities.wishSubmit)) {
+        return {ok: true, wishes: [], hasMore: false};
+    }
 
     let supabase;
     try {

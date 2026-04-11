@@ -5,11 +5,18 @@ import {useEffect, useRef, useState} from "react";
 import {useTranslations} from "next-intl";
 import {toast} from "sonner";
 
+import {
+    isFeatureControlInteractive,
+    isFeatureHidden,
+    isFeaturePreview,
+    resolveWishPhotoAttachForGuest,
+} from "@entities/site-settings";
 import {GuestSessionRestoreForm, useGuestSession} from "@features/guest-session";
+import {useSiteCapabilities} from "@features/site-settings/client";
 import {GALLERY_MAX_FILE_BYTES, GALLERY_MAX_SOURCE_FILE_BYTES,} from "@entities/photo";
 import {cn} from "@shared/lib/cn";
 import {GalleryPhotoPrepareError} from "@shared/lib/prepare-gallery-photo-for-upload";
-import {useCelebrationLive} from "@shared/lib/wedding-calendar/use-celebration-live";
+import {isCelebrationLive} from "@shared/lib/wedding-calendar";
 import {isGalleryUploadOversizeMessage} from "@shared/lib/validate-gallery-photo-file";
 import {Button} from "@shared/ui/Button";
 import {Input} from "@shared/ui/Input";
@@ -36,7 +43,29 @@ export function WishesSectionForm({
     const tGuestErr = useTranslations("guestSession.errors");
     const router = useRouter();
     const {status: guestStatus, session} = useGuestSession();
-    const isCelebrationLive = useCelebrationLive();
+    const {capabilities} = useSiteCapabilities();
+    const effectiveWishPhotoAttach = resolveWishPhotoAttachForGuest(
+        capabilities.wishSubmit,
+        capabilities.wishPhotoAttach,
+        guestStatus === "authenticated" && session
+            ? {attending: session.attending}
+            : null,
+    );
+    const [celebrationNow, setCelebrationNow] = useState(() => new Date());
+    useEffect(() => {
+        const tick = () => setCelebrationNow(new Date());
+        const id = window.setInterval(tick, 60_000);
+        const onFocus = () => tick();
+        window.addEventListener("focus", onFocus);
+        return () => {
+            window.clearInterval(id);
+            window.removeEventListener("focus", onFocus);
+        };
+    }, []);
+    const celebrationLive = isCelebrationLive(celebrationNow);
+    const photoInteractive = isFeatureControlInteractive(effectiveWishPhotoAttach);
+    const photoHidden = isFeatureHidden(effectiveWishPhotoAttach);
+    const photoPreviewOnly = isFeaturePreview(effectiveWishPhotoAttach);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [name, setName] = useState("");
     const [message, setMessage] = useState("");
@@ -51,14 +80,15 @@ export function WishesSectionForm({
     const showHomeAnonymousHint =
         guestStatus === "anonymous" && presentation === "preview";
     const photoBlockedByCelebration =
+        photoInteractive &&
         guestStatus === "authenticated" &&
         session !== null &&
         session.attending === true &&
-        !isCelebrationLive;
-
+        !celebrationLive;
     const photoPickerDisabled =
         guestStatus === "loading" ||
         guestStatus === "anonymous" ||
+        !photoInteractive ||
         photoBlockedByCelebration;
 
     useEffect(() => {
@@ -92,7 +122,7 @@ export function WishesSectionForm({
                     : name.trim();
 
             let photoR2Key: string | undefined;
-            if (photo && guestStatus === "authenticated") {
+            if (photoInteractive && photo && guestStatus === "authenticated") {
                 photoR2Key = await uploadWishAttachment(
                     photo,
                     uploaderLabel,
@@ -196,16 +226,27 @@ export function WishesSectionForm({
             ) : null}
             {showHomeAnonymousHint ? (
                 <p className="mx-auto max-w-[min(36rem,var(--content-width))] text-center font-display text-h3 font-medium leading-relaxed text-text-secondary">
-                    {t.rich("anonymousSessionHintHome", {
-                        rsvp: (chunks) => (
-                            <Link
-                                href={{pathname: "/", hash: "rsvp"}}
-                                className="text-primary underline decoration-primary/50 underline-offset-[0.2em] transition hover:decoration-primary"
-                            >
-                                {chunks}
-                            </Link>
-                        ),
-                    })}
+                    {photoInteractive
+                        ? t.rich("anonymousSessionHintHome", {
+                              rsvp: (chunks) => (
+                                  <Link
+                                      href={{pathname: "/", hash: "rsvp"}}
+                                      className="text-primary underline decoration-primary/50 underline-offset-[0.2em] transition hover:decoration-primary"
+                                  >
+                                      {chunks}
+                                  </Link>
+                              ),
+                          })
+                        : t.rich("anonymousSessionHintHomeNameOnly", {
+                              rsvp: (chunks) => (
+                                  <Link
+                                      href={{pathname: "/", hash: "rsvp"}}
+                                      className="text-primary underline decoration-primary/50 underline-offset-[0.2em] transition hover:decoration-primary"
+                                  >
+                                      {chunks}
+                                  </Link>
+                              ),
+                          })}
                 </p>
             ) : null}
             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
@@ -249,39 +290,43 @@ export function WishesSectionForm({
                         disabled={showNameSkeleton}
                     />
                 </div>
-                <div
-                    className={cn(
-                        "flex flex-col gap-2",
-                        showNameSkeleton && "pointer-events-none opacity-60",
-                    )}
-                >
-                    <label htmlFor="wish-photo" className="text-small font-medium text-text-primary">
-                        {t("photoLabel")}
-                    </label>
-                    {photoBlockedByCelebration ? (
-                        <p className="text-small text-text-muted" id="wish-photo-hint">
-                            {t("photoLockedUntilCelebration")}
-                        </p>
-                    ) : photoPickerDisabled && guestStatus === "anonymous" ? (
-                        <p className="text-small text-text-muted" id="wish-photo-hint">
-                            {t("photoGuestSignInHint")}
-                        </p>
-                    ) : null}
-                    <PhotoFileInput
-                        ref={fileInputRef}
-                        id="wish-photo"
-                        showHint
-                        disabled={photoPickerDisabled}
-                        aria-describedby={
-                            (photoBlockedByCelebration ||
-                                (photoPickerDisabled && guestStatus === "anonymous"))
-                                ? "wish-photo-hint"
-                                : undefined
-                        }
-                        onFileChange={setPhoto}
-                        className="text-small text-text-secondary file:mr-3 file:rounded-pill file:border-0 file:bg-bg-section file:px-4 file:py-2 file:text-body file:text-text-primary"
-                    />
-                </div>
+                {photoHidden ? null : photoPreviewOnly ? (
+                    <p className="text-small text-text-secondary">{t("photoPreviewNotice")}</p>
+                ) : (
+                    <div
+                        className={cn(
+                            "flex flex-col gap-2",
+                            showNameSkeleton && "pointer-events-none opacity-60",
+                        )}
+                    >
+                        <label htmlFor="wish-photo" className="text-small font-medium text-text-primary">
+                            {t("photoLabel")}
+                        </label>
+                        {photoBlockedByCelebration ? (
+                            <p className="text-small text-text-muted" id="wish-photo-hint">
+                                {t("photoLockedUntilCelebration")}
+                            </p>
+                        ) : photoPickerDisabled && guestStatus === "anonymous" ? (
+                            <p className="text-small text-text-muted" id="wish-photo-hint">
+                                {t("photoGuestSignInHint")}
+                            </p>
+                        ) : null}
+                        <PhotoFileInput
+                            ref={fileInputRef}
+                            id="wish-photo"
+                            showHint
+                            disabled={photoPickerDisabled}
+                            aria-describedby={
+                                photoBlockedByCelebration ||
+                                (photoPickerDisabled && guestStatus === "anonymous")
+                                    ? "wish-photo-hint"
+                                    : undefined
+                            }
+                            onFileChange={setPhoto}
+                            className="text-small text-text-secondary file:mr-3 file:rounded-pill file:border-0 file:bg-bg-section file:px-4 file:py-2 file:text-body file:text-text-primary"
+                        />
+                    </div>
+                )}
                 {error ? (
                     <p className="text-small text-red-500" role="alert">
                         {error}

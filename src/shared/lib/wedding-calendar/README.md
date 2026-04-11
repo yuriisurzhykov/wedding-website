@@ -10,7 +10,7 @@ import `getScheduleItems` from here without pulling in widgets or features.
 
 ## Public API
 
-See `index.ts`: `getWeddingCeremonyDate`, `getCelebrationStartDate`, `isCelebrationLive`, `getRsvpDeadlineDate`,
+See `index.ts`: `getWeddingCeremonyDate`, `getCelebrationStartDate`, `isCelebrationLive`, `getRsvpDeadlineDate` (instants for UI/countdown; gallery and wishes are gated by `site_feature_states`, not by celebration time),
 `format*` helpers, `getScheduleItems`, `ScheduleItem`.
 
 ## Server vs client

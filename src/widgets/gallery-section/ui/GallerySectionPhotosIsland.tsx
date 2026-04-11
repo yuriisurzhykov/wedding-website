@@ -1,3 +1,4 @@
+import type {FeatureState} from "@entities/site-settings";
 import {getViewerRsvpIdFromServerCookies} from "@features/guest-session/server";
 import {listGalleryPhotosCached} from "@features/gallery-list";
 
@@ -8,13 +9,22 @@ export type {GalleryPhotosClientSlots};
 
 type Props = {
     presentation: GalleryPresentation;
+    galleryBrowse: FeatureState;
+    galleryUpload: FeatureState;
+    galleryPhotoDelete: FeatureState;
     slots?: GalleryPhotosClientSlots;
 };
 
 /**
  * Async server child: loads initial gallery rows then hydrates the client island.
  */
-export async function GallerySectionPhotosIsland({presentation, slots}: Props) {
+export async function GallerySectionPhotosIsland({
+    presentation,
+    galleryBrowse,
+    galleryUpload,
+    galleryPhotoDelete,
+    slots,
+}: Props) {
     const limit = galleryListLimitForPresentation(presentation);
     const viewerRsvpId = await getViewerRsvpIdFromServerCookies();
     const result = await listGalleryPhotosCached({
@@ -38,6 +48,9 @@ export async function GallerySectionPhotosIsland({presentation, slots}: Props) {
             initialPhotos={initialPhotos}
             initialHasMore={initialHasMore}
             presentation={presentation}
+            galleryBrowse={galleryBrowse}
+            galleryUpload={galleryUpload}
+            galleryPhotoDelete={galleryPhotoDelete}
             slots={slots}
         />
     );
