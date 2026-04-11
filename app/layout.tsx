@@ -2,6 +2,7 @@ import type {Metadata} from 'next'
 import {Cormorant_Garamond, Great_Vibes, Roboto} from 'next/font/google'
 import {Analytics} from '@vercel/analytics/next'
 import {getLocale} from 'next-intl/server'
+import {getPublicSiteUrl} from '@shared/lib/get-public-site-url'
 import {AppToaster} from '@shared/ui'
 import './globals.css'
 import './hero-mesh-gradient.css'
@@ -36,11 +37,15 @@ const fontAccent = Great_Vibes({
 })
 
 const FAVICON_V = '20260410'
+const SITE_TITLE = 'Yurii & Mariia Wedding'
+const SITE_DESCRIPTION = 'Wedding website'
 
-export const metadata: Metadata = {
-    title: 'Yurii & Mariia Wedding',
-    description: 'Wedding website',
-    icons: {
+export async function generateMetadata(): Promise<Metadata> {
+    let manifest = `/favicon/site.webmanifest?v=${FAVICON_V}`;
+    let appleWebApp = {
+        title: SITE_TITLE,
+    };
+    let faviconIcons = {
         icon: [
             {
                 url: `/favicon/favicon-96x96.png?v=${FAVICON_V}`,
@@ -60,11 +65,46 @@ export const metadata: Metadata = {
                 type: 'image/png',
             },
         ],
-    },
-    manifest: `/favicon/site.webmanifest?v=${FAVICON_V}`,
-    appleWebApp: {
-        title: 'Yurii & Mariia Wedding',
-    },
+    };
+    const publicBase = getPublicSiteUrl()
+    if (!publicBase) {
+
+        return {
+            title: SITE_TITLE,
+            description: SITE_DESCRIPTION,
+            icons: faviconIcons,
+            manifest: manifest,
+            appleWebApp: appleWebApp,
+        }
+    }
+    const metadataBase = new URL(publicBase)
+    return {
+        metadataBase,
+        title: SITE_TITLE,
+        description: SITE_DESCRIPTION,
+        icons: faviconIcons,
+        manifest: manifest,
+        appleWebApp: appleWebApp,
+        openGraph: {
+            title: SITE_TITLE,
+            description: SITE_DESCRIPTION,
+            url: new URL('/', metadataBase),
+            siteName: SITE_TITLE,
+            type: 'website',
+            images: [
+                {
+                    url: '/og/wedding-preview.png',
+                    alt: SITE_TITLE,
+                },
+            ],
+        },
+        twitter: {
+            card: 'summary_large_image',
+            title: SITE_TITLE,
+            description: SITE_DESCRIPTION,
+            images: ['/og/wedding-preview.png'],
+        },
+    }
 }
 
 export default async function RootLayout(
