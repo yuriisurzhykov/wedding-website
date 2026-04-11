@@ -279,6 +279,7 @@ No manual mappings — Tailwind v4 does this itself by naming convention (`--col
      CSS variables in layout.tsx (see Phase 2)
      -------------------------------------------------- */
     --font-display: 'Cormorant Garamond', Georgia, serif;  /* font-display */
+    --font-header: 'Cormorant Garamond', Georgia, serif;  /* font-display */
     --font-body: 'Lato', system-ui, sans-serif;             /* font-body */
     --font-accent: 'Great Vibes', cursive;                  /* font-accent */
     /* --------------------------------------------------

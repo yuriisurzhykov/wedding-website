@@ -280,9 +280,17 @@
             hero-mesh-hue-drift 5.3s ease-in-out infinite;
 }
 
-.hero-mesh > * {
+/* Stack hero content above ::before; keep absolute botanical decor out of this rule. */
+.hero-mesh > *:not(.hero-botanical-decor) {
     position: relative;
     z-index: 1;
+}
+
+.hero-mesh > .hero-botanical-decor {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

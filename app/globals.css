@@ -40,7 +40,8 @@
      Values are injected from next/font/google via
      CSS variables in layout.tsx (see Phase 2)
      -------------------------------------------------- */
-    --font-display: 'Cormorant Garamond', Georgia, serif;  /* font-display */
+    --font-display: 'Cormorant Garamond', Georgia, serif;   /* font-display */
+    --font-header: 'Cormorant Garamond', Georgia, serif;    /* font-display */
     --font-body: 'Lato', system-ui, sans-serif;             /* font-body */
     --font-accent: 'Great Vibes', cursive;                  /* font-accent */
     /* --------------------------------------------------
@@ -92,11 +93,9 @@
             color-mix(in srgb, #efd6da 58%, #fdfaf7 42%) 46%,
             color-mix(
                     in srgb,
-                    color-mix(in srgb, var(--color-wedding-champagne) 60%, var(--color-wedding-blush) 40%)
-                            44%,
+                    color-mix(in srgb, var(--color-wedding-champagne) 60%, var(--color-wedding-blush) 40%) 44%,
                     #faf6f3
-            )
-                    72%,
+            ) 72%,
             color-mix(in srgb, #eee8e2 88%, #fdfaf7 12%) 100%
     );
     --gradient-section: linear-gradient(180deg, #fdf9f6 0%, #f3ebe4 100%);
