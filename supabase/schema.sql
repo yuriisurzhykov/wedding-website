@@ -178,3 +178,121 @@ $$;
 
 REVOKE ALL ON FUNCTION guest_session_check_restore_rate(text, int, int) FROM PUBLIC;
 GRANT EXECUTE ON FUNCTION guest_session_check_restore_rate(text, int, int) TO service_role;
+
+-- =============================================
+-- Admin API rate limit (fixed window; RPC only, service_role)
+-- =============================================
+CREATE TABLE admin_rate_limit
+(
+    bucket_key    TEXT PRIMARY KEY,
+    window_start  TIMESTAMPTZ NOT NULL,
+    attempt_count INT NOT NULL CHECK (attempt_count >= 0)
+);
+
+ALTER TABLE admin_rate_limit ENABLE ROW LEVEL SECURITY;
+
+CREATE OR REPLACE FUNCTION admin_check_rate_limit(
+    p_bucket_key text,
+    p_max_attempts int,
+    p_window_seconds int
+)
+RETURNS json
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+DECLARE
+    v_now timestamptz := clock_timestamp();
+    v_window_end timestamptz;
+    v_count int;
+    v_start timestamptz;
+BEGIN
+    IF p_max_attempts < 1 OR p_window_seconds < 1 THEN
+        RETURN json_build_object('allowed', true, 'retry_after_sec', 0);
+    END IF;
+
+    PERFORM pg_advisory_xact_lock(hashtext(p_bucket_key)::bigint);
+
+    SELECT window_start, attempt_count INTO v_start, v_count
+    FROM admin_rate_limit
+    WHERE bucket_key = p_bucket_key;
+
+    IF NOT FOUND THEN
+        INSERT INTO admin_rate_limit (bucket_key, window_start, attempt_count)
+        VALUES (p_bucket_key, v_now, 1);
+        RETURN json_build_object('allowed', true, 'retry_after_sec', 0);
+    END IF;
+
+    v_window_end := v_start + make_interval(secs => p_window_seconds);
+
+    IF v_now >= v_window_end THEN
+        UPDATE admin_rate_limit
+        SET window_start = v_now, attempt_count = 1
+        WHERE bucket_key = p_bucket_key;
+        RETURN json_build_object('allowed', true, 'retry_after_sec', 0);
+    END IF;
+
+    IF v_count >= p_max_attempts THEN
+        RETURN json_build_object(
+            'allowed', false,
+            'retry_after_sec',
+            GREATEST(1, CEIL(EXTRACT(EPOCH FROM (v_window_end - v_now)))::int)
+        );
+    END IF;
+
+    UPDATE admin_rate_limit
+    SET attempt_count = attempt_count + 1
+    WHERE bucket_key = p_bucket_key;
+
+    RETURN json_build_object('allowed', true, 'retry_after_sec', 0);
+END;
+$$;
+
+REVOKE ALL ON FUNCTION admin_check_rate_limit(text, int, int) FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION admin_check_rate_limit(text, int, int) TO service_role;
+
+-- =============================================
+-- Admin email senders, templates + send log (service_role in API routes)
+-- =============================================
+CREATE TABLE email_senders
+(
+    id           UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
+    label        TEXT        NOT NULL,
+    mailbox      TEXT        NOT NULL,
+    display_name TEXT,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at   TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE email_templates
+(
+    id               UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
+    slug             TEXT        NOT NULL UNIQUE,
+    name             TEXT        NOT NULL,
+    subject_template TEXT        NOT NULL,
+    body_html        TEXT        NOT NULL,
+    body_text        TEXT,
+    sender_id        UUID REFERENCES email_senders (id) ON DELETE SET NULL,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE TABLE email_send_log
+(
+    id               UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
+    template_id      UUID REFERENCES email_templates (id) ON DELETE SET NULL,
+    recipient_email  TEXT        NOT NULL,
+    subject          TEXT        NOT NULL,
+    status           TEXT        NOT NULL CHECK (status IN ('sent', 'failed')),
+    resend_email_id  TEXT,
+    error_message    TEXT,
+    segment          TEXT,
+    from_address     TEXT,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_email_send_log_created_at ON email_send_log (created_at DESC);
+CREATE INDEX idx_email_templates_sender_id ON email_templates (sender_id);
+
+ALTER TABLE email_senders ENABLE ROW LEVEL SECURITY;
+ALTER TABLE email_templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE email_send_log ENABLE ROW LEVEL SECURITY;

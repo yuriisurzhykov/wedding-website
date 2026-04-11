@@ -210,7 +210,14 @@ Env block for local secrets (unchanged):
     R2_PUBLIC_URL                        # Bucket CDN URL (custom domain)
     RESEND_API_KEY
     ADMIN_EMAIL                          # Where to send RSVP notifications
-    ADMIN_SECRET                         # Token for /admin routes
+    ADMIN_SECRET                         # Optional legacy Bearer token for /api/admin (scripts)
+    ADMIN_SESSION_SECRET                 # Signs admin session JWT (httpOnly cookie); admin password lives in DB (admin_site_credential)
+    ADMIN_RATE_LIMIT_LOGIN_MAX           # optional — login rate limit (see @features/admin-api README)
+    ADMIN_RATE_LIMIT_LOGIN_WINDOW_SEC
+    ADMIN_RATE_LIMIT_API_MAX
+    ADMIN_RATE_LIMIT_API_WINDOW_SEC
+    ADMIN_EMAIL_MAX_BROADCAST_RECIPIENTS   # optional — cap per broadcast request (see @features/admin-email-dispatch README)
+    ADMIN_EMAIL_SEND_DELAY_MS              # optional — pause between Resend calls in a broadcast
 ```
 
 ---
@@ -520,6 +527,7 @@ export function middleware(req: NextRequest) {
     }
 
     // 2. i18n routing for everything else
+    // (Current repo: admin UI checks session JWT in middleware; /api/admin auth + rate limits live in route handlers.)
     return intlMiddleware(req)
 }
 
@@ -3291,15 +3299,28 @@ export function Donate() {
 
 ## Phase 8 — Admin panel
 
-### Access
+### Access and security
 
-```
-https://yoursite.com/admin?token=YOUR_ADMIN_SECRET
-```
+- **Sign-in:** `/admin/login` (and `/ru/admin/login`). Password is verified against **`admin_site_credential.password_hash`** (bcrypt) in Postgres; set with **`npm run admin:set-password`** (service_role). **`POST /api/admin/login`** sets an **httpOnly** cookie with a JWT signed by **`ADMIN_SESSION_SECRET`**.
+- **UI:** Middleware allows `/[locale]/admin/login` without a session; other `/[locale]/admin/*` routes require a valid session cookie (JWT). Unauthenticated users are redirected to login (no `?token=` URL flow).
+- **API:** Each `/api/admin/*` handler calls **`checkAdminRateLimit`** from `@features/admin-api` first (`login` vs `api` thresholds), then **`isAdminApiAuthorized`** (session cookie or legacy **`ADMIN_SECRET`** via `Authorization: Bearer` / `x-admin-token`). API auth is implemented in route handlers, not only in middleware.
+- **Rate limiting:** Table `admin_rate_limit` + RPC `admin_check_rate_limit`. Tunable via **`ADMIN_RATE_LIMIT_LOGIN_*`** and **`ADMIN_RATE_LIMIT_API_*`**.
 
-Middleware checks the token on every request to `/admin` and `/api/admin`.
+### Layout and routes (foundation)
 
-### `app/[locale]/admin/page.tsx`
+- Shell: `src/widgets/admin-shell` — sidebar + logout; stub pages where a screen is not implemented yet.
+- See **`src/widgets/admin-shell/README.md`** for how to add a new admin screen.
+
+### Email (templates + broadcast)
+
+- **Tables:** `email_senders` (saved From lines), `email_templates` (optional `sender_id`), `email_send_log` (includes `from_address` per attempt). Migrations + `supabase/schema.sql`. Access only with **service_role** from API routes; RLS enabled with no anon policies (same pattern as other admin tables).
+- **Features:** `@features/admin-email-senders` (CRUD senders), `@features/admin-email-templates` (CRUD templates), `@features/admin-email-dispatch` (Resend send + log read). Placeholders in subject/body are **whitelisted** (`{{name}}`, `{{email}}`, … — see feature README). If no sender is selected, dispatch uses `getTransactionalFromAddress()` (`RESEND_FROM_EMAIL`).
+- **Routes:** `GET/POST /api/admin/email/senders`, `PATCH/DELETE /api/admin/email/senders/[id]`, `GET/POST /api/admin/email/templates`, `PATCH/DELETE /api/admin/email/templates/[id]`, `POST /api/admin/email/send`, `GET /api/admin/email/log?limit=`. Each handler: `checkAdminRateLimit` → `isAdminApiAuthorized` → feature call.
+- **UI:** `src/widgets/admin-email` — `app/[locale]/admin/(dashboard)/email/page.tsx`.
+- **Env (optional tuning):** `ADMIN_EMAIL_MAX_BROADCAST_RECIPIENTS` (default 250), `ADMIN_EMAIL_SEND_DELAY_MS` (default 75). Requires **`RESEND_API_KEY`** and a verified **`RESEND_FROM_EMAIL`** (or onboarding sender) for actual delivery — same stack as transactional RSVP mail.
+- **Cron:** not used; large broadcasts are intentionally capped per request (documented in `@features/admin-email-dispatch/README.md`).
+
+### `app/[locale]/admin/page.tsx` (legacy example in doc — product uses dashboard stubs)
 
 ```typescript
 import {createServerClient} from '@/lib/supabase'
@@ -3633,7 +3654,7 @@ Functionality
   [ ] Zelle: tap copies number to clipboard
   [ ] Countdown shows the correct remaining time
   [ ] Wishes save and display correctly
-  [ ] Admin panel opens with the token
+  [ ] Admin panel: login at /admin/login, session cookie, site settings save
   [ ] Cron jobs visible in Vercel Dashboard → Settings → Cron Jobs
   [ ] RU/EN switcher works and preserves scroll position
 
@@ -3653,7 +3674,7 @@ Infrastructure
   [ ] SSL certificate active (Vercel handles this automatically)
   [ ] R2 Custom Domain configured (media.yourdomain.com)
   [ ] RESEND_API_KEY domain verified
-  [ ] ADMIN_SECRET — long random string (not "password")
+  [ ] Admin password in DB (`admin_site_credential` via `npm run admin:set-password`), ADMIN_SESSION_SECRET, optional ADMIN_SECRET for API scripts
   [ ] All env variables added in Vercel Dashboard
 ```
 

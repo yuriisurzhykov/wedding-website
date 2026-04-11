@@ -2,35 +2,23 @@
 
 import {useRouter} from '@/i18n/navigation'
 import {
-    FEATURE_STATE_VALUES,
     getCatalogEntryBySegmentId,
     SCHEDULE_I18N_CATALOG,
     SCHEDULE_PROGRAM_ICON_IDS,
-    type FeatureState,
     type ScheduleProgramItem,
-    SITE_FEATURE_KEYS,
-    type SiteCapabilities,
     type SiteSettings,
 } from '@entities/site-settings'
 import {cn} from '@shared/lib/cn'
 import {Button} from '@shared/ui/Button'
 import {Input} from '@shared/ui/Input'
-import {Select} from '@shared/ui/Select'
-import {useSearchParams} from 'next/navigation'
 import {useTranslations} from 'next-intl'
-import {useCallback, useEffect, useMemo, useRef, useState} from 'react'
+import {useEffect, useMemo, useRef, useState} from 'react'
 import {toast} from 'sonner'
 
-const ADMIN_TOKEN_STORAGE_KEY = 'wedding_admin_bearer'
+import {patchAdminSiteSettings} from '../lib/patch-admin-site-settings'
 
-function cloneEditable(settings: SiteSettings): {
-    capabilities: SiteCapabilities
-    schedule_program: ScheduleProgramItem[]
-} {
-    return {
-        capabilities: {...settings.capabilities},
-        schedule_program: settings.schedule_program.map((row) => ({...row})),
-    }
+function cloneSchedule(settings: SiteSettings): ScheduleProgramItem[] {
+    return settings.schedule_program.map((row) => ({...row}))
 }
 
 function segmentIdForRow(row: ScheduleProgramItem): string {
@@ -49,26 +37,15 @@ type Props = Readonly<{
     initialSettings: SiteSettings
 }>
 
-export function AdminSettingsForm({initialSettings}: Props) {
-    const t = useTranslations('admin.settings')
-    const router = useRouter()
-    const searchParams = useSearchParams()
+export function AdminScheduleForm({initialSettings}: Props) {
+    const tPage = useTranslations('admin.schedulePage')
+    const tSettings = useTranslations('admin.settings')
 
-    const [capabilities, setCapabilities] = useState(() => cloneEditable(initialSettings).capabilities)
-    const [scheduleRows, setScheduleRows] = useState(() => cloneEditable(initialSettings).schedule_program)
+    const router = useRouter()
+
+    const [scheduleRows, setScheduleRows] = useState(() => cloneSchedule(initialSettings))
     const [saving, setSaving] = useState(false)
     const [updatedAt, setUpdatedAt] = useState(initialSettings.updated_at)
-
-    useEffect(() => {
-        const fromUrl = searchParams.get('token')?.trim()
-        if (fromUrl) {
-            try {
-                sessionStorage.setItem(ADMIN_TOKEN_STORAGE_KEY, fromUrl)
-            } catch {
-                /* ignore quota / private mode */
-            }
-        }
-    }, [searchParams])
 
     const lastSyncedServerAt = useRef(initialSettings.updated_at)
     useEffect(() => {
@@ -77,26 +54,8 @@ export function AdminSettingsForm({initialSettings}: Props) {
         }
         lastSyncedServerAt.current = initialSettings.updated_at
         setUpdatedAt(initialSettings.updated_at)
-        const next = cloneEditable(initialSettings)
-        setCapabilities(next.capabilities)
-        setScheduleRows(next.schedule_program)
+        setScheduleRows(cloneSchedule(initialSettings))
     }, [initialSettings])
-
-    const resolveToken = useCallback((): string | null => {
-        const fromUrl = searchParams.get('token')?.trim()
-        if (fromUrl) {
-            return fromUrl
-        }
-        try {
-            return sessionStorage.getItem(ADMIN_TOKEN_STORAGE_KEY)?.trim() ?? null
-        } catch {
-            return null
-        }
-    }, [searchParams])
-
-    function setCapability(key: (typeof SITE_FEATURE_KEYS)[number], value: FeatureState) {
-        setCapabilities((prev) => ({...prev, [key]: value}))
-    }
 
     function updateRow(index: number, row: ScheduleProgramItem) {
         setScheduleRows((prev) => {
@@ -177,61 +136,61 @@ export function AdminSettingsForm({initialSettings}: Props) {
             return
         }
         if (duplicateIds.size > 0) {
-            toast.error(t('errors.duplicateIds'))
+            toast.error(tSettings('errors.duplicateIds'))
             return
         }
         if (scheduleRows.length === 0) {
-            toast.error(t('errors.emptySchedule'))
-            return
-        }
-
-        const token = resolveToken()
-        if (!token) {
-            toast.error(t('errors.noToken'))
+            toast.error(tSettings('errors.emptySchedule'))
             return
         }
 
         setSaving(true)
         try {
-            const res = await fetch('/api/admin/site-settings', {
-                method: 'PATCH',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    capabilities,
-                    schedule_program: scheduleRows,
-                }),
-            })
+            const result = await patchAdminSiteSettings({schedule_program: scheduleRows})
 
-            const data: unknown = await res.json().catch(() => null)
+            if (!result.ok && result.status === 401) {
+                toast.error(tSettings('errors.notSignedIn'))
+                return
+            }
 
-            if (!res.ok) {
+            if (!result.ok && result.status === 429) {
+                const data = result.data
+                const retry =
+                    typeof data === 'object' &&
+                    data !== null &&
+                    'retry_after' in data &&
+                    typeof (data as {retry_after: unknown}).retry_after === 'number'
+                        ? (data as {retry_after: number}).retry_after
+                        : undefined
+                toast.error(
+                    retry !== undefined
+                        ? tSettings('errors.rateLimited', {seconds: retry})
+                        : tSettings('errors.rateLimitedGeneric'),
+                )
+                return
+            }
+
+            if (!result.ok) {
+                const data = result.data
                 const msg =
                     typeof data === 'object' &&
                     data !== null &&
                     'error' in data &&
-                    typeof (data as { error: unknown }).error === 'string'
-                        ? (data as { error: string }).error
-                        : t('errors.saveFailed')
+                    typeof (data as {error: unknown}).error === 'string'
+                        ? (data as {error: string}).error
+                        : tSettings('errors.saveFailed')
                 toast.error(msg)
                 return
             }
 
-            if (
-                typeof data === 'object' &&
-                data !== null &&
-                'updated_at' in data &&
-                typeof (data as { updated_at: unknown }).updated_at === 'string'
-            ) {
-                setUpdatedAt((data as { updated_at: string }).updated_at)
+            if (result.updated_at) {
+                setUpdatedAt(result.updated_at)
             }
 
-            toast.success(t('toast.saved'))
+            toast.success(tPage('toast.saved'))
             router.refresh()
         } catch {
-            toast.error(t('errors.saveFailed'))
+            toast.error(tSettings('errors.saveFailed'))
         } finally {
             setSaving(false)
         }
@@ -240,56 +199,22 @@ export function AdminSettingsForm({initialSettings}: Props) {
     return (
         <div className="mx-auto max-w-3xl px-4 py-10">
             <header className="mb-8">
-                <h1 className="font-display text-h2 text-text-primary">{t('title')}</h1>
-                <p className="mt-2 text-body text-text-secondary">{t('subtitle')}</p>
-                <p className="mt-3 text-small text-text-secondary">{t('accessHint')}</p>
+                <h1 className="font-display text-h2 text-text-primary">{tPage('title')}</h1>
+                <p className="mt-2 text-body text-text-secondary">{tPage('subtitle')}</p>
+                <p className="mt-3 text-small text-text-secondary">{tPage('accessHint')}</p>
                 <p className="mt-1 font-mono text-small text-text-secondary">
-                    {t('updatedAtLabel')}: {updatedAt}
+                    {tSettings('updatedAtLabel')}: {updatedAt}
                 </p>
             </header>
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-10">
                 <section className="rounded-card border border-border bg-bg-card p-6 shadow-sm">
-                    <h2 className="font-display text-h3 text-text-primary">{t('capabilities.title')}</h2>
-                    <ul className="mt-4 flex flex-col gap-4">
-                        {SITE_FEATURE_KEYS.map((key) => (
-                            <li
-                                key={key}
-                                className="flex flex-col gap-2 border-b border-border/60 pb-4 last:border-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4"
-                            >
-                                <span className="text-body text-text-primary">{t(`capabilities.labels.${key}`)}</span>
-                                <div className="inline-flex flex-col gap-1 sm:items-end">
-                                    <label
-                                        className="text-small text-text-secondary"
-                                        htmlFor={`admin-feature-state-${key}`}
-                                    >
-                                        {t('capabilities.state')}
-                                    </label>
-                                    <Select
-                                        id={`admin-feature-state-${key}`}
-                                        className="min-w-[12rem] rounded-pill"
-                                        value={capabilities[key]}
-                                        onChange={(ev) =>
-                                            setCapability(key, ev.target.value as FeatureState)
-                                        }
-                                    >
-                                        {FEATURE_STATE_VALUES.map((state) => (
-                                            <option key={state} value={state}>
-                                                {t(`capabilities.stateLabels.${state}`)}
-                                            </option>
-                                        ))}
-                                    </Select>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                </section>
-
-                <section className="rounded-card border border-border bg-bg-card p-6 shadow-sm">
                     <div className="flex flex-wrap items-end justify-between gap-4">
-                        <h2 className="font-display text-h3 text-text-primary">{t('schedule.title')}</h2>
+                        <h2 className="font-display text-h3 text-text-primary">
+                            {tSettings('schedule.title')}
+                        </h2>
                         <Button type="button" variant="secondary" size="sm" onClick={addRow}>
-                            {t('schedule.addRow')}
+                            {tSettings('schedule.addRow')}
                         </Button>
                     </div>
 
@@ -310,7 +235,7 @@ export function AdminSettingsForm({initialSettings}: Props) {
                                         disabled={index === 0}
                                         onClick={() => moveRow(index, -1)}
                                     >
-                                        {t('schedule.moveUp')}
+                                        {tSettings('schedule.moveUp')}
                                     </Button>
                                     <Button
                                         type="button"
@@ -319,17 +244,23 @@ export function AdminSettingsForm({initialSettings}: Props) {
                                         disabled={index === scheduleRows.length - 1}
                                         onClick={() => moveRow(index, 1)}
                                     >
-                                        {t('schedule.moveDown')}
+                                        {tSettings('schedule.moveDown')}
                                     </Button>
-                                    <Button type="button" variant="outline" size="sm" onClick={() => removeRow(index)}>
-                                        {t('schedule.removeRow')}
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => removeRow(index)}
+                                    >
+                                        {tSettings('schedule.removeRow')}
                                     </Button>
                                 </div>
 
                                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
                                     <label className="flex flex-col gap-1">
-                                        <span
-                                            className="text-small font-medium text-text-primary">{t('schedule.rowId')}</span>
+                                        <span className="text-small font-medium text-text-primary">
+                                            {tSettings('schedule.rowId')}
+                                        </span>
                                         <Input
                                             value={row.id}
                                             onChange={(ev) =>
@@ -340,7 +271,7 @@ export function AdminSettingsForm({initialSettings}: Props) {
                                     </label>
                                     <label className="flex flex-col gap-1">
                                         <span className="text-small font-medium text-text-primary">
-                                            {t('schedule.messagePreset')}
+                                            {tSettings('schedule.messagePreset')}
                                         </span>
                                         <select
                                             className="rounded-pill border border-border bg-bg-card px-4 py-3 text-body text-text-primary"
@@ -349,14 +280,15 @@ export function AdminSettingsForm({initialSettings}: Props) {
                                         >
                                             {SCHEDULE_I18N_CATALOG.map((c) => (
                                                 <option key={c.segmentId} value={c.segmentId}>
-                                                    {t(`segments.${c.segmentId}`)}
+                                                    {tSettings(`segments.${c.segmentId}`)}
                                                 </option>
                                             ))}
                                         </select>
                                     </label>
                                     <label className="flex flex-col gap-1">
-                                        <span
-                                            className="text-small font-medium text-text-primary">{t('schedule.icon')}</span>
+                                        <span className="text-small font-medium text-text-primary">
+                                            {tSettings('schedule.icon')}
+                                        </span>
                                         <select
                                             className="rounded-pill border border-border bg-bg-card px-4 py-3 text-body text-text-primary"
                                             value={safeIconIdForSelect(row.iconId)}
@@ -366,7 +298,7 @@ export function AdminSettingsForm({initialSettings}: Props) {
                                         >
                                             {SCHEDULE_PROGRAM_ICON_IDS.map((id) => (
                                                 <option key={id} value={id}>
-                                                    {t(`schedule.icons.${id}`)}
+                                                    {tSettings(`schedule.icons.${id}`)}
                                                 </option>
                                             ))}
                                         </select>
@@ -374,7 +306,7 @@ export function AdminSettingsForm({initialSettings}: Props) {
                                     <div className="flex gap-2 sm:col-span-2">
                                         <label className="flex flex-1 flex-col gap-1">
                                             <span className="text-small font-medium text-text-primary">
-                                                {t('schedule.hour')}
+                                                {tSettings('schedule.hour')}
                                             </span>
                                             <Input
                                                 inputMode="numeric"
@@ -394,7 +326,7 @@ export function AdminSettingsForm({initialSettings}: Props) {
                                         </label>
                                         <label className="flex flex-1 flex-col gap-1">
                                             <span className="text-small font-medium text-text-primary">
-                                                {t('schedule.minute')}
+                                                {tSettings('schedule.minute')}
                                             </span>
                                             <Input
                                                 inputMode="numeric"
@@ -415,19 +347,19 @@ export function AdminSettingsForm({initialSettings}: Props) {
                                     </div>
                                     <label className="flex flex-col gap-1 sm:col-span-2">
                                         <span className="text-small font-medium text-text-primary">
-                                            {t('schedule.titleKey')}
+                                            {tSettings('schedule.titleKey')}
                                         </span>
                                         <Input value={row.titleKey} readOnly className="opacity-80"/>
                                     </label>
                                     <label className="flex flex-col gap-1 sm:col-span-2">
                                         <span className="text-small font-medium text-text-primary">
-                                            {t('schedule.descKey')}
+                                            {tSettings('schedule.descKey')}
                                         </span>
                                         <Input value={row.descKey} readOnly className="opacity-80"/>
                                     </label>
                                     <label className="flex flex-col gap-1 sm:col-span-2">
                                         <span className="text-small font-medium text-text-primary">
-                                            {t('schedule.location')}
+                                            {tSettings('schedule.location')}
                                         </span>
                                         <Input
                                             value={row.location}
@@ -438,7 +370,7 @@ export function AdminSettingsForm({initialSettings}: Props) {
                                     </label>
                                     <label className="flex flex-col gap-1 sm:col-span-2">
                                         <span className="text-small font-medium text-text-primary">
-                                            {t('schedule.locationUrl')}
+                                            {tSettings('schedule.locationUrl')}
                                         </span>
                                         <Input
                                             value={row.locationUrl}
@@ -455,7 +387,7 @@ export function AdminSettingsForm({initialSettings}: Props) {
 
                 <div className="flex justify-end">
                     <Button type="submit" disabled={saving}>
-                        {saving ? t('saving') : t('save')}
+                        {saving ? tPage('saving') : tPage('save')}
                     </Button>
                 </div>
             </form>

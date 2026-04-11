@@ -35,8 +35,10 @@ role for upserts, Next cache with tag invalidation on update.
   components.
 - **HTTP:** `GET /api/site-settings/public` — JSON `{ ok: true, updated_at, capabilities }` (feature state map) for
   guest-tab refetch; validated with `publicSiteSettingsApiSuccessSchema` in `@entities/site-settings`.
-- **Admin:** `PATCH /api/admin/site-settings` — JSON body as `siteSettingsPatchSchema`; protected by middleware
-  (`ADMIN_SECRET`). Implemented in `app/api/admin/site-settings/route.ts` (thin handler calling `updateSiteSettings`).
+- **Admin:** `PATCH /api/admin/site-settings` — JSON body as `siteSettingsPatchSchema`; requires **rate limit pass** +
+  **auth** (`isAdminApiAuthorized`: httpOnly session cookie from `POST /api/admin/login` or legacy `Authorization` /
+  `x-admin-token` with `ADMIN_SECRET`). Implemented in `app/api/admin/site-settings/route.ts` (thin handler calling
+  `updateSiteSettings`).
 
 ## Usage
 

@@ -9,7 +9,8 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "admin:set-password": "node scripts/set-admin-password.cjs"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1026.0",
@@ -21,7 +22,9 @@
     "@supabase/supabase-js": "^2.102.1",
     "@types/mdx": "^2.0.13",
     "@vercel/analytics": "^2.0.1",
+    "bcryptjs": "^3.0.3",
     "clsx": "^2.1.1",
+    "jose": "^6.2.2",
     "libphonenumber-js": "^1.12.41",
     "next": "16.2.2",
     "next-intl": "^4.9.0",
@@ -36,6 +39,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",

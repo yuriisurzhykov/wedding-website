@@ -296,11 +296,244 @@
     "signInCta": "Guest sign-in (name and email)"
   },
   "admin": {
+    "shell": {
+      "title": "Admin",
+      "navAria": "Admin sections",
+      "logout": "Log out",
+      "loggingOut": "Logging out…",
+      "nav": {
+        "dashboard": "Overview",
+        "guests": "Guests",
+        "features": "Features",
+        "schedule": "Schedule",
+        "gallery": "Gallery",
+        "wishes": "Wishes",
+        "email": "Email"
+      }
+    },
+    "login": {
+      "metaTitle": "Admin sign-in",
+      "title": "Admin sign-in",
+      "subtitle": "Enter the site admin password. Your session is stored in a secure cookie.",
+      "passwordLabel": "Password",
+      "submit": "Sign in",
+      "submitting": "Signing in…",
+      "invalidCredentials": "Invalid password.",
+      "badRequest": "Invalid request. Try again.",
+      "serverError": "Server error. If you manage this site, ensure admin password is set in the database (npm run admin:set-password), migrations are applied, and ADMIN_SESSION_SECRET is set.",
+      "networkError": "Could not reach the server. Try again.",
+      "rateLimited": "Too many attempts. Try again in {seconds, plural, one {# second} other {# seconds}}.",
+      "rateLimitedGeneric": "Too many attempts. Please wait and try again."
+    },
+    "dashboard": {
+      "metaTitle": "Admin overview",
+      "title": "Overview",
+      "subtitle": "Quick links and placeholders until detailed dashboards ship.",
+      "placeholders": {
+        "rsvp": "—",
+        "rsvpLabel": "RSVP count (coming soon)",
+        "photos": "—",
+        "photosLabel": "Gallery photos (coming soon)"
+      },
+      "linkGuests": "Guests — RSVP list"
+    },
+    "guests": {
+      "metaTitle": "Admin — Guests",
+      "title": "Guests",
+      "subtitle": "RSVP responses from the database. Use filters to narrow by attendance.",
+      "filtersAria": "Filter RSVPs",
+      "filterAll": "All",
+      "filterAttending": "Attending",
+      "filterNotAttending": "Not attending",
+      "empty": "No RSVPs match this filter.",
+      "loadError": "Could not load RSVPs. Try again later.",
+      "invalidQuery": "Invalid filter in the URL. Open Guests from the menu and choose All, Attending, or Not attending.",
+      "attendingYes": "Yes",
+      "attendingNo": "No",
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "phone": "Phone",
+        "attending": "Attending",
+        "guestCount": "Guests",
+        "dietary": "Dietary",
+        "message": "Message",
+        "submittedAt": "Submitted"
+      }
+    },
+    "gallery": {
+      "metaTitle": "Admin — Gallery",
+      "title": "Gallery photos",
+      "subtitle": "Remove photos from the shared album and storage. This does not check which guest uploaded them.",
+      "loadError": "Could not load photos. Try again later.",
+      "empty": "No photos in the gallery yet.",
+      "hasMoreHint": "Only the most recent photos are listed here. Delete in batches if you need to clear older items.",
+      "deleteSelected": "Delete selected",
+      "deleting": "Deleting…",
+      "countSelected": "{count, plural, =0 {None selected} one {# selected} other {# selected}}",
+      "selectAll": "Select all on this page",
+      "selectRow": "Select row",
+      "confirmDelete": "Delete {count, plural, one {# selected photo} other {# selected photos}}? This cannot be undone.",
+      "toastDeleted": "{count, plural, one {# photo removed} other {# photos removed}}",
+      "toastDeleteFailed": "Could not delete photos. Try again.",
+      "columns": {
+        "thumbnail": "Preview",
+        "uploader": "Uploader",
+        "uploadedAt": "Uploaded",
+        "rsvp": "RSVP link"
+      }
+    },
+    "wishes": {
+      "metaTitle": "Admin — Wishes",
+      "title": "Guest wishes",
+      "subtitle": "Remove messages from the wishes wall. Attachments are deleted from storage when present.",
+      "loadError": "Could not load wishes. Try again later.",
+      "empty": "No wishes yet.",
+      "hasMoreHint": "Only the most recent wishes are listed here. Delete in batches if you need to clear older items.",
+      "deleteSelected": "Delete selected",
+      "deleting": "Deleting…",
+      "countSelected": "{count, plural, =0 {None selected} one {# selected} other {# selected}}",
+      "selectAll": "Select all on this page",
+      "selectRow": "Select row",
+      "confirmDelete": "Delete {count, plural, one {# selected wish} other {# selected wishes}}? This cannot be undone.",
+      "toastDeleted": "{count, plural, one {# wish removed} other {# wishes removed}}",
+      "toastDeleteFailed": "Could not delete wishes. Try again.",
+      "columns": {
+        "photo": "Photo",
+        "author": "From",
+        "message": "Message",
+        "createdAt": "Posted"
+      }
+    },
+    "emailPage": {
+      "metaTitle": "Admin — Email",
+      "title": "Email",
+      "subtitle": "Add verified sender addresses, create templates with placeholders, send a test or broadcast, and review the log. Each send is logged.",
+      "tabsAria": "Email admin sections",
+      "tabs": {
+        "senders": "Senders",
+        "templates": "Templates",
+        "broadcast": "Broadcast",
+        "recentSends": "Recent sends"
+      },
+      "loadError": "Could not load email data. Try again later.",
+      "sendersHeading": "Sender addresses",
+      "sendersIntro": "Each mailbox must be allowed in Resend (verified domain). Display name is optional — we format it as the visible sender name plus the mailbox address.",
+      "senderFields": {
+        "label": "Short label (for lists only)",
+        "mailbox": "Email address",
+        "displayName": "Display name (optional)",
+        "displayNamePlaceholder": "e.g. Yurii & Mariia"
+      },
+      "saveSender": "Save sender",
+      "createSender": "Add sender",
+      "cancelSenderEdit": "Cancel",
+      "confirmDeleteSender": "Delete this sender? Templates using it will fall back to the default site address.",
+      "templateFromBadge": "From:",
+      "templatesHeading": "Templates",
+      "placeholdersHint": "Allowed placeholders: {keys}",
+      "sendHeading": "Send",
+      "sendIntro": "Test sends one message. Broadcast uses RSVP rows with a non-empty email (segment filter + per-request cap — see docs).",
+      "edit": "Edit",
+      "delete": "Delete",
+      "saveTemplate": "Save template",
+      "createTemplate": "Create template",
+      "cancelEdit": "Cancel edit",
+      "confirmDeleteTemplate": "Delete this template? Past send log entries stay, but the template will be removed.",
+      "fields": {
+        "slug": "Slug (kebab-case, immutable after create)",
+        "name": "Display name",
+        "subject": "Subject line (supports placeholders)",
+        "bodyHtml": "HTML body",
+        "bodyText": "Plain text (optional; multipart alternative)",
+        "templateSender": "Send from (optional)",
+        "templateSenderDefault": "Site default (RESEND_FROM_EMAIL)",
+        "templateSenderHint": "Default sender for this template. You can override per send below.",
+        "pickTemplate": "Template",
+        "pickTemplatePlaceholder": "Select a template…",
+        "sendFrom": "Override sender for this send",
+        "sendFromDefault": "Use template / site default",
+        "sendFromHint": "Choose a saved sender to override the template default for this run only.",
+        "mode": "Mode",
+        "testEmail": "Send test to",
+        "segment": "Guests to include"
+      },
+      "modeTest": "Test to one address",
+      "modeBroadcast": "Broadcast to RSVP emails",
+      "segmentAll": "All with email",
+      "segmentAttending": "Attending only",
+      "segmentNotAttending": "Not attending only",
+      "send": "Send",
+      "sending": "Sending…",
+      "logHeading": "Recent sends",
+      "logRefresh": "Refresh log",
+      "logRefreshing": "Refreshing…",
+      "logEmpty": "No sends recorded yet.",
+      "logColumns": {
+        "time": "Time",
+        "from": "From",
+        "to": "To",
+        "status": "Status",
+        "segment": "Segment",
+        "subject": "Subject"
+      },
+      "statusSent": "Sent",
+      "statusFailed": "Failed",
+      "toast": {
+        "templateSaved": "Template saved",
+        "templateCreated": "Template created",
+        "templateDeleted": "Template deleted",
+        "templateSaveFailed": "Could not save template.",
+        "templateDeleteFailed": "Could not delete template.",
+        "sendFailed": "Send failed.",
+        "sendDone": "Done: {sent} sent, {failed} failed.",
+        "sendCapped": "Recipient list was larger than the per-request cap ({total} total). Only the first batch was sent — narrow the segment or raise ADMIN_EMAIL_MAX_BROADCAST_RECIPIENTS.",
+        "logLoadFailed": "Could not refresh the log.",
+        "senderSaved": "Sender saved",
+        "senderCreated": "Sender added",
+        "senderDeleted": "Sender removed",
+        "senderSaveFailed": "Could not save sender.",
+        "senderDeleteFailed": "Could not delete sender."
+      }
+    },
+    "stubs": {
+      "comingSoon": "This section is not implemented yet.",
+      "titles": {
+        "guests": "Guests",
+        "features": "Features",
+        "schedule": "Schedule",
+        "gallery": "Gallery",
+        "wishes": "Wishes",
+        "email": "Email"
+      }
+    },
+    "featuresPage": {
+      "metaTitle": "Admin — Features",
+      "title": "Features",
+      "subtitle": "Choose visibility for each guest-facing section: hidden, preview (teaser only), or fully enabled.",
+      "accessHint": "Sign in at /admin/login. Saving uses your admin session cookie (or a legacy API token in scripts).",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "toast": {
+        "saved": "Features saved"
+      }
+    },
+    "schedulePage": {
+      "metaTitle": "Admin — Schedule",
+      "title": "Day-of program",
+      "subtitle": "Edit the timeline guests see on the site. Presets map to the same translation keys as the public schedule.",
+      "accessHint": "Sign in at /admin/login. Saving uses your admin session cookie (or a legacy API token in scripts).",
+      "save": "Save changes",
+      "saving": "Saving…",
+      "toast": {
+        "saved": "Program saved"
+      }
+    },
     "settings": {
       "metaTitle": "Site settings",
       "title": "Site settings",
       "subtitle": "Toggle guest-facing features and edit the day-of schedule. Changes apply after you save.",
-      "accessHint": "Open this page with ?token=YOUR_ADMIN_SECRET in the URL (same value as ADMIN_SECRET) so the browser can reach the admin area. Saving sends the secret in the Authorization header.",
+      "accessHint": "You must be signed in at /admin/login. Saving uses your admin session cookie (or a legacy API token in scripts).",
       "updatedAtLabel": "Last updated (server)",
       "save": "Save changes",
       "saving": "Saving…",
@@ -310,7 +543,9 @@
       "errors": {
         "duplicateIds": "Each schedule item needs a unique id.",
         "emptySchedule": "Add at least one schedule item.",
-        "noToken": "Missing admin token. Add ?token=… to the URL or reload after signing in with the secret.",
+        "notSignedIn": "Your session expired. Sign in again from the admin login page.",
+        "rateLimited": "Too many requests. Try again in {seconds, plural, one {# second} other {# seconds}}.",
+        "rateLimitedGeneric": "Too many requests. Please wait and try again.",
         "saveFailed": "Could not save settings"
       },
       "capabilities": {

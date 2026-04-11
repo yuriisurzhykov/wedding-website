@@ -1,23 +1,38 @@
-import {updateSiteSettings} from '@features/site-settings'
-import {NextResponse} from 'next/server'
+import {
+    checkAdminRateLimit,
+    isAdminApiAuthorized,
+    rateLimitToResponse,
+} from "@features/admin-api";
+import {updateSiteSettings} from "@features/site-settings";
+import {NextResponse} from "next/server";
 
 /**
  * PATCH /api/admin/site-settings
  *
  * Body: JSON matching {@link siteSettingsPatchSchema} (partial capabilities and/or full `schedule_program`).
- * Auth: middleware requires `ADMIN_SECRET` (Authorization Bearer, `x-admin-token`, or `?token=` for navigations).
+ * Auth: valid admin session cookie or legacy `Authorization: Bearer` / `x-admin-token` with `ADMIN_SECRET`.
+ * Rate limit: applied before auth (429 + `retry_after`).
  */
 export async function PATCH(request: Request) {
-    let body: unknown
-    try {
-        body = await request.json()
-    } catch {
-        return NextResponse.json({error: 'Invalid JSON body'}, {status: 400})
+    const rl = await checkAdminRateLimit(request, "api");
+    const blocked = rateLimitToResponse(rl);
+    if (blocked) {
+        return blocked;
+    }
+    if (!(await isAdminApiAuthorized(request))) {
+        return NextResponse.json({error: "Unauthorized"}, {status: 401});
     }
 
-    const result = await updateSiteSettings(body)
+    let body: unknown;
+    try {
+        body = await request.json();
+    } catch {
+        return NextResponse.json({error: "Invalid JSON body"}, {status: 400});
+    }
+
+    const result = await updateSiteSettings(body);
     if (!result.ok) {
-        return NextResponse.json({error: result.error}, {status: 400})
+        return NextResponse.json({error: result.error}, {status: 400});
     }
 
     return NextResponse.json({
@@ -25,5 +40,5 @@ export async function PATCH(request: Request) {
         updated_at: result.settings.updated_at,
         capabilities: result.settings.capabilities,
         schedule_program: result.settings.schedule_program,
-    })
+    });
 }
