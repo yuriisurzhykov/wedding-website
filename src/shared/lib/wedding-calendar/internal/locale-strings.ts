@@ -1,6 +1,17 @@
 import {DISPLAY_FORMATS} from '../config/event-display'
 import {getRsvpDeadlineDate, getWeddingCeremonyDate,} from './resolve-instants'
 
+function isTwelveHourLocale(locale: string): boolean {
+    return locale === 'en' || locale.startsWith('en-')
+}
+
+export function formatHeroWeddingStartTime(locale: string): string {
+    return new Intl.DateTimeFormat(locale, {
+        ...DISPLAY_FORMATS.heroWeddingStartTime,
+        hour12: isTwelveHourLocale(locale),
+    }).format(getWeddingCeremonyDate())
+}
+
 export function formatHeroWeddingLine(locale: string): string {
     return new Intl.DateTimeFormat(locale, DISPLAY_FORMATS.heroWeddingLine).format(
         getWeddingCeremonyDate(),

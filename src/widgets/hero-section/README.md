@@ -1,6 +1,6 @@
 # Widget: `hero-section`
 
-Home page **hero**: names, ceremony date line, venue link, and countdown to the ceremony.
+Home page **hero**: names, ceremony date line, localized start time (same styling as the date), venue link, and countdown to the ceremony.
 
 ## Why this slice exists
 
@@ -28,5 +28,5 @@ for `Countdown`.
 
 ## Data flow
 
-`getLocale` / `getTranslations('hero')`, `formatHeroWeddingLine`, `getWeddingCeremonyDate` from
+`getLocale` / `getTranslations('hero')`, `formatHeroWeddingLine`, `formatHeroWeddingStartTime`, `getWeddingCeremonyDate` from
 `@shared/lib/wedding-calendar`, and `VENUE.mapsUrl` from `@entities/wedding-venue`.

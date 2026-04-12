@@ -24,6 +24,15 @@ export const DISPLAY_FORMATS = {
         dateStyle: 'long',
         timeZone: EVENT_DISPLAY_TIMEZONE,
     },
+    /**
+     * Wall-clock start under the hero date — same instant as `weddingCeremony` in `instants.ts`.
+     * 12h vs 24h is chosen in `formatHeroWeddingStartTime` from `locale` (e.g. en vs ru).
+     */
+    heroWeddingStartTime: {
+        hour: 'numeric',
+        minute: '2-digit',
+        timeZone: EVENT_DISPLAY_TIMEZONE,
+    },
     scheduleClock: {
         hour: 'numeric',
         minute: '2-digit',

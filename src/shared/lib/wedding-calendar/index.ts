@@ -30,6 +30,7 @@ export {
 
 export {
     formatHeroWeddingLine,
+    formatHeroWeddingStartTime,
     formatRsvpDeadlineLine,
     formatScheduleClock,
     formatStoryWeddingLine,

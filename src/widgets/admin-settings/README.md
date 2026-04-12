@@ -35,3 +35,4 @@ return <AdminFeaturesForm initialSettings={settings} />;
 ## Errors and edge cases
 
 - Schedule: duplicate row `id` values and empty `schedule_program` are blocked client-side before PATCH (server Zod also rejects).
+- Schedule: at most one row may have `emphasis: true`; the form uses a single radio group (none or one row) and rejects save if more than one flag is set.

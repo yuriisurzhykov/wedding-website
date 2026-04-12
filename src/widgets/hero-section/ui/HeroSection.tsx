@@ -2,7 +2,11 @@ import {getLocale, getTranslations} from "next-intl/server";
 
 import {Countdown} from "@shared/ui";
 import {ExternalLinkIcon} from "@shared/ui/icons/ExternalLinkIcon";
-import {formatHeroWeddingLine, getWeddingCeremonyDate} from "@shared/lib/wedding-calendar";
+import {
+    formatHeroWeddingLine,
+    formatHeroWeddingStartTime,
+    getWeddingCeremonyDate,
+} from "@shared/lib/wedding-calendar";
 import {VENUE} from '@entities/wedding-venue'
 
 import {HeroBotanicalBackdrop} from "./HeroBotanicalBackdrop";
@@ -11,6 +15,7 @@ export async function HeroSection() {
     const locale = await getLocale();
     const translator = await getTranslations("hero");
     const weddingDateLabel = formatHeroWeddingLine(locale);
+    const weddingStartTimeLabel = formatHeroWeddingStartTime(locale);
 
     return (
         <section
@@ -31,6 +36,10 @@ export async function HeroSection() {
 
                 <p className="font-display mb-3 max-w-2xl text-balance text-h2 text-text-primary">
                     {translator("date", {date: weddingDateLabel})}
+                </p>
+
+                <p className="font-display mb-3 max-w-2xl text-balance text-h2 text-text-primary">
+                    {weddingStartTimeLabel}
                 </p>
 
                 <a

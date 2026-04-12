@@ -42,6 +42,8 @@
   "schedule": {
     "title": "Schedule",
     "subtitle": "How the day unfolds",
+    "emphasisBadge": "Main celebration",
+    "emphasisBadgeAria": "Main moment on the schedule — the timeline line is stronger from this point onward.",
     "previewNotice": "The full schedule will appear here soon — during and after the celebration you’ll see the full timeline.",
     "items": {
       "gathering": {
@@ -52,13 +54,13 @@
         "title": "Ceremony",
         "desc": "Wedding ceremony on campus. Please arrive about ten minutes before the start."
       },
-      "reception": {
-        "title": "Reception",
-        "desc": "We will move together to the reception space at the same venue."
+      "photo": {
+        "title": "Group Photo",
+        "desc": "Group photo with the guests."
       },
       "dinner": {
         "title": "Dinner & celebration",
-        "desc": "Dinner, music, and dancing — still at WGBC."
+        "desc": "Dinner, socializing, photo with couple  — still at WGBC."
       }
     }
   },
@@ -542,6 +544,7 @@
       },
       "errors": {
         "duplicateIds": "Each schedule item needs a unique id.",
+        "multipleEmphasis": "Only one schedule item can be marked as the main moment. Turn off the extra highlight.",
         "emptySchedule": "Add at least one schedule item.",
         "notSignedIn": "Your session expired. Sign in again from the admin login page.",
         "rateLimited": "Too many requests. Try again in {seconds, plural, one {# second} other {# seconds}}.",
@@ -583,6 +586,11 @@
         "descKey": "Description message key",
         "location": "Venue label",
         "locationUrl": "Maps / venue URL",
+        "emphasisLegend": "Main moment on the timeline",
+        "emphasisHint": "Guests see a stronger timeline from this point onward. Pick one item or none.",
+        "emphasisNone": "No highlighted item",
+        "emphasisThisRow": "{time} — {segment}",
+        "emphasisRowAria": "Set as main timeline moment: {segment} at {time}",
         "icons": {
           "gathering": "Gathering",
           "ceremony": "Ceremony",

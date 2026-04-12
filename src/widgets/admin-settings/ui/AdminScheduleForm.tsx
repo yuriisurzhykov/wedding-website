@@ -33,6 +33,20 @@ function safeIconIdForSelect(iconId: string): string {
     return ids.includes(iconId) ? iconId : SCHEDULE_PROGRAM_ICON_IDS[0]
 }
 
+function clearAllEmphasis(rows: ScheduleProgramItem[]): ScheduleProgramItem[] {
+    return rows.map((r) => ({...r, emphasis: false}))
+}
+
+function setEmphasisOnlyAt(rows: ScheduleProgramItem[], index: number): ScheduleProgramItem[] {
+    return rows.map((r, i) => ({...r, emphasis: i === index}))
+}
+
+function formatRowTimeLabel(row: ScheduleProgramItem): string {
+    const h = String(row.hour).padStart(2, '0')
+    const m = String(row.minute).padStart(2, '0')
+    return `${h}:${m}`
+}
+
 type Props = Readonly<{
     initialSettings: SiteSettings
 }>
@@ -96,6 +110,7 @@ export function AdminScheduleForm({initialSettings}: Props) {
                 descKey: template.descKey,
                 location: '',
                 locationUrl: '',
+                emphasis: false,
             },
         ])
     }
@@ -141,6 +156,12 @@ export function AdminScheduleForm({initialSettings}: Props) {
         }
         if (scheduleRows.length === 0) {
             toast.error(tSettings('errors.emptySchedule'))
+            return
+        }
+
+        const emphasisCount = scheduleRows.filter((r) => r.emphasis).length
+        if (emphasisCount > 1) {
+            toast.error(tSettings('errors.multipleEmphasis'))
             return
         }
 
@@ -218,7 +239,30 @@ export function AdminScheduleForm({initialSettings}: Props) {
                         </Button>
                     </div>
 
-                    <div className="mt-6 flex flex-col gap-8">
+                    <fieldset className="mt-6 border-0 p-0">
+                        <legend className="mb-3 block text-small font-medium text-text-primary">
+                            {tSettings('schedule.emphasisLegend')}
+                        </legend>
+                        <p className="mb-4 text-small text-text-secondary">
+                            {tSettings('schedule.emphasisHint')}
+                        </p>
+                        <div className="mb-6 rounded-pill border border-border bg-bg-section p-4">
+                            <label className="flex cursor-pointer items-start gap-3">
+                                <input
+                                    type="radio"
+                                    name="schedule-emphasis"
+                                    className="mt-1 shrink-0"
+                                    checked={!scheduleRows.some((r) => r.emphasis)}
+                                    onChange={() =>
+                                        setScheduleRows((prev) => clearAllEmphasis(prev))
+                                    }
+                                />
+                                <span className="text-body text-text-primary">
+                                    {tSettings('schedule.emphasisNone')}
+                                </span>
+                            </label>
+                        </div>
+                        <div className="flex flex-col gap-8">
                         {scheduleRows.map((row, index) => (
                             <div
                                 key={`${row.id}-${index}`}
@@ -227,6 +271,35 @@ export function AdminScheduleForm({initialSettings}: Props) {
                                     duplicateIds.has(row.id) && 'border-primary-dark ring-2 ring-primary/30',
                                 )}
                             >
+                                <div className="mb-4 border-b border-border pb-4">
+                                    <label className="flex cursor-pointer items-start gap-3">
+                                        <input
+                                            type="radio"
+                                            name="schedule-emphasis"
+                                            className="mt-1 shrink-0"
+                                            checked={row.emphasis}
+                                            onChange={() =>
+                                                setScheduleRows((prev) =>
+                                                    setEmphasisOnlyAt(prev, index),
+                                                )
+                                            }
+                                            aria-label={tSettings('schedule.emphasisRowAria', {
+                                                time: formatRowTimeLabel(row),
+                                                segment: tSettings(
+                                                    `segments.${segmentIdForRow(row)}`,
+                                                ),
+                                            })}
+                                        />
+                                        <span className="text-body text-text-primary">
+                                            {tSettings('schedule.emphasisThisRow', {
+                                                time: formatRowTimeLabel(row),
+                                                segment: tSettings(
+                                                    `segments.${segmentIdForRow(row)}`,
+                                                ),
+                                            })}
+                                        </span>
+                                    </label>
+                                </div>
                                 <div className="flex flex-wrap items-center gap-2">
                                     <Button
                                         type="button"
@@ -382,7 +455,8 @@ export function AdminScheduleForm({initialSettings}: Props) {
                                 </div>
                             </div>
                         ))}
-                    </div>
+                        </div>
+                    </fieldset>
                 </section>
 
                 <div className="flex justify-end">

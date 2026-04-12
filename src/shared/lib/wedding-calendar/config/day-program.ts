@@ -22,6 +22,7 @@ export const DAY_PROGRAM_TIMELINE = [
         descKey: 'schedule.items.gathering.desc',
         location: 'WGBC Battle Ground — welcome area',
         locationUrl: VENUE_MAPS_URL,
+        emphasis: false,
     },
     {
         id: 'ceremony',
@@ -32,6 +33,7 @@ export const DAY_PROGRAM_TIMELINE = [
         descKey: 'schedule.items.ceremony.desc',
         location: 'WGBC Battle Ground — ceremony',
         locationUrl: VENUE_MAPS_URL,
+        emphasis: true,
     },
     {
         id: 'reception',
@@ -42,6 +44,7 @@ export const DAY_PROGRAM_TIMELINE = [
         descKey: 'schedule.items.reception.desc',
         location: 'WGBC Battle Ground — reception',
         locationUrl: VENUE_MAPS_URL,
+        emphasis: false,
     },
     {
         id: 'dinner',
@@ -52,5 +55,6 @@ export const DAY_PROGRAM_TIMELINE = [
         descKey: 'schedule.items.dinner.desc',
         location: 'WGBC Battle Ground — celebration',
         locationUrl: VENUE_MAPS_URL,
+        emphasis: false,
     },
 ] as const

@@ -13,6 +13,8 @@ export type ScheduleTimelineRow = {
     descKey: string
     location: string
     locationUrl: string
+    /** Visual “main” timeline node (at most one row per program). */
+    emphasis: boolean
 }
 
 export type ScheduleItem = ScheduleTimelineRow & { instant: Date }
