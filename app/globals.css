@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
-/* ============================================================
-   Примитивы — не использовать в компонентах напрямую, только через @theme.
-   ============================================================ */
+/*  ============================================================
+    Do not use primitives directly in components, only through @theme.
+    ============================================================ */
 :root {
-    /* Тёплые нейтрали (крем → уголь), ось ~hue 32–42 */
+    /* Warm neutral (cream -> charcoal), everything around 32-42 hue*/
     --primitive-neutral-0: hsl(42 28% 98%);
     --primitive-neutral-50: hsl(38 32% 94%);
     --primitive-neutral-100: hsl(36 26% 89%);
@@ -18,7 +18,7 @@
     --primitive-neutral-900: hsl(0 0% 25%);
     --primitive-neutral-950: hsl(18 10% 12%);
 
-    /* Бренд: sage */
+    /* Brand color: sage */
     --primitive-brand-50: hsl(85 22% 96%);
     --primitive-brand-100: hsl(85 20% 90%);
     --primitive-brand-200: hsl(85 18% 80%);
@@ -31,13 +31,13 @@
     --primitive-brand-900: hsl(85 24% 14%);
     --primitive-brand-950: hsl(85 26% 8%);
 
-    /* Акценты приглашения */
+    /* Invitation accents */
     --primitive-accent-dusty-pink: hsl(350 30% 85%);
     --primitive-accent-coral: hsl(355 60% 80%);
     --primitive-accent-yellow: hsl(45 80% 60%);
     --primitive-accent-lily: hsl(0 0% 100%);
 
-    /* Статусы (приглушённые, но читаемые) */
+    /* Status colors (dimmed, but readable) */
     --primitive-danger-50: hsl(0 70% 97%);
     --primitive-danger-100: hsl(0 65% 92%);
     --primitive-danger-300: hsl(0 60% 78%);
@@ -61,14 +61,14 @@
 }
 
 @theme {
-    /* Поверхности */
+    /* Surfaces */
     --color-surface-primary: var(--primitive-neutral-0);
     --color-surface-secondary: var(--primitive-neutral-50);
     --color-surface-elevated: var(--primitive-accent-lily);
     --color-surface-overlay: var(--primitive-neutral-950);
     --color-surface-inverse: var(--primitive-neutral-900);
 
-    /* Текст */
+    /* Text colors */
     --color-text-primary: var(--primitive-neutral-900);
     --color-text-secondary: var(--primitive-neutral-600);
     --color-text-muted: var(--primitive-neutral-400);
@@ -77,20 +77,20 @@
     --color-text-link: var(--primitive-brand-600);
     --color-text-link-hover: var(--primitive-brand-700);
 
-    /* Границы */
+    /* Borders */
     --color-border-default: var(--primitive-neutral-200);
     --color-border-strong: var(--primitive-neutral-300);
     --color-border-muted: var(--primitive-neutral-400);
     --color-border-focus: var(--primitive-brand-500);
 
-    /* Интерактив */
+    /* interactive colors */
     --color-interactive-primary: var(--primitive-brand-500);
     --color-interactive-secondary: var(--primitive-neutral-100);
     --color-interactive-active: var(--primitive-neutral-200);
     --color-interactive-muted: var(--primitive-neutral-300);
     --color-interactive-disabled: var(--primitive-neutral-400);
 
-    /* Статусы */
+    /* Status colors */
     --color-status-success: var(--primitive-success-500);
     --color-status-success-subtle: var(--primitive-success-100);
     --color-status-danger: var(--primitive-danger-500);
@@ -100,21 +100,21 @@
     --color-status-info: var(--primitive-brand-500);
     --color-status-info-subtle: var(--primitive-brand-100);
 
-    /* Именованные градиенты (при необходимости — arbitrary values) */
+    /* Named gradients */
     --image-gradient-brand: linear-gradient(
-        135deg,
-        var(--primitive-neutral-0),
-        var(--primitive-neutral-50)
+            135deg,
+            var(--primitive-neutral-0),
+            var(--primitive-neutral-50)
     );
     --image-gradient-botanical: linear-gradient(
-        135deg,
-        var(--primitive-brand-400),
-        var(--primitive-accent-dusty-pink)
+            135deg,
+            var(--primitive-brand-400),
+            var(--primitive-accent-dusty-pink)
     );
     --image-gradient-subtle: linear-gradient(
-        to right,
-        color-mix(in srgb, var(--primitive-brand-300) 35%, transparent),
-        color-mix(in srgb, var(--primitive-accent-dusty-pink) 35%, transparent)
+            to right,
+            color-mix(in srgb, var(--primitive-brand-300) 35%, transparent),
+            color-mix(in srgb, var(--primitive-accent-dusty-pink) 35%, transparent)
     );
 
     /* --- Legacy + wedding (совместимость с текущим кодом и hero-mesh) --- */
@@ -128,9 +128,9 @@
     --color-primary-dark: var(--primitive-brand-700);
     /* Стоп для геро-градиента / mesh: мягкий розово-кремовый, не «светлый sage» */
     --color-primary-light: color-mix(
-        in srgb,
-        var(--primitive-accent-dusty-pink) 78%,
-        var(--primitive-neutral-0) 22%
+            in srgb,
+            var(--primitive-accent-dusty-pink) 78%,
+            var(--primitive-neutral-0) 22%
     );
 
     --color-secondary: var(--primitive-brand-600);
@@ -187,32 +187,35 @@
     --shadow-sm: 0 1px 4px color-mix(in srgb, var(--primitive-neutral-900) 8%, transparent);
     --shadow-card: 0 4px 24px color-mix(in srgb, var(--primitive-neutral-900) 10%, transparent);
     --shadow-modal: 0 20px 60px color-mix(in srgb, var(--primitive-neutral-900) 22%, transparent);
-    --shadow-button: 0 2px 8px color-mix(in srgb, var(--primitive-brand-500) 40%, transparent);
+    /* Primary controls: crisp edge + soft sage lift (avoids a flat pink-tinted glow from the old blush theme) */
+    --shadow-button:
+        0 1px 2px color-mix(in srgb, var(--primitive-neutral-900) 12%, transparent),
+        0 4px 14px color-mix(in srgb, var(--primitive-brand-700) 22%, transparent);
 }
 
 :root {
     --gradient-hero: linear-gradient(
-        135deg,
-        var(--primitive-neutral-0) 0%,
-        color-mix(in srgb, var(--primitive-accent-dusty-pink) 45%, var(--primitive-neutral-0)) 28%,
-        color-mix(in srgb, var(--primitive-neutral-50) 70%, var(--primitive-accent-coral) 30%) 52%,
-        color-mix(in srgb, var(--primitive-neutral-200) 55%, var(--primitive-brand-200) 45%) 78%,
-        var(--primitive-neutral-0) 100%
+            135deg,
+            var(--primitive-neutral-0) 0%,
+            color-mix(in srgb, var(--primitive-accent-dusty-pink) 45%, var(--primitive-neutral-0)) 28%,
+            color-mix(in srgb, var(--primitive-neutral-50) 70%, var(--primitive-accent-coral) 30%) 52%,
+            color-mix(in srgb, var(--primitive-neutral-200) 55%, var(--primitive-brand-200) 45%) 78%,
+            var(--primitive-neutral-0) 100%
     );
     --gradient-section: linear-gradient(
-        180deg,
-        var(--primitive-neutral-0) 0%,
-        var(--primitive-neutral-50) 100%
+            180deg,
+            var(--primitive-neutral-0) 0%,
+            var(--primitive-neutral-50) 100%
     );
     --gradient-overlay: linear-gradient(
-        to bottom,
-        transparent 0%,
-        color-mix(in srgb, var(--primitive-neutral-950) 65%, transparent) 100%
+            to bottom,
+            transparent 0%,
+            color-mix(in srgb, var(--primitive-neutral-950) 65%, transparent) 100%
     );
     --gradient-button: linear-gradient(
-        135deg,
-        var(--primitive-brand-500) 0%,
-        var(--primitive-brand-700) 100%
+            135deg,
+            var(--primitive-brand-500) 0%,
+            var(--primitive-brand-700) 100%
     );
 
     --spacing-section: clamp(4rem, 10vw, 8rem);
