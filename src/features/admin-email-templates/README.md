@@ -10,6 +10,7 @@ Persist reusable HTML/text email bodies with `{{name}}`-style placeholders (whit
 
 - `listEmailTemplatesForAdmin()` — newest first.
 - `getEmailTemplateByIdForAdmin(id)` — single row or `not_found`.
+- `getEmailTemplateBySlugForAdmin(slug)` — single row or `not_found`.
 - `createEmailTemplateForAdmin(body)` — Zod `emailTemplateCreateSchema`.
 - `updateEmailTemplateForAdmin(id, body)` — partial Zod `emailTemplateUpdateSchema`.
 - `deleteEmailTemplateForAdmin(id)`.

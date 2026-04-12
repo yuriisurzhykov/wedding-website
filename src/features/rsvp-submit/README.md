@@ -41,27 +41,48 @@ After a **successful save** (insert or update), `submitRsvp` **awaits** `notifyA
 
 ## Guest confirmation email (after admin only)
 
-Sent only when the stored row has a **non-empty** `email` (trimmed), and **only after** admin send succeeds.
-`notifyGuestRsvpConfirmation` uses `lib/email/build-guest-confirmation-email.ts`. If the guest provided an email but
-Resend fails, the API returns **502** with `step: 'guest'`. **No-op** when the guest omitted email (nothing to send).
+Sent only when the stored row has a **non-empty** `email` (trimmed), and **only after** admin send succeeds. If the
+guest provided an email but Resend fails, the API returns **502** with `step: 'guest'`. **No-op** when the guest
+omitted email (nothing to send).
 
-**Locale:** `parseRsvpPayload` returns `locale: 'ru' | 'en'` (default `'en'` if the client omits `locale`). Copy lives
-in `lib/email/guest-confirmation-copy.ts` only — no client i18n in the server templates.
+### DB-backed transactional template (primary path)
+
+`notifyGuestRsvpConfirmation` calls `sendTransactionalEmailFromSlug` from `@features/admin-email-dispatch` with:
+
+- **Reserved slugs** (one logical role, two language rows in `email_templates`): `guest-rsvp-confirmation-en`,
+  `guest-rsvp-confirmation-ru`. Mapping: `locale === 'ru'` → Russian slug; otherwise English.
+- **Variables** — `buildGuestRsvpConfirmationTemplateVars` in `lib/email/build-guest-rsvp-confirmation-template-vars.ts`
+  (venue, calendar lines, conditional blocks, optional site and magic-link URLs). Allowed `{{key}}` names are
+  `GUEST_RSVP_CONFIRMATION_PLACEHOLDER_KEYS` in `@entities/email-template` (separate from the seven broadcast keys).
+- **Log segment** — `email_send_log.segment` is `transactional:guest-rsvp` for these sends.
+
+### Fallback when the template row is missing
+
+If no row exists for the slug (e.g. deleted in admin), the feature logs a warning `[rsvp-submit] Guest confirmation
+template missing; using code fallback.` and sends using `buildGuestConfirmationEmail` (`lib/email/build-guest-confirmation-email.ts`)
+with Resend `from` from `getTransactionalFromAddress()` (the same default used when a template row has no `sender_id`),
+so RSVP delivery stays reliable.
+
+**Locale:** `parseRsvpPayload` returns `locale: 'ru' | 'en'` (default `'en'` if the client omits `locale`). For the
+primary path, subject/body live in `email_templates` per slug. The fallback path still uses
+`lib/email/guest-confirmation-copy.ts` for copy — no client i18n in server templates.
 
 **Site link:** `getPublicSiteUrl()` — priority: `NEXT_PUBLIC_SITE_URL` (canonical override), then Vercel
 `VERCEL_PROJECT_PRODUCTION_URL`, then `VERCEL_URL` (see `@shared/lib/README.md` “Public site URL”). Passed into the
-guest builder; if unset, the HTML/text omit the primary CTA but the rest of the message still sends.
+template vars / guest builder; if unset, the HTML/text omit the primary CTA but the rest of the message still sends.
 
 ## Email build contracts (Resend)
 
 | Type / function                 | Role                                                                                                 |
 |---------------------------------|------------------------------------------------------------------------------------------------------|
 | `AdminRsvpEmailPayload`         | `{ subject, html, text }` from `buildAdminRsvpEmail`                                                 |
-| `GuestConfirmationEmailPayload` | `{ subject, html, text }` from `buildGuestConfirmationEmail`                                         |
+| `GuestConfirmationEmailPayload` | `{ subject, html, text }` from `buildGuestConfirmationEmail` (fallback path only)                  |
+| Guest RSVP template vars       | `Record` of string values for `{{key}}` substitution; keys in `GUEST_RSVP_CONFIRMATION_PLACEHOLDER_KEYS` (`@entities/email-template`) |
 | `buildAdminRsvpPlainText`       | Plain-text body for Resend `text` part (inbox search / plain-text clients); not repeated inside HTML |
 
 User-controlled strings in HTML go through `escapeHtml` from `@shared/lib/html-escape`. Theme tokens:
-`lib/email/wedding-email-theme.ts` (keep in sync with `app/globals.css` `@theme`).
+`lib/email/wedding-email-theme.ts` (keep in sync with `app/globals.css` `@theme`); transactional HTML in the database
+should stay visually aligned with those tokens when edited in admin.
 
 ## Adding a new field
 
@@ -71,14 +92,17 @@ User-controlled strings in HTML go through `escapeHtml` from `@shared/lib/html-e
 4. **Types** — `@entities/rsvp` `RsvpRow` / `RsvpRowInsert` if the column is new (and `supabase/schema.sql`).
 5. **Email — admin** — `lib/email/build-admin-rsvp-email.ts`: add table rows / plain lines for new columns; wire through
    `notify-admin.ts`.
-6. **Email — guest** — same file family: `build-guest-confirmation-email.ts` if the field should appear in the thank-you
-   message (optional blocks, summary, etc.).
-7. **Email — guest copy (RU/EN)** — `lib/email/guest-confirmation-copy.ts` for any new user-facing strings (subjects,
-   labels, body lines).
+6. **Email — guest (transactional)** — extend `buildGuestRsvpConfirmationTemplateVars` and, if new placeholders are
+   required, add keys to `GUEST_RSVP_CONFIRMATION_PLACEHOLDER_KEYS` in `@entities/email-template`, then update the
+   `guest-rsvp-confirmation-en` / `guest-rsvp-confirmation-ru` rows in `email_templates` (subject/body) so admin sends
+   match the allowlist. `applyEmailTemplateString` substitutes only allowed keys.
+7. **Email — guest (fallback)** — `build-guest-confirmation-email.ts` and `guest-confirmation-copy.ts` for any new
+   user-facing strings when the code path runs (template row missing).
 
 ## Observability
 
 - **Vercel logs:** `[rsvp-submit]` prefix for admin/guest notification skips and failures (admin vs guest distinguished
-  in the message text).
+  in the message text); guest template missing logs before code fallback.
+- **email_send_log:** transactional guest sends include `segment` `transactional:guest-rsvp` (see `@features/admin-email-dispatch` README).
 - **Supabase:** `rsvp` table rows and API errors from `persistRsvpRow` (select / insert / update).
 - **Resend:** dashboard for delivered/bounced mail when configured.

@@ -11,6 +11,10 @@ export {
     type GetEmailTemplateByIdForAdminResult,
 } from "./api/get-email-template-by-id-for-admin";
 export {
+    getEmailTemplateBySlugForAdmin,
+    type GetEmailTemplateBySlugForAdminResult,
+} from "./api/get-email-template-by-slug-for-admin";
+export {
     listEmailTemplatesForAdmin,
     type ListEmailTemplatesForAdminResult,
 } from "./api/list-email-templates-for-admin";

@@ -1,12 +1,9 @@
 import type {RsvpRowInsert} from "@entities/rsvp";
-import {VENUE} from '@entities/wedding-venue'
-import {formatStoryWeddingLine} from '@shared/lib/wedding-calendar'
 import {escapeHtml} from "@shared/lib/html-escape";
 
-import {getGuestConfirmationCopy, guestConfirmationSubject, type GuestEmailLocale,} from "./guest-confirmation-copy";
-import {buildGuestConfirmationMagicLinkEmailParts} from "./guest-confirmation-magic-link-email-parts";
-import {normalizeOptionalHttpsUrl} from "./normalize-optional-https-url";
-import {WEDDING_EMAIL_GOOGLE_FONTS_HREF, WEDDING_EMAIL_THEME as T,} from "./wedding-email-theme";
+import {buildGuestRsvpConfirmationTemplateVars} from "./build-guest-rsvp-confirmation-template-vars";
+import type {GuestEmailLocale} from "./guest-confirmation-copy";
+import {WEDDING_EMAIL_GOOGLE_FONTS_HREF, WEDDING_EMAIL_THEME as T} from "./wedding-email-theme";
 
 /** Parts passed to Resend `emails.send` for the guest thank-you after RSVP (multipart/alternative). */
 export type GuestConfirmationEmailPayload = {
@@ -14,28 +11,6 @@ export type GuestConfirmationEmailPayload = {
     html: string;
     text: string;
 };
-
-function venueLines(locale: GuestEmailLocale): { title: string; lines: string[] } {
-    const c = getGuestConfirmationCopy(locale);
-    const ceremony = formatStoryWeddingLine(locale);
-    const parts: string[] = [ceremony];
-    const venueTitle = VENUE.name?.trim()
-        ? `${VENUE.name.trim()} — ${VENUE.address}`
-        : VENUE.address;
-    if (venueTitle.trim()) {
-        parts.push(venueTitle.trim());
-    }
-    return {title: `${c.ceremonyLabel} & ${c.venueLabel}`, lines: parts};
-}
-
-function optionalBlockText(
-    label: string,
-    value: string | null | undefined,
-): string | null {
-    const v = value?.trim();
-    if (!v) return null;
-    return `${label}: ${v}`;
-}
 
 /**
  * Builds multipart guest confirmation after RSVP (HTML + plain text).
@@ -54,54 +29,26 @@ export function buildGuestConfirmationEmail(
     siteUrl?: string,
     magicLinkClaimUrl?: string,
 ): GuestConfirmationEmailPayload {
-    const copy = getGuestConfirmationCopy(locale);
-    const subject = guestConfirmationSubject(row, locale);
-    const greeting = escapeHtml(copy.greeting(row.name));
+    const v = buildGuestRsvpConfirmationTemplateVars(
+        row,
+        locale,
+        siteUrl,
+        magicLinkClaimUrl,
+    );
+    const subject = v.subject;
+    const greeting = v.greeting_html;
 
-    const lead = row.attending ? copy.leadAttending : copy.leadNotAttending;
-    const summary = row.attending
-        ? copy.summaryAttending(row.guest_count)
-        : copy.summaryNotAttending;
+    const lead = v.lead;
+    const summary = v.summary;
 
-    const {title: whenWhereTitle, lines: whenWhereLines} = venueLines(locale);
-    const whenWhereHtml = whenWhereLines
-        .map((line) => `<p style="margin:0 0 6px 0;">${escapeHtml(line)}</p>`)
-        .join("");
-    const whenWhereText = whenWhereLines.join("\n");
+    const whenWhereTitle = v.when_where_title;
+    const whenWhereHtml = v.when_where_body_html;
+    const whenWhereText = v.when_where_body_text;
 
-    const extrasText = [
-        optionalBlockText(copy.dietaryLabel, row.dietary),
-        optionalBlockText(copy.messageLabel, row.message),
-    ].filter(Boolean) as string[];
+    const extrasHtml = v.extras_html;
+    const extrasText = v.extras_text ? v.extras_text.split("\n") : [];
 
-    const extrasHtml =
-        extrasText.length > 0
-            ? `<div style="margin-top:20px;padding-top:16px;border-top:1px solid ${T.border};font-family:${T.fontBody};font-size:14px;color:${T.textSecondary};">${extrasText
-                .map(
-                    (line) =>
-                        `<p style="margin:0 0 8px 0;color:${T.textPrimary};">${escapeHtml(line)}</p>`,
-                )
-                .join("")}</div>`
-            : "";
-
-    const normalizedSite = normalizeOptionalHttpsUrl(siteUrl);
-    const normalizedMagic = normalizeOptionalHttpsUrl(magicLinkClaimUrl);
-
-    const ctaLine = normalizedSite
-        ? `${copy.openSite}: ${normalizedSite}`
-        : null;
-
-    const magicParts = normalizedMagic
-        ? buildGuestConfirmationMagicLinkEmailParts(
-            {
-                magicLinkIntro: copy.magicLinkIntro,
-                magicLinkButton: copy.magicLinkButton,
-            },
-            normalizedMagic,
-        )
-        : null;
-
-    const magicHtml = magicParts?.htmlBlock ?? "";
+    const magicHtml = v.magic_link_html;
 
     const html = `<!DOCTYPE html>
 <html lang="${locale}">
@@ -124,14 +71,14 @@ ${whenWhereHtml}
 </div>
 ${extrasHtml}
 ${magicHtml}
-<p style="margin:32px 0 0 0;font-family:${T.fontBody};font-size:14px;line-height:1.6;color:${T.textSecondary};white-space:pre-line;">${escapeHtml(copy.signOff)}</p>
+<p style="margin:32px 0 0 0;font-family:${T.fontBody};font-size:14px;line-height:1.6;color:${T.textSecondary};white-space:pre-line;">${v.sign_off_html}</p>
 </td></tr>
 </table>
 </body>
 </html>`;
 
     const textLines = [
-        copy.greeting(row.name),
+        v.greeting_text,
         "",
         lead,
         "",
@@ -143,10 +90,10 @@ ${magicHtml}
     if (extrasText.length > 0) {
         textLines.push("", ...extrasText);
     }
-    if (magicParts) {
-        textLines.push(...magicParts.textAppend);
+    if (v.magic_link_text) {
+        textLines.push(...v.magic_link_text.split("\n"));
     }
-    textLines.push("", copy.signOff);
+    textLines.push("", v.sign_off_text);
     const text = textLines.join("\n");
 
     return {subject, html, text};

@@ -9,4 +9,5 @@ Shared typing for `@features/admin-email-templates` and `@features/admin-email-d
 ## Public API
 
 - `EmailTemplateRow`, `EmailSendLogRow`
-- `EMAIL_TEMPLATE_PLACEHOLDER_KEYS`, `EmailTemplatePlaceholderKey` — allowed `{{key}}` tokens for admin templates (shared with `@features/admin-email-dispatch` so client UI does not import server-only code).
+- `EMAIL_TEMPLATE_PLACEHOLDER_KEYS`, `EmailTemplatePlaceholderKey` — allowed `{{key}}` tokens for admin broadcast templates (shared with `@features/admin-email-dispatch` so client UI does not import server-only code).
+- `GUEST_RSVP_CONFIRMATION_PLACEHOLDER_KEYS`, `GuestRsvpConfirmationPlaceholderKey` — reserved slugs for guest transactional confirmation; pre-computed fragment keys for DB-backed templates.

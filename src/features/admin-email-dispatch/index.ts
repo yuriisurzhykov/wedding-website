@@ -5,6 +5,11 @@ export {
 } from "./api/list-email-send-log-for-admin";
 export {sendAdminEmail, type SendAdminEmailResult} from "./api/send-admin-email";
 export {
+    sendTransactionalEmailFromSlug,
+    type SendTransactionalEmailFromSlugInput,
+    type SendTransactionalEmailFromSlugResult,
+} from "./api/send-transactional-email-from-slug";
+export {
     adminEmailSendSchema,
     type AdminEmailSendInput,
 } from "./lib/admin-email-send-schema";
