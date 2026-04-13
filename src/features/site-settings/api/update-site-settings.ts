@@ -18,16 +18,13 @@ export type UpdateSiteSettingsResult =
     | {ok: false; error: string}
 
 function mergePatch(current: SiteSettings, patch: SiteSettingsPatch): SiteSettings {
-    const next: SiteSettings = {
+    return {
         ...current,
         capabilities:
             patch.capabilities !== undefined
                 ? {...current.capabilities, ...patch.capabilities}
                 : current.capabilities,
-        schedule_program:
-            patch.schedule_program !== undefined ? patch.schedule_program : current.schedule_program,
     }
-    return next
 }
 
 /**
@@ -46,11 +43,7 @@ export async function updateSiteSettings(patch: unknown): Promise<UpdateSiteSett
         const supabase = createServerClient()
 
         const [siteRead, featuresRead] = await Promise.all([
-            supabase
-                .from('site_settings')
-                .select('id,updated_at,schedule_program')
-                .eq('id', 'default')
-                .maybeSingle(),
+            supabase.from('site_settings').select('id,updated_at').eq('id', 'default').maybeSingle(),
             supabase.from('site_feature_states').select('feature_key,state'),
         ])
 
@@ -65,7 +58,6 @@ export async function updateSiteSettings(patch: unknown): Promise<UpdateSiteSett
             id: 'default',
             updated_at: current.updated_at,
             capabilities: merged.capabilities,
-            schedule_program: merged.schedule_program,
         })
         if (!validated.success) {
             return {ok: false, error: validated.error.message}
@@ -76,13 +68,10 @@ export async function updateSiteSettings(patch: unknown): Promise<UpdateSiteSett
             state: validated.data.capabilities[feature_key],
         }))
 
-        const {error: settingsWriteError} = await supabase.from('site_settings').upsert(
-            {
-                id: 'default',
-                schedule_program: validated.data.schedule_program,
-            },
-            {onConflict: 'id'},
-        )
+        const {error: settingsWriteError} = await supabase
+            .from('site_settings')
+            .update({updated_at: new Date().toISOString()})
+            .eq('id', 'default')
 
         if (settingsWriteError) {
             return {ok: false, error: settingsWriteError.message}
@@ -97,11 +86,7 @@ export async function updateSiteSettings(patch: unknown): Promise<UpdateSiteSett
         }
 
         const [siteUpdated, featuresUpdated] = await Promise.all([
-            supabase
-                .from('site_settings')
-                .select('id,updated_at,schedule_program')
-                .eq('id', 'default')
-                .single(),
+            supabase.from('site_settings').select('id,updated_at').eq('id', 'default').single(),
             supabase.from('site_feature_states').select('feature_key,state'),
         ])
 

@@ -6,8 +6,12 @@ role for upserts, Next cache with tag invalidation on update.
 ## Purpose
 
 - **`getSiteSettings` / `getSiteSettingsCached`:** load the normalized snapshot from Postgres (`site_settings` +
-  `site_feature_states`, plus code defaults).
-- **`updateSiteSettings`:** merge a validated patch and persist (for admin API only).
+  `site_feature_states`, plus code defaults). The snapshot **never** includes schedule rows or a `schedule_program` field;
+  load the timeline in parallel with **`getResolvedGuestSchedule`** / **`getWeddingScheduleCached`** from
+  `@features/wedding-schedule`.
+- **`updateSiteSettings`:** merge a validated patch and persist feature states (for admin API only). **`siteSettingsPatchSchema`**
+  only allows `capabilities` — schedule copy and icons are **not** merged here; use `@features/wedding-schedule` and
+  `PATCH /api/admin/schedule`.
 
 ## Approach
 
@@ -15,7 +19,7 @@ role for upserts, Next cache with tag invalidation on update.
   `site_feature_states`).
 - Writes use `createServerClient` (service role) so INSERT/UPDATE bypass missing anon policies.
 - **`getSiteSettingsCached`** wraps the DB read with `unstable_cache` (60s revalidate) and tag `site-settings`.
-- **`updateSiteSettings`** upserts `site_settings` (schedule) and all `site_feature_states` rows, then calls
+- **`updateSiteSettings`** bumps `site_settings.updated_at` and upserts all `site_feature_states` rows, then calls
   `revalidateTag(SITE_SETTINGS_CACHE_TAG)`.
 
 ## Public API

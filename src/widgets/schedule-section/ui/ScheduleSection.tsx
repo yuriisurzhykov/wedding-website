@@ -8,17 +8,42 @@ import {ScheduleTimeline} from "./ScheduleTimeline";
 type Props = Readonly<{
     items: ScheduleItem[];
     theme?: SectionTheme;
+    /** When provided, overrides default `messages` for the section header and emphasis badge source. */
+    headerTitle?: string | null;
+    headerSubtitle?: string | null;
+    emphasisBadgeText?: string | null;
 }>;
 
-export async function ScheduleSection({items, theme = "alt"}: Props) {
+export async function ScheduleSection({
+    items,
+    theme = "alt",
+    headerTitle,
+    headerSubtitle,
+    emphasisBadgeText,
+}: Props) {
     const locale = await getLocale();
     const t = await getTranslations();
 
+    const title =
+        headerTitle != null && headerTitle.trim() !== "" ? headerTitle : t("schedule.title");
+    const subtitle =
+        headerSubtitle != null && headerSubtitle.trim() !== ""
+            ? headerSubtitle
+            : t("schedule.subtitle");
+    const emphasisBadgeLabel =
+        emphasisBadgeText != null && emphasisBadgeText.trim() !== ""
+            ? emphasisBadgeText
+            : t("schedule.emphasisBadge");
+
     return (
         <Section id="schedule" theme={theme}>
-            <SectionHeader title={t("schedule.title")} subtitle={t("schedule.subtitle")}/>
+            <SectionHeader title={title} subtitle={subtitle}/>
 
-            <ScheduleTimeline items={items} locale={locale}/>
+            <ScheduleTimeline
+                items={items}
+                locale={locale}
+                emphasisBadgeLabel={emphasisBadgeLabel}
+            />
         </Section>
     );
 }

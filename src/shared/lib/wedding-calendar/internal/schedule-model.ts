@@ -1,20 +1,31 @@
-import {DAY_PROGRAM_TIMELINE} from '../config/day-program'
 import {getProgramInstantOnWeddingDay} from './resolve-instants'
 
-export type DayProgramRow = (typeof DAY_PROGRAM_TIMELINE)[number]
+/** Preset ids supported by {@link getScheduleIcon} in `@shared/ui/icons/schedule`. */
+export type ScheduleIconId = 'gathering' | 'ceremony' | 'reception' | 'dinner'
 
-/** Wall-clock program row (e.g. from `day-program.ts` or `site_settings.schedule_program`). */
+/**
+ * How the timeline renders the icon for one row (preset component, sanitized inline SVG, or image URL).
+ *
+ * For {@link ScheduleIconRender.kind} `url`, `alt` is passed to `<img alt>` — use `''` when the icon is
+ * decorative (redundant with the row title); a non-empty string exposes the image to assistive tech.
+ */
+export type ScheduleIconRender =
+    | {kind: 'preset'; iconId: ScheduleIconId}
+    | {kind: 'inline'; svgHtml: string}
+    | {kind: 'url'; href: string; alt: string}
+
+/** Wall-clock program row for the guest timeline (copy resolved server-side for the active locale). */
 export type ScheduleTimelineRow = {
     id: string
-    iconId: string
     hour: number
     minute: number
-    titleKey: string
-    descKey: string
+    title: string
+    desc: string
     location: string
     locationUrl: string
     /** Visual “main” timeline node (at most one row per program). */
     emphasis: boolean
+    icon: ScheduleIconRender
 }
 
 export type ScheduleItem = ScheduleTimelineRow & { instant: Date }
@@ -28,8 +39,4 @@ export function resolveScheduleItems(rows: readonly ScheduleTimelineRow[]): Sche
         ...row,
         instant: getProgramInstantOnWeddingDay(row.hour, row.minute),
     }))
-}
-
-export function getScheduleItems(): ScheduleItem[] {
-    return resolveScheduleItems(DAY_PROGRAM_TIMELINE)
 }

@@ -25,20 +25,6 @@ export {
     type SiteFeatureStates,
 } from './model/site-capabilities'
 export {
-    DEFAULT_SCHEDULE_PROGRAM,
-    parseScheduleProgramFromDb,
-    scheduleProgramItemSchema,
-    scheduleProgramSchema,
-    type ScheduleProgramItem,
-} from './model/schedule-program'
-export {
-    getCatalogEntryBySegmentId,
-    SCHEDULE_I18N_CATALOG,
-    SCHEDULE_PROGRAM_ICON_IDS,
-    type ScheduleI18nCatalogEntry,
-    type ScheduleProgramIconId,
-} from './model/schedule-i18n-catalog'
-export {
     getDefaultSiteSettings,
     normalizeSiteSettingsRow,
     siteSettingsPatchSchema,

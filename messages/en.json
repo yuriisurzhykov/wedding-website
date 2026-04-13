@@ -44,25 +44,7 @@
     "subtitle": "How the day unfolds",
     "emphasisBadge": "Main celebration",
     "emphasisBadgeAria": "Main moment on the schedule — the timeline line is stronger from this point onward.",
-    "previewNotice": "The full schedule will appear here soon — during and after the celebration you’ll see the full timeline.",
-    "items": {
-      "gathering": {
-        "title": "Guest arrival",
-        "desc": "Meet at WGBC in Battle Ground, WA. Arrive a little early — we will greet you and head to the ceremony together."
-      },
-      "ceremony": {
-        "title": "Ceremony",
-        "desc": "Wedding ceremony on campus. Please arrive about ten minutes before the start."
-      },
-      "photo": {
-        "title": "Group Photo",
-        "desc": "Group photo with the guests."
-      },
-      "dinner": {
-        "title": "Dinner & celebration",
-        "desc": "Dinner, socializing, photo with couple  — still at WGBC."
-      }
-    }
+    "previewNotice": "The full schedule will appear here soon — during and after the celebration you’ll see the full timeline."
   },
   "dresscode": {
     "title": "Dress code",
@@ -77,7 +59,8 @@
       "champagne": "Champagne",
       "umber": "Warm umber",
       "white": "White",
-      "black": "Black"
+      "black": "Black",
+      "blue": "Blue"
     }
   },
   "story": {
@@ -523,7 +506,7 @@
     "schedulePage": {
       "metaTitle": "Admin — Schedule",
       "title": "Day-of program",
-      "subtitle": "Edit the timeline guests see on the site. Presets map to the same translation keys as the public schedule.",
+      "subtitle": "Edit the timeline guests see on the site. Presets fill Russian and English text you can adjust.",
       "accessHint": "Sign in at /admin/login. Saving uses your admin session cookie (or a legacy API token in scripts).",
       "save": "Save changes",
       "saving": "Saving…",
@@ -549,7 +532,30 @@
         "notSignedIn": "Your session expired. Sign in again from the admin login page.",
         "rateLimited": "Too many requests. Try again in {seconds, plural, one {# second} other {# seconds}}.",
         "rateLimitedGeneric": "Too many requests. Please wait and try again.",
-        "saveFailed": "Could not save settings"
+        "saveFailed": "Could not save settings",
+        "scheduleSaveFailed": "Could not save the program. Check the form and try again.",
+        "schedule": {
+          "invalidJson": "The request body is not valid JSON. Reload the page and try again.",
+          "duplicateIdsInPayload": "Each schedule item needs a unique id.",
+          "multipleEmphasisInPayload": "Only one item can be the main moment on the timeline.",
+          "iconExclusive": "Use only one icon source: built-in, hosted URL, or inline SVG — not several at once.",
+          "itemsEmpty": "Add at least one schedule item.",
+          "itemsTooMany": "The program cannot have more than 64 items.",
+          "hourInvalid": "Hour must be a whole number from 0 to 23.",
+          "minuteInvalid": "Minute must be a whole number from 0 to 59.",
+          "titleTooLong": "A title is too long (max 4000 characters).",
+          "descTooLong": "A description is too long (max 8000 characters).",
+          "locationTooLong": "A venue label is too long (max 2000 characters).",
+          "locationUrlTooLong": "A maps or venue URL is too long (max 4000 characters).",
+          "iconSvgTooLong": "Inline SVG is too large after sanitization (limit applies on save).",
+          "iconUrlTooLong": "The icon URL is too long (max 4000 characters).",
+          "iconPresetInvalid": "Choose one of the built-in icon presets.",
+          "itemIdInvalid": "Each row id must be a valid UUID (or leave blank to assign on save).",
+          "itemFieldsInvalid": "Some fields are invalid. Check times, text length, and icon options.",
+          "persistenceFailed": "The server could not save the program. Try again in a moment.",
+          "iconHostedNeedsUrlOrUpload": "Row {row}: paste a public SVG URL or upload a file before saving.",
+          "iconInlineNeedsSvg": "Row {row}: paste SVG markup or switch to another icon mode before saving."
+        }
       },
       "capabilities": {
         "title": "Features",
@@ -573,17 +579,22 @@
       },
       "schedule": {
         "title": "Day-of program",
+        "expandItem": "Expand item",
+        "collapseItem": "Collapse item",
+        "mainMomentBadge": "Main",
         "addRow": "Add item",
         "removeRow": "Remove",
         "moveUp": "Move up",
         "moveDown": "Move down",
         "rowId": "Stable id",
-        "messagePreset": "Text preset (translations)",
+        "messagePreset": "Text preset (RU / EN)",
         "icon": "Icon",
         "hour": "Hour (0–23)",
         "minute": "Minute (0–59)",
-        "titleKey": "Title message key",
-        "descKey": "Description message key",
+        "titleRu": "Title (Russian)",
+        "titleEn": "Title (English)",
+        "descRu": "Description (Russian)",
+        "descEn": "Description (English)",
         "location": "Venue label",
         "locationUrl": "Maps / venue URL",
         "emphasisLegend": "Main moment on the timeline",
@@ -596,13 +607,31 @@
           "ceremony": "Ceremony",
           "reception": "Reception",
           "dinner": "Dinner"
-        }
+        },
+        "iconKindPreset": "Built-in icon",
+        "iconKindInline": "Inline SVG (paste markup)",
+        "iconKindHosted": "Hosted SVG (URL or upload)",
+        "inlineSvgLabel": "SVG markup",
+        "inlineSvgPlaceholder": "Paste a root svg element (open tag with xmlns is recommended).",
+        "inlineSvgNotice": "Paste a complete SVG element. It is sanitized when you save.",
+        "inlineToBuiltin": "Switch to built-in icon",
+        "inlineToHosted": "Switch to hosted URL",
+        "iconUrlLabel": "Public SVG URL",
+        "iconUrlPlaceholder": "https://…",
+        "uploadSvg": "Upload SVG to storage",
+        "uploadingSvg": "Uploading…",
+        "clearHostedIcon": "Remove URL and use built-in icon",
+        "uploadSvgSuccess": "Icon uploaded — URL filled in. Save the program to apply.",
+        "uploadSvgInvalidFile": "Choose a single .svg file up to {maxKb} KB.",
+        "uploadSvgUnauthorized": "Your session expired. Sign in again.",
+        "uploadSvgFailed": "Could not upload the icon. Try again."
       },
       "segments": {
         "gathering": "Guest arrival",
         "ceremony": "Ceremony",
         "reception": "Reception",
-        "dinner": "Dinner & celebration"
+        "dinner": "Dinner & celebration",
+        "photo": "Group photo"
       }
     }
   },

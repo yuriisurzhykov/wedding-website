@@ -1,6 +1,6 @@
 import type {ComponentType, SVGProps} from 'react'
 
-import type {ScheduleItem} from '@shared/lib/wedding-calendar'
+import type {ScheduleIconId} from '@shared/lib/wedding-calendar'
 
 import {CeremonyIcon} from './CeremonyIcon'
 import {DinnerIcon} from './DinnerIcon'
@@ -9,12 +9,7 @@ import {ReceptionIcon} from './ReceptionIcon'
 
 export {CeremonyIcon, DinnerIcon, GatheringIcon, ReceptionIcon}
 
-export type ScheduleIconId = ScheduleItem['iconId']
-
-const SCHEDULE_ICON_MAP: Record<
-    ScheduleIconId,
-    ComponentType<SVGProps<SVGSVGElement>>
-> = {
+const SCHEDULE_ICON_MAP: Record<ScheduleIconId, ComponentType<SVGProps<SVGSVGElement>>> = {
     gathering: GatheringIcon,
     ceremony: CeremonyIcon,
     reception: ReceptionIcon,
@@ -22,10 +17,8 @@ const SCHEDULE_ICON_MAP: Record<
 }
 
 /**
- * Resolves the vector icon component for a day-program `iconId`.
+ * Resolves the vector icon component for a preset timeline `iconId`.
  */
-export function getScheduleIcon(
-    id: ScheduleIconId,
-): ComponentType<SVGProps<SVGSVGElement>> {
+export function getScheduleIcon(id: ScheduleIconId): ComponentType<SVGProps<SVGSVGElement>> {
     return SCHEDULE_ICON_MAP[id]
 }

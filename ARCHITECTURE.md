@@ -912,56 +912,13 @@ export const RSVP_FIELDS: FormField[] = [
 ]
 ```
 
-### `lib/config/schedule.ts`
+### Day-of schedule (Postgres, not `lib/config`)
 
-```typescript
-export interface ScheduleItem {
-    id: string
-    time: string
-    icon: string
-    titleKey: string        // schedule.items.ID.title
-    descKey: string         // schedule.items.ID.desc
-    location?: string
-    locationUrl?: string    // Google Maps link
-}
-
-export const SCHEDULE: ScheduleItem[] = [
-    {
-        id: 'gathering',
-        time: '14:00',
-        icon: '🏛️',
-        titleKey: 'schedule.items.gathering.title',
-        descKey: 'schedule.items.gathering.desc',
-        location: 'Venue Name',
-        locationUrl: 'https://maps.google.com/?q=...',
-    },
-    {
-        id: 'ceremony',
-        time: '15:00',
-        icon: '💍',
-        titleKey: 'schedule.items.ceremony.title',
-        descKey: 'schedule.items.ceremony.desc',
-        location: 'Church Name',
-        locationUrl: 'https://maps.google.com/?q=...',
-    },
-    {
-        id: 'reception',
-        time: '17:00',
-        icon: '🚗',
-        titleKey: 'schedule.items.reception.title',
-        descKey: 'schedule.items.reception.desc',
-    },
-    {
-        id: 'dinner',
-        time: '18:00',
-        icon: '🥂',
-        titleKey: 'schedule.items.dinner.title',
-        descKey: 'schedule.items.dinner.desc',
-        location: 'Restaurant Name',
-        locationUrl: 'https://maps.google.com/?q=...',
-    },
-]
-```
+Guest-facing timeline lives in **`schedule_items`** (sort order, wall time, ru/en copy, location URLs, icon fields).
+Section titles and optional emphasis badge copy live in **`schedule_section`** (singleton row). Admin saves go through
+`PATCH /api/admin/schedule` (`replaceWeddingSchedule` in `@features/wedding-schedule`). Domain types and Zod contracts
+are in `@entities/wedding-schedule`. `@shared/lib/wedding-calendar` still supplies **`resolveScheduleItems`** so mapped DB
+rows gain wedding-day **`instant`** values for display.
 
 ### `lib/config/dresscode.ts`
 
@@ -3612,7 +3569,7 @@ When adding something new — follow this order (**FSD under `src/`**; `lib/` an
 ```
 1. DATA / CONFIG → src/entities/<slice>/ (model or config) + public export from index.ts
    During migration: optional thin re-export from lib/config/*.ts if external callers still use @/lib/config
-   Example: new schedule item → @entities/schedule; keep lib/config/schedule.ts as re-export if needed
+   Example: new schedule field → migration + `@entities/wedding-schedule` + `@features/wedding-schedule` + admin/guest UI
 
 2. STRINGS → messages/ru.json + messages/en.json
    Both files at the same time, always.

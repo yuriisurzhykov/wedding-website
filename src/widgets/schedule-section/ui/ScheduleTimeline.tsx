@@ -1,19 +1,23 @@
 'use client'
 
 import {useLayoutEffect, useRef, useState} from 'react'
-import {useTranslations} from 'next-intl'
 
 import {cn} from '@shared/lib/cn'
 import {getScheduleIcon} from '@shared/ui/icons/schedule'
-import {type ScheduleItem, formatScheduleClock} from '@shared/lib/wedding-calendar'
+import {
+    type ScheduleIconRender,
+    type ScheduleItem,
+    formatScheduleClock,
+} from '@shared/lib/wedding-calendar'
 
 type Props = Readonly<{
     items: ScheduleItem[]
     locale: string
+    /** Resolved label for the emphasis row badge (server applies DB copy or `messages` fallback). */
+    emphasisBadgeLabel: string
 }>
 
-export function ScheduleTimeline({items, locale}: Props) {
-    const t = useTranslations()
+export function ScheduleTimeline({items, locale, emphasisBadgeLabel}: Props) {
     const containerRef = useRef<HTMLDivElement>(null)
     const iconRefs = useRef<(HTMLDivElement | null)[]>([])
     const [splitPx, setSplitPx] = useState<number | null>(null)
@@ -73,7 +77,6 @@ export function ScheduleTimeline({items, locale}: Props) {
 
             <div className="relative z-10 flex flex-col gap-8">
                 {items.map((item, index) => {
-                    const Icon = getScheduleIcon(item.iconId)
                     const isEmphasis = item.emphasis
                     return (
                         <div key={item.id} className="flex items-start gap-6">
@@ -87,24 +90,23 @@ export function ScheduleTimeline({items, locale}: Props) {
                                         ? 'border-primary ring-2 ring-primary/30 ring-offset-2 ring-offset-bg-card'
                                         : 'border-border',
                                 )}
-                                aria-hidden
                             >
-                                <Icon className="h-8 w-8"/>
+                                <ScheduleIconSlot icon={item.icon}/>
                             </div>
 
                             <div className="flex-1 pt-2 pb-6">
                                 {isEmphasis ? (
                                     <p className="mb-2 inline-block rounded-pill border border-primary/40 bg-bg-card px-3 py-1 font-mono text-small font-medium uppercase tracking-wide text-primary">
-                                        {t('schedule.emphasisBadge')}
+                                        {emphasisBadgeLabel}
                                     </p>
                                 ) : null}
                                 <div className="mb-1 flex flex-wrap items-baseline gap-3">
                                     <span className="font-mono text-small font-medium text-primary">
                                         {formatScheduleClock(locale, item.hour, item.minute)}
                                     </span>
-                                    <h3 className="font-display text-h3 text-text-primary">{t(item.titleKey)}</h3>
+                                    <h3 className="font-display text-h3 text-text-primary">{item.title}</h3>
                                 </div>
-                                <p className="text-body text-text-secondary">{t(item.descKey)}</p>
+                                <p className="text-body text-text-secondary">{item.desc}</p>
                                 {item.location && item.locationUrl ? (
                                     <a
                                         href={item.locationUrl}
@@ -122,5 +124,39 @@ export function ScheduleTimeline({items, locale}: Props) {
                 })}
             </div>
         </div>
+    )
+}
+
+function ScheduleIconSlot({icon}: Readonly<{icon: ScheduleIconRender}>) {
+    if (icon.kind === 'preset') {
+        const Icon = getScheduleIcon(icon.iconId)
+        return (
+            <span className="inline-flex h-8 w-8 items-center justify-center" aria-hidden>
+                <Icon className="h-8 w-8" aria-hidden/>
+            </span>
+        )
+    }
+    if (icon.kind === 'url') {
+        const decorative = icon.alt === ''
+        return (
+            // Admin-provided SVG URL; size is fixed — next/image remote patterns would not cover arbitrary hosts.
+            // eslint-disable-next-line @next/next/no-img-element -- external schedule icon URL from DB
+            <img
+                src={icon.href}
+                alt={icon.alt}
+                aria-hidden={decorative ? true : undefined}
+                className="h-8 w-8 object-contain"
+                loading="lazy"
+                decoding="async"
+            />
+        )
+    }
+    // icon.kind === 'inline' — sanitized SVG from DB; brand tint via `.schedule-custom-svg` → `--color-primary` (globals.css).
+    return (
+        <span
+            className="schedule-custom-svg inline-flex h-8 w-8 items-center justify-center [&>svg]:block [&>svg]:h-full [&>svg]:w-full [&>svg]:max-h-8 [&>svg]:max-w-8"
+            aria-hidden
+            dangerouslySetInnerHTML={{__html: icon.svgHtml}}
+        />
     )
 }

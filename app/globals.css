@@ -275,6 +275,61 @@ body {
     button.bg-primary {
         color: var(--color-text-on-primary);
     }
+
+    /**
+     * Guest schedule: admin inline SVG often ships with dark stroke/fill hex values.
+     * Map those to the app brand token (same hue as preset icons via `text-primary` / `--color-primary`).
+     */
+    .schedule-custom-svg {
+        color: var(--color-primary);
+    }
+
+    .schedule-custom-svg svg path[stroke='#000'],
+    .schedule-custom-svg svg path[stroke='#000000'],
+    .schedule-custom-svg svg path[stroke='#111'],
+    .schedule-custom-svg svg path[stroke='#111111'],
+    .schedule-custom-svg svg path[stroke='black'],
+    .schedule-custom-svg svg circle[stroke='#000'],
+    .schedule-custom-svg svg circle[stroke='#000000'],
+    .schedule-custom-svg svg circle[stroke='black'],
+    .schedule-custom-svg svg ellipse[stroke='#000'],
+    .schedule-custom-svg svg ellipse[stroke='#000000'],
+    .schedule-custom-svg svg ellipse[stroke='black'],
+    .schedule-custom-svg svg line[stroke='#000'],
+    .schedule-custom-svg svg line[stroke='#000000'],
+    .schedule-custom-svg svg line[stroke='black'],
+    .schedule-custom-svg svg polyline[stroke='#000'],
+    .schedule-custom-svg svg polyline[stroke='#000000'],
+    .schedule-custom-svg svg polyline[stroke='black'],
+    .schedule-custom-svg svg polygon[stroke='#000'],
+    .schedule-custom-svg svg polygon[stroke='#000000'],
+    .schedule-custom-svg svg polygon[stroke='black'],
+    .schedule-custom-svg svg rect[stroke='#000'],
+    .schedule-custom-svg svg rect[stroke='#000000'],
+    .schedule-custom-svg svg rect[stroke='black'],
+    .schedule-custom-svg svg g[stroke='#000'],
+    .schedule-custom-svg svg g[stroke='#000000'],
+    .schedule-custom-svg svg g[stroke='black'],
+    .schedule-custom-svg svg[stroke='#000'],
+    .schedule-custom-svg svg[stroke='#000000'],
+    .schedule-custom-svg svg[stroke='black'] {
+        stroke: var(--color-primary) !important;
+    }
+
+    .schedule-custom-svg svg path[fill='#000'],
+    .schedule-custom-svg svg path[fill='#000000'],
+    .schedule-custom-svg svg path[fill='#111'],
+    .schedule-custom-svg svg path[fill='#111111'],
+    .schedule-custom-svg svg path[fill='black'],
+    .schedule-custom-svg svg circle[fill='#000'],
+    .schedule-custom-svg svg circle[fill='#000000'],
+    .schedule-custom-svg svg circle[fill='#111'],
+    .schedule-custom-svg svg circle[fill='black'],
+    .schedule-custom-svg svg rect[fill='#000'],
+    .schedule-custom-svg svg rect[fill='#000000'],
+    .schedule-custom-svg svg rect[fill='black'] {
+        fill: var(--color-primary) !important;
+    }
 }
 
 h1,

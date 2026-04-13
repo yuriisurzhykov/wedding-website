@@ -7,7 +7,7 @@
  * |------|------|-------------|
  * | Ceremony, celebration start & RSVP instants | `config/instants.ts` | The real date/time of those events changes |
  * | Locale display (zone, 12h, date style) | `config/event-display.ts` | How you want dates/times to *look* |
- * | Day-of schedule rows | `config/day-program.ts` | Program order, times, venues, i18n keys |
+ * | Day-of schedule copy & order | Postgres `schedule_items` | Edited in admin; loaded via `@features/wedding-schedule` |
  *
  * ## Why this split
  *
@@ -37,8 +37,9 @@ export {
 } from './internal/locale-strings'
 
 export {
-    getScheduleItems,
     resolveScheduleItems,
+    type ScheduleIconId,
+    type ScheduleIconRender,
     type ScheduleItem,
     type ScheduleTimelineRow,
 } from './internal/schedule-model'

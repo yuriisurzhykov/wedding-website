@@ -1,4 +1,4 @@
-import type {SVGProps} from 'react'
+import type {SVGProps} from 'react';
 
 /**
  * Covered dish centered with fork and knife — dining — decorative schedule icon.
@@ -8,25 +8,14 @@ import type {SVGProps} from 'react'
 export function DinnerIcon(props: SVGProps<SVGSVGElement>) {
     return (
         <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={1.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
+            viewBox="0 0 64 64"
             aria-hidden
             {...props}
         >
-            <g transform="translate(12 12) scale(1.1) translate(-12 -12)">
-                {/* Fork (left) */}
-                <path d="M3.5 5.5v2.5 M4.25 5.5v2.5 M5 5.5v2.5 M4.25 8v10" />
-                {/* Cloche — centered */}
-                <path d="M8 17.5C8 9.5 16 9.5 16 17.5" />
-                <circle cx="12" cy="11" r="1.35" />
-                <path d="M7.5 18.5h9" />
-                {/* Knife (right) */}
-                <path d="M19.5 5.5l2.25 4.25v6.25L19.5 18" />
-            </g>
+            <path
+                fill="currentColor"
+                d="M45.7 1.8h-3.2c-2 0-3.6 1.6-3.6 3.6v51.9c0 2.8 2.2 5 5 5h2.8c2.8 0 5-2.2 5-5v-20h1.5c2 0 3.6-1.6 3.6-3.6V12.8c-.1-6.1-5.1-11-11.1-11m1 56h-2.8c-.3 0-.5-.2-.5-.5v-20h3.8v19.9c0 .3-.3.6-.5.6m5.6-25h-8.9V6.3h2.3c3.6 0 6.6 3 6.6 6.6zM27.1 2c-1.2 0-2.3 1-2.3 2.3v14.1h-4.3V4.2c0-1.2-1-2.3-2.3-2.3S16 3 16 4.2v14.1h-4.3V4.2c0-1.2-1-2.3-2.3-2.3S7.2 3 7.2 4.2v21.6c0 2.9 2 5.3 4.8 6v25.5c0 2.8 2.2 5 5 5h2.7c2.8 0 5-2.2 5-5V31.8c2.7-.6 4.7-3.1 4.7-5.9V4.2C29.3 3 28.3 2 27.1 2m-7.5 55.8h-2.7c-.3 0-.5-.2-.5-.5V31.9h3.7v25.3c0 .3-.2.6-.5.6m3.6-30.4h-9.9c-.9 0-1.6-.7-1.6-1.6v-3h13.1v3c0 .9-.7 1.6-1.6 1.6"
+            />
         </svg>
-    )
+    );
 }

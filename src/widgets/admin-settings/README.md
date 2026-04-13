@@ -1,6 +1,7 @@
 # Widget: admin-settings
 
-Client forms for editing site-wide configuration via `PATCH /api/admin/site-settings`: **feature visibility** (hidden / preview / enabled) and the **day-of schedule** are separate screens and partial saves.
+Client forms for site-wide configuration: **feature visibility** via `PATCH /api/admin/site-settings` and the **day-of
+schedule** via `PATCH /api/admin/schedule`.
 
 ## Purpose
 
@@ -8,22 +9,29 @@ Client forms for editing site-wide configuration via `PATCH /api/admin/site-sett
 - **Schedule** — `AdminScheduleForm` on `app/[locale]/admin/(dashboard)/schedule/page.tsx`.
 - Legacy path `/admin/settings` redirects to `/admin/features`.
 
-Server loads the current snapshot with `getSiteSettings()` and passes `initialSettings`.
-
 ## Approach
 
-- **Auth:** sign in at `/admin/login`. Saves use `patchAdminSiteSettings()` (`fetch` with `credentials: 'include'`). The API still accepts legacy `ADMIN_SECRET` via headers for scripts.
-- **Partial PATCH:** features form sends `{ capabilities }`; schedule form sends `{ schedule_program }`. The feature merges with the stored row.
-- **Schedule text:** `titleKey` / `descKey` follow {@link SCHEDULE_I18N_CATALOG}; admins pick a preset per row.
-- After a successful save, `router.refresh()` reloads server props; each form re-syncs when `initialSettings.updated_at` changes.
+- **Auth:** sign in at `/admin/login`. The schedule admin page loads with **`getWeddingSchedule()`** in RSC (same snapshot
+  as **`GET /api/admin/schedule`** for scripts or client refetch). Saves use **`patchAdminSchedule()`** (`fetch` with
+  `credentials: 'include'`); feature flags still use `patchAdminSiteSettings()`. The API still accepts legacy `ADMIN_SECRET` via headers
+  for scripts.
+- **Features PATCH:** `{ capabilities }` — merged server-side with `updateSiteSettings`.
+- **Schedule GET:** `{ ok: true, section, items }` — same contract as `getWeddingSchedule()`.
+- **Schedule PATCH:** replace-all `{ items }` (optional `section` copy) — validated and persisted by
+  `replaceWeddingSchedule` (inline SVG sanitized before storage). SVG file uploads use **`POST /api/admin/schedule-icon/presign`**
+  then `PUT` to R2; store returned `publicUrl` as `icon_url` on the item.
+- **Schedule text:** editable Russian and English fields; presets copy literals from
+  `WEDDING_SCHEDULE_ADMIN_PRESETS` (`@entities/wedding-schedule`).
+- After a successful save, `router.refresh()` reloads server props; each form re-syncs when server `updated_at` changes.
 
 ## Public API
 
 | Export | Role |
 |--------|------|
 | `AdminFeaturesForm` | Props: `initialSettings: SiteSettings`. |
-| `AdminScheduleForm` | Props: `initialSettings: SiteSettings`. |
-| `patchAdminSiteSettings` | Client-side `PATCH` helper (shared error shape). |
+| `AdminScheduleForm` | Props: `initialItems`, `sectionUpdatedAt` from `getWeddingSchedule()`. |
+| `patchAdminSiteSettings` | Client `PATCH` helper for site settings. |
+| `patchAdminSchedule` | Client `PATCH` helper for schedule replace-all. |
 
 ## Usage
 
@@ -32,7 +40,17 @@ const settings = await getSiteSettings();
 return <AdminFeaturesForm initialSettings={settings} />;
 ```
 
+```tsx
+const schedule = await getWeddingSchedule();
+return (
+  <AdminScheduleForm
+    initialItems={schedule.items}
+    sectionUpdatedAt={schedule.section?.updated_at ?? ''}
+  />
+);
+```
+
 ## Errors and edge cases
 
-- Schedule: duplicate row `id` values and empty `schedule_program` are blocked client-side before PATCH (server Zod also rejects).
+- Schedule: duplicate row `id` values and empty item lists are blocked client-side before PATCH (server Zod also rejects).
 - Schedule: at most one row may have `emphasis: true`; the form uses a single radio group (none or one row) and rejects save if more than one flag is set.

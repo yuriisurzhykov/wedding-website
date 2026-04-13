@@ -1,11 +1,6 @@
 import {z} from 'zod'
 
 import {
-    type ScheduleProgramItem,
-    parseScheduleProgramFromDb,
-    scheduleProgramSchema,
-} from './schedule-program'
-import {
     type SiteCapabilities,
     parseFeatureStatesFromDb,
     siteCapabilitiesSchema,
@@ -15,7 +10,6 @@ export type SiteSettings = {
     id: 'default'
     updated_at: string
     capabilities: SiteCapabilities
-    schedule_program: ScheduleProgramItem[]
 }
 
 export const siteSettingsSchema = z
@@ -23,7 +17,6 @@ export const siteSettingsSchema = z
         id: z.literal('default'),
         updated_at: z.string(),
         capabilities: siteCapabilitiesSchema,
-        schedule_program: scheduleProgramSchema,
     })
     .strict()
 
@@ -31,7 +24,6 @@ export const siteSettingsSchema = z
 export const siteSettingsPatchSchema = z
     .object({
         capabilities: siteCapabilitiesSchema.partial().optional(),
-        schedule_program: scheduleProgramSchema.optional(),
     })
     .strict()
 
@@ -45,19 +37,17 @@ export function getDefaultSiteSettings(): SiteSettings {
         id: 'default',
         updated_at: new Date(0).toISOString(),
         capabilities: parseFeatureStatesFromDb(undefined),
-        schedule_program: parseScheduleProgramFromDb(undefined),
     }
 }
 
 /**
  * Maps Supabase `site_settings` plus optional `site_feature_states` rows to {@link SiteSettings}. Null or invalid
- * fragments fall back to code defaults (see migration seed and `day-program.ts`).
+ * fragments fall back to code defaults (see migration seed).
  */
 export function normalizeSiteSettingsRow(
     row: {
         id: string
         updated_at: string
-        schedule_program: unknown
     } | null,
     featureStatesFromDb?: unknown,
 ): SiteSettings {
@@ -68,6 +58,5 @@ export function normalizeSiteSettingsRow(
         id: 'default',
         updated_at: row.updated_at,
         capabilities: parseFeatureStatesFromDb(featureStatesFromDb),
-        schedule_program: parseScheduleProgramFromDb(row.schedule_program),
     }
 }

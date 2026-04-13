@@ -1,7 +1,8 @@
 # R2 (S3 API)
 
 Server-only helpers for Cloudflare R2: presigned PUT and `PutObject`. Env: `R2_ACCOUNT_ID` or `R2_ACCOUNT_ENDPOINT`,
-`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL`. Used by `@features/gallery-upload`; do
+`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`, `R2_PUBLIC_URL`. Used by `@features/gallery-upload` and
+`createPresignedScheduleIconSvgPutUrl` (`schedule-icons/…` keys for admin schedule row icons); do
 not import from client code.
 
 ## CORS (required for default guest uploads)

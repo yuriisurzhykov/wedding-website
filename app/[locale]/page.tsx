@@ -1,4 +1,5 @@
 import {getViewerRsvpIdFromServerCookies} from '@features/guest-session/server'
+import {getResolvedGuestSchedule} from '@features/wedding-schedule'
 import {
     FeatureGate,
     GalleryHomeGate,
@@ -9,7 +10,6 @@ import {
     alignHomeThemesAfterSkippedRsvpBand,
     homeSectionThemeAt,
 } from '@shared/lib/home-section-themes'
-import {resolveScheduleItems} from '@shared/lib/wedding-calendar'
 import {DonateSection} from '@widgets/donate-section'
 import {DressCodeSection} from '@widgets/dresscode-section'
 import {GallerySection} from '@widgets/gallery-section'
@@ -19,20 +19,25 @@ import {RsvpSection, RsvpSectionGate} from '@widgets/rsvp-section'
 import {ScheduleSection} from '@widgets/schedule-section'
 import {WelcomeSection} from '@widgets/welcome-section'
 import {WishesSection} from '@widgets/wishes-section'
+import {getLocale} from 'next-intl/server'
 
 export default async function Home() {
     const viewerRsvpId = await getViewerRsvpIdFromServerCookies()
     /** Matches client `RsvpSectionGate`: no RSVP band when guest session cookie is present. */
     const rsvpSlotSkippedOnHome = viewerRsvpId !== null
 
-    const siteSettings = await getSiteSettingsCached()
+    const locale = await getLocale()
+    const [siteSettings, resolvedSchedule] = await Promise.all([
+        getSiteSettingsCached(),
+        getResolvedGuestSchedule(locale),
+    ])
     const showScheduleSection = siteSettings.capabilities.scheduleSection !== 'hidden'
     const showRsvpSection = siteSettings.capabilities.rsvp !== 'hidden'
     const showGallerySection = siteSettings.capabilities.galleryBrowse !== 'hidden'
     const showWishesSection = siteSettings.capabilities.wishSubmit !== 'hidden'
-    const scheduleItems = showScheduleSection
-        ? resolveScheduleItems(siteSettings.schedule_program)
-        : []
+
+    const scheduleHeaders = resolvedSchedule.sectionHeaders
+    const scheduleItems = showScheduleSection ? resolvedSchedule.items : []
 
     let sectionIndex = 0
     const nextSectionTheme = () => homeSectionThemeAt(sectionIndex++)
@@ -70,7 +75,13 @@ export default async function Home() {
                         />
                     }
                 >
-                    <ScheduleSection items={scheduleItems} theme={themeSchedule}/>
+                    <ScheduleSection
+                        items={scheduleItems}
+                        theme={themeSchedule}
+                        headerTitle={scheduleHeaders.title}
+                        headerSubtitle={scheduleHeaders.subtitle}
+                        emphasisBadgeText={scheduleHeaders.emphasisBadge}
+                    />
                 </FeatureGate>
             ) : null}
             <DressCodeSection theme={themeDress}/>

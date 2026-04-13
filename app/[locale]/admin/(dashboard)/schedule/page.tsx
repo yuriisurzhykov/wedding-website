@@ -1,4 +1,4 @@
-import {getSiteSettings} from '@features/site-settings'
+import {getWeddingSchedule} from '@features/wedding-schedule'
 import {AdminScheduleForm} from '@widgets/admin-settings'
 import type {Metadata} from 'next'
 import {getTranslations} from 'next-intl/server'
@@ -12,7 +12,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AdminSchedulePage() {
-    const settings = await getSiteSettings()
+    const schedule = await getWeddingSchedule()
 
-    return <AdminScheduleForm initialSettings={settings}/>
+    return (
+        <AdminScheduleForm
+            initialItems={schedule.items}
+            sectionUpdatedAt={schedule.section?.updated_at ?? ''}
+        />
+    )
 }
