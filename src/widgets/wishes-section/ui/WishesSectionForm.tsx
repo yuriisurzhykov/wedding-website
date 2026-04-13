@@ -232,7 +232,7 @@ export function WishesSectionForm({
                         ? t.rich("anonymousSessionHintHome", {
                               rsvp: (chunks) => (
                                   <Link
-                                      href={{pathname: "/", hash: "rsvp"}}
+                                      href={{pathname: "/guest/sign-in"}}
                                       className="text-primary underline decoration-primary/50 underline-offset-[0.2em] transition hover:decoration-primary"
                                   >
                                       {chunks}
@@ -242,7 +242,7 @@ export function WishesSectionForm({
                         : t.rich("anonymousSessionHintHomeNameOnly", {
                               rsvp: (chunks) => (
                                   <Link
-                                      href={{pathname: "/", hash: "rsvp"}}
+                                      href={{pathname: "/guest/sign-in"}}
                                       className="text-primary underline decoration-primary/50 underline-offset-[0.2em] transition hover:decoration-primary"
                                   >
                                       {chunks}

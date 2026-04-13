@@ -5,8 +5,8 @@ export interface PaletteColor {
 }
 
 /**
- * Swatches shown in the dress code section; `hex` matches site palette tokens in `app/globals.css`
- * (`--color-wedding-*`).
+ * Dress code swatches: `hex` values match `--color-wedding-*` in `app/globals.css`
+ * (blush → accent-dusty-pink, sage → brand-500, champagne → neutral-200, umber → neutral-700).
  */
 export const PALETTE: PaletteColor[] = Array.from(
     new Set<PaletteColor>([

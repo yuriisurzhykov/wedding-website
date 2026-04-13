@@ -4,12 +4,7 @@ import {useCallback, useEffect, useRef, useState} from 'react'
 import {useTranslations} from 'next-intl'
 import {toast} from 'sonner'
 
-import {
-    isFeatureEnabled,
-    isFeatureHidden,
-    isFeaturePreview,
-    type FeatureState,
-} from '@entities/site-settings'
+import {type FeatureState, isFeatureEnabled, isFeatureHidden, isFeaturePreview,} from '@entities/site-settings'
 import type {GalleryPhotoView} from '@entities/photo'
 import {GuestSessionRestoreForm, useGuestSession} from '@features/guest-session'
 import {Link} from '@/i18n/navigation'
@@ -285,7 +280,7 @@ export function GalleryPhotosClient({
                     {t.rich('uploadHintAnonymousHome', {
                         rsvp: (chunks) => (
                             <Link
-                                href={{pathname: '/', hash: 'rsvp'}}
+                                href={{pathname: '/guest/sign-in'}}
                                 className="text-primary underline decoration-primary/50 underline-offset-[0.2em] transition hover:decoration-primary"
                             >
                                 {chunks}

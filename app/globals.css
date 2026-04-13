@@ -73,7 +73,8 @@
     --color-text-secondary: var(--primitive-neutral-600);
     --color-text-muted: var(--primitive-neutral-400);
     --color-text-inverse: var(--primitive-neutral-0);
-    --color-text-on-brand: var(--primitive-accent-lily);
+    /* Light copy on sage / primary: warm ivory (same as page cream), not body charcoal */
+    --color-text-on-brand: var(--primitive-neutral-0);
     --color-text-link: var(--primitive-brand-600);
     --color-text-link-hover: var(--primitive-brand-700);
 
@@ -188,9 +189,8 @@
     --shadow-card: 0 4px 24px color-mix(in srgb, var(--primitive-neutral-900) 10%, transparent);
     --shadow-modal: 0 20px 60px color-mix(in srgb, var(--primitive-neutral-900) 22%, transparent);
     /* Primary controls: crisp edge + soft sage lift (avoids a flat pink-tinted glow from the old blush theme) */
-    --shadow-button:
-        0 1px 2px color-mix(in srgb, var(--primitive-neutral-900) 12%, transparent),
-        0 4px 14px color-mix(in srgb, var(--primitive-brand-700) 22%, transparent);
+    --shadow-button: 0 1px 2px color-mix(in srgb, var(--primitive-neutral-900) 12%, transparent),
+    0 4px 14px color-mix(in srgb, var(--primitive-brand-700) 22%, transparent);
 }
 
 :root {
@@ -267,6 +267,14 @@ body {
     color: var(--color-text-primary);
     font-family: var(--font-body);
     line-height: 1.7;
+}
+
+@layer components {
+    /* Buttons inherit `color` from body (Preflight); keep labels readable on `bg-primary`. */
+    a.bg-primary,
+    button.bg-primary {
+        color: var(--color-text-on-primary);
+    }
 }
 
 h1,
