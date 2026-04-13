@@ -701,7 +701,9 @@ export function AdminScheduleForm({initialItems, sectionUpdatedAt}: Props) {
                                                                 type="radio"
                                                                 name={`schedule-row-icon-${row.id ?? String(index)}`}
                                                                 className="mt-1 shrink-0"
-                                                                checked={iconKind === 'inline'}
+                                                                checked={
+                                                                    scheduleRowIconKind(row) === 'inline'
+                                                                }
                                                                 onChange={() =>
                                                                     updateRow(index, {
                                                                         ...row,
