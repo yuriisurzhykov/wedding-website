@@ -1,3 +1,5 @@
+import {toDialString} from '@shared/lib/phone'
+
 export interface VenueInfo {
     name: string
     address: string
@@ -19,7 +21,32 @@ export interface ContactInfo {
     phone: string
 }
 
-export const CONTACT: ContactInfo = {
+const contactFacts: ContactInfo = {
     email: 'contact@yuriimariia.wedding',
     phone: '+1 (916)-517-2011',
+}
+
+/**
+ * Public contact facts for the wedding (phone display string and email).
+ */
+export function getContactInfo(): Readonly<ContactInfo> {
+    return contactFacts
+}
+
+function mailtoHrefForEmail(email: string): string {
+    const e = email.trim()
+    return `mailto:${e}`
+}
+
+/**
+ * `tel:` href for the configured contact phone, or `undefined` when dialing is not derivable.
+ */
+export function getContactTelHref(): string | undefined {
+    const dial = toDialString(contactFacts.phone)
+    return dial ? `tel:${dial}` : undefined
+}
+
+/** `mailto:` href for the configured contact email. */
+export function getContactMailtoHref(): string {
+    return mailtoHrefForEmail(contactFacts.email)
 }

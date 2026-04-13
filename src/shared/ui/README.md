@@ -19,4 +19,6 @@ uploads.
 ## Other exports
 
 Barrel: `index.ts`. Includes layout (`Section`, `SectionHeader`), forms (`DynamicForm`, `Input`, …), `AppToaster`,
-`LanguageSwitcher`, etc.
+`LanguageSwitcher`, **`LabeledExternalLinkRow`** (caption + single `<a>` for `tel:` / `mailto:` / outbound URLs; pass
+copy via props, customize with `className` / `labelClassName` / `linkClassName`, optional `linkProps` for `rel` /
+`target` / `aria-*`), etc.
