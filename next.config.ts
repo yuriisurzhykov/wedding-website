@@ -32,6 +32,9 @@ function r2RemoteImagePattern():
 const r2Pattern = r2RemoteImagePattern();
 
 const nextConfig: NextConfig = {
+    // jsdom 28+ pulls html-encoding-sniffer@6 → @exodus/bytes (ESM-only), which breaks
+    // require() on some serverless Node builds; isomorphic-dompurify only needs a DOM impl.
+    serverExternalPackages: ["isomorphic-dompurify", "jsdom"],
     pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
     images: {
         remotePatterns: r2Pattern ? [r2Pattern] : [],
