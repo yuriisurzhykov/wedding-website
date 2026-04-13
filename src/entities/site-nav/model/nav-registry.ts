@@ -11,6 +11,7 @@ export const SITE_NAV_REGISTRY = [
     {kind: 'route', navKey: 'guestSignIn', pathname: '/guest/sign-in'},
     {kind: 'route', navKey: 'wishes', pathname: '/wishes'},
     {kind: 'section', navKey: 'donate', sectionId: 'donate'},
+    {kind: 'section', navKey: 'contact', sectionId: 'contact'},
 ] as const
 
 export type SiteNavRegistryEntry = (typeof SITE_NAV_REGISTRY)[number]

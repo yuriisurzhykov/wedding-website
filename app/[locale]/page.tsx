@@ -10,6 +10,7 @@ import {
     alignHomeThemesAfterSkippedRsvpBand,
     homeSectionThemeAt,
 } from '@shared/lib/home-section-themes'
+import {ContactSection} from '@widgets/contact-section'
 import {DonateSection} from '@widgets/donate-section'
 import {DressCodeSection} from '@widgets/dresscode-section'
 import {GallerySection} from '@widgets/gallery-section'
@@ -51,12 +52,14 @@ export default async function Home() {
     const themeGallery = showGallerySection ? nextSectionTheme() : null
     const themeWishes = showWishesSection ? nextSectionTheme() : null
     const themeDonate = nextSectionTheme()
+    const themeContact = nextSectionTheme()
     const postRsvp = alignHomeThemesAfterSkippedRsvpBand(
         rsvpSlotSkippedOnHome || !showRsvpSection,
         {
             gallery: themeGallery ?? themeWishes ?? themeDonate,
             wishes: themeWishes ?? themeGallery ?? themeDonate,
             donate: themeDonate,
+            contact: themeContact,
         },
     )
 
@@ -141,6 +144,7 @@ export default async function Home() {
                 </FeatureGate>
             ) : null}
             <DonateSection theme={postRsvp.donate}/>
+            <ContactSection theme={postRsvp.contact}/>
         </>
     )
 }

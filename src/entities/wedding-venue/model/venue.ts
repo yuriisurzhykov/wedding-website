@@ -20,6 +20,6 @@ export interface ContactInfo {
 }
 
 export const CONTACT: ContactInfo = {
-    email: 'hello@yuriimariia.wedding',
+    email: 'contact@yuriimariia.wedding',
     phone: '+1 (916)-517-2011',
 }

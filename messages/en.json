@@ -8,6 +8,7 @@
     "guestSignIn": "Guest sign-in",
     "wishes": "Wishes",
     "donate": "Gift",
+    "contact": "Contact us",
     "coupleNames": "Yurii & Mariia",
     "mainNav": "Main navigation",
     "openMenu": "Open menu",
@@ -634,6 +635,13 @@
         "photo": "Group photo"
       }
     }
+  },
+  "contact": {
+    "title": "Contact us",
+    "subtitle": "If you have any questions or concerns, please reach us by phone or send an email — we’d love to hear from you.",
+    "phoneLabel": "Phone",
+    "emailLabel": "Email",
+    "emailLink": "Email us"
   },
   "donate": {
     "title": "Gift the couple",

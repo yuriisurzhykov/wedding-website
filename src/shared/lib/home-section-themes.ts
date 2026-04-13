@@ -23,8 +23,18 @@ export function invertHomeSectionBand(theme: SectionTheme): SectionTheme {
  */
 export function alignHomeThemesAfterSkippedRsvpBand(
     rsvpSlotSkipped: boolean,
-    post: { gallery: SectionTheme; wishes: SectionTheme; donate: SectionTheme },
-): { gallery: SectionTheme; wishes: SectionTheme; donate: SectionTheme } {
+    post: {
+        gallery: SectionTheme
+        wishes: SectionTheme
+        donate: SectionTheme
+        contact: SectionTheme
+    },
+): {
+    gallery: SectionTheme
+    wishes: SectionTheme
+    donate: SectionTheme
+    contact: SectionTheme
+} {
     if (!rsvpSlotSkipped) {
         return post
     }
@@ -32,5 +42,6 @@ export function alignHomeThemesAfterSkippedRsvpBand(
         gallery: invertHomeSectionBand(post.gallery),
         wishes: invertHomeSectionBand(post.wishes),
         donate: invertHomeSectionBand(post.donate),
+        contact: invertHomeSectionBand(post.contact),
     }
 }
