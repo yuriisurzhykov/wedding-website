@@ -1,5 +1,7 @@
 # Feature: gallery-upload
 
+Gallery rows store **`photos.guest_account_id`** from the guest session (delete and wish attachment checks use the same id).
+
 **Two upload paths**
 
 1. **Presigned (default)** — `presignGalleryUpload` / `confirmGalleryUpload` + `POST /api/upload/presign` and `confirm`.

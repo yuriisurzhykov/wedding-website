@@ -2,7 +2,12 @@ export {AppToaster} from './AppToaster'
 export {Button} from './Button'
 export {Countdown} from './Countdown'
 export {DynamicForm} from './dynamic-form'
-export type {FieldType, FormField, FormValues} from './dynamic-form'
+export type {
+    DynamicFormSlotContext,
+    FieldType,
+    FormField,
+    FormValues,
+} from './dynamic-form'
 export {Input} from './Input'
 export {LanguageSwitcher} from './LanguageSwitcher'
 export {LabeledExternalLinkRow} from './LabeledExternalLinkRow'

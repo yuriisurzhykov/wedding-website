@@ -1,9 +1,11 @@
 # Feature: `rsvp-submit`
 
 Server-only flow: accept JSON from the guest → validate → upsert into Supabase (`rsvp` via `lib/persist-rsvp-row.ts`;
-unique non-null `email` and `phone`) → **await** admin email → **await** guest confirmation only when `email` is set and
-admin send succeeded. If mail fails after save, the API returns **502** so the UI can toast; the row still exists in the
-database.
+unique non-null `email` and `phone`) → sync **`guest_accounts`** for the party (`lib/sync-guest-accounts-party-for-rsvp.ts`
+after `lib/build-party-members-from-form.ts`) → **await** admin email → **await** guest confirmation only when `email`
+is set and admin send succeeded. If mail fails after save, the API returns **502** so the UI can toast; the row still
+exists in the database. If party sync fails after the RSVP row is saved, the handler returns **500** (operational follow-up
+may be needed).
 
 ## Why this slice exists
 
@@ -35,9 +37,10 @@ Internal modules (`lib/validate-payload`, `lib/persist-rsvp-row`, `lib/notify-ad
 
 ## Admin email (sequential, blocking)
 
-After a **successful save** (insert or update), `submitRsvp` **awaits** `notifyAdminOfNewRsvp`. Content is built by
-`lib/email/build-admin-rsvp-email.ts` as **multipart** `{ subject, html, text }` for Resend. Missing `RESEND_API_KEY` /
-`ADMIN_EMAIL` or a Resend error yields `kind: 'notification'`, `step: 'admin'`.
+After a **successful save** (insert or update) and **party sync**, `submitRsvp` **awaits** `notifyAdminOfNewRsvp`.
+Content is built by `lib/email/build-admin-rsvp-email.ts` as **multipart** `{ subject, html, text }` for Resend. When the
+guest is attending with companions, companion display names are passed into the admin template (plain text + HTML table
+row). Missing `RESEND_API_KEY` / `ADMIN_EMAIL` or a Resend error yields `kind: 'notification'`, `step: 'admin'`.
 
 ## Guest confirmation email (after admin only)
 
@@ -87,7 +90,8 @@ should stay visually aligned with those tokens when edited in admin.
 ## Adding a new field
 
 1. **Form / i18n** — `@entities/rsvp` (`RSVP_FIELDS`; `lib/config/rsvp` re-exports during migration) and messages.
-2. **Validation** — `lib/validate-payload.ts` (`rsvpPayloadSchema`): types, max lengths, refinements.
+2. **Validation** — `lib/validate-payload.ts` (`rsvpPayloadSchema`): types, max lengths, refinements (including
+   `companionNames` length vs `guestCount` when attending, per-name limits, and party-wide unique names).
 3. **DB mapping** — `@entities/rsvp` (`RsvpFormInput`, `mapRsvpFormToRow`).
 4. **Types** — `@entities/rsvp` `RsvpRow` / `RsvpRowInsert` if the column is new (and `supabase/schema.sql`).
 5. **Email — admin** — `lib/email/build-admin-rsvp-email.ts`: add table rows / plain lines for new columns; wire through

@@ -8,7 +8,7 @@ export type AdminPhotoRow = {
     publicUrl: string;
     uploaderName: string | null;
     uploadedAt: string;
-    rsvpId: string | null;
+    guestAccountId: string | null;
 };
 
 export type ListPhotosForAdminOptions = Readonly<{
@@ -26,7 +26,7 @@ function mapRow(row: PhotoDbRow): AdminPhotoRow {
         publicUrl: row.public_url,
         uploaderName: row.uploader_name,
         uploadedAt: row.uploaded_at,
-        rsvpId: row.rsvp_id ?? null,
+        guestAccountId: row.guest_account_id ?? null,
     };
 }
 

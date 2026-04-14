@@ -5,6 +5,7 @@ export type WishDbRow = {
     message: string;
     photo_r2_key: string | null;
     photo_url: string | null;
+    guest_account_id?: string | null;
     created_at: string;
 };
 

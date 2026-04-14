@@ -16,10 +16,12 @@ export type CreateGuestMagicLinkTokenResult =
 /**
  * Allocates a new magic-link token: computes expiry, inserts `guest_magic_link_tokens` (hash only), returns raw token for URLs.
  * Retries once on rare `token_hash` collision (`23505`).
+ *
+ * @param guestAccountId — Target `guest_accounts.id` (typically the party primary for RSVP confirmation mail).
  */
 export async function createGuestMagicLinkToken(
     supabase: SupabaseClient,
-    rsvpId: string,
+    guestAccountId: string,
     config: MagicLinkRuntimeConfig = getMagicLinkRuntimeConfig(),
 ): Promise<CreateGuestMagicLinkTokenResult> {
     const expiresAt = computeMagicLinkExpiresAt(config);
@@ -29,7 +31,7 @@ export async function createGuestMagicLinkToken(
 
         const persisted = await persistOneGuestMagicLinkToken(
             supabase,
-            rsvpId,
+            guestAccountId,
             expiresAt,
             rawToken,
             tokenHash,

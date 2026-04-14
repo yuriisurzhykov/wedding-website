@@ -7,7 +7,7 @@ import type {SupabaseClient} from "@supabase/supabase-js";
  */
 export type GuestMagicLinkTokenRow = {
     id: string;
-    rsvp_id: string;
+    guest_account_id: string;
     expires_at: string;
 };
 
@@ -25,7 +25,7 @@ export async function fetchMagicLinkTokenByHash(
 ): Promise<FetchMagicLinkTokenByHashResult> {
     const {data, error} = await supabase
         .from("guest_magic_link_tokens")
-        .select("id, rsvp_id, expires_at")
+        .select("id, guest_account_id, expires_at")
         .eq("token_hash", tokenHash)
         .maybeSingle();
 

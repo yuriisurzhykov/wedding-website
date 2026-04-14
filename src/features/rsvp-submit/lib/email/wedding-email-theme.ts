@@ -1,15 +1,15 @@
 /**
  * Colours and typography for transactional RSVP HTML emails.
- * Keep hex values aligned with `app/globals.css` `@theme` (primary, surfaces, text, borders, fonts).
+ * Aligned with the guest confirmation DB template (sage CTA, warm paper surfaces).
  */
 export const WEDDING_EMAIL_THEME = {
-    primary: "#C9A69A",
-    primaryLight: "#E8D5CF",
-    bgBase: "#FDFAF7",
-    bgSection: "#F5F0E8",
-    textPrimary: "#2C2420",
-    textSecondary: "#6B5C54",
-    border: "#E8DDD8",
+    primary: "#758461",
+    primaryLight: "#E8E6D8",
+    bgBase: "#F5F0E7",
+    bgSection: "#FCF9F4",
+    textPrimary: "#404040",
+    textSecondary: "#70645C",
+    border: "#DDD4CB",
     white: "#FFFFFF",
     /** Web fonts + safe fallbacks for clients that block remote fonts */
     fontDisplay: "'Cormorant Garamond', Georgia, 'Times New Roman', serif",
@@ -18,4 +18,4 @@ export const WEDDING_EMAIL_THEME = {
 
 /** Google Fonts stylesheet for HTML emails (optional for clients). */
 export const WEDDING_EMAIL_GOOGLE_FONTS_HREF =
-    "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&family=Lato:wght@400;700&display=swap";
+    "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Great+Vibes&family=Lato:wght@300;400;700&display=swap";

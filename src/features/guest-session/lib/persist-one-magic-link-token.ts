@@ -34,13 +34,13 @@ export function newMagicLinkOpaquePair(): { rawToken: string; tokenHash: string 
  */
 export async function persistOneGuestMagicLinkToken(
     supabase: SupabaseClient,
-    rsvpId: string,
+    guestAccountId: string,
     expiresAt: Date,
     rawToken: string,
     tokenHash: string,
 ): Promise<PersistOneMagicLinkTokenResult> {
     const {error} = await supabase.from("guest_magic_link_tokens").insert({
-        rsvp_id: rsvpId,
+        guest_account_id: guestAccountId,
         token_hash: tokenHash,
         expires_at: expiresAt.toISOString(),
     });

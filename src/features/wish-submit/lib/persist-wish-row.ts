@@ -13,6 +13,7 @@ export async function persistWishRow(
         message: string;
         photoR2Key: string | null;
         photoUrl: string | null;
+        guestAccountId: string | null;
     },
 ): Promise<PersistWishResult> {
     const {error} = await supabase.from("wishes").insert({
@@ -20,6 +21,7 @@ export async function persistWishRow(
         message: input.message,
         photo_r2_key: input.photoR2Key,
         photo_url: input.photoUrl,
+        guest_account_id: input.guestAccountId,
     });
 
     if (error) {

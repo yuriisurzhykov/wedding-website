@@ -14,7 +14,7 @@ export type CreateGuestSessionResult =
     | {
     ok: true;
     rawToken: string;
-    session: Pick<GuestSessionRow, "id" | "expires_at" | "rsvp_id">;
+    session: Pick<GuestSessionRow, "id" | "expires_at" | "guest_account_id">;
 }
     | { ok: false; kind: "database"; message: string };
 
@@ -26,7 +26,7 @@ export type CreateGuestSessionResult =
  */
 export async function createGuestSession(
     supabase: SupabaseClient,
-    rsvpId: string,
+    guestAccountId: string,
     config: GuestSessionRuntimeConfig = getGuestSessionRuntimeConfig(),
 ): Promise<CreateGuestSessionResult> {
     const expiresAt = guestSessionExpiresAtFromNow(config);
@@ -38,17 +38,17 @@ export async function createGuestSession(
         const {data, error} = await supabase
             .from("guest_sessions")
             .insert({
-                rsvp_id: rsvpId,
+                guest_account_id: guestAccountId,
                 token_hash: tokenHash,
                 expires_at: expiresAt.toISOString(),
             })
-            .select("id, rsvp_id, expires_at")
+            .select("id, guest_account_id, expires_at")
             .single();
 
         if (!error && data) {
             const row = data as {
                 id: string;
-                rsvp_id: string;
+                guest_account_id: string;
                 expires_at: string;
             };
             return {
@@ -56,7 +56,7 @@ export async function createGuestSession(
                 rawToken,
                 session: {
                     id: row.id,
-                    rsvp_id: row.rsvp_id,
+                    guest_account_id: row.guest_account_id,
                     expires_at: row.expires_at,
                 },
             };

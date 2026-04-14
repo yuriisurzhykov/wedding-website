@@ -28,6 +28,9 @@ Product convention: RSVP guest mail uses two rows in `email_templates`, **`guest
 **`guest-rsvp-confirmation-ru`** (locale selects slug; no `locale` column). Deleting a row does not break RSVP: callers
 may fall back to code-built mail. See `@features/rsvp-submit` README.
 
+Companion rehome uses **`guest-magic-link-rehome-en`** / **`guest-magic-link-rehome-ru`** with segment
+`transactional:guest-rehome-magic-link` and allowlist `GUEST_MAGIC_LINK_REHOME_PLACEHOLDER_KEYS`; see `@features/guest-session` README.
+
 ## Resend limits
 
 Resend applies account-level rate limits and daily quotas; this feature does not implement a queue or cron. Very large lists require multiple requests (narrow the segment) or external tooling. Document your plan’s throughput in operations runbooks.

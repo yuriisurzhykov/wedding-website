@@ -3,7 +3,7 @@
  */
 export type GuestSessionRow = {
     id: string;
-    rsvp_id: string;
+    guest_account_id: string;
     token_hash: string;
     expires_at: string;
     created_at: string | null;

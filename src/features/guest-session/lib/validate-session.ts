@@ -30,7 +30,7 @@ export async function validateGuestSession(
     const {data, error} = await supabase
         .from("guest_sessions")
         .select(
-            "id, rsvp_id, token_hash, expires_at, created_at, last_seen_at",
+            "id, guest_account_id, token_hash, expires_at, created_at, last_seen_at",
         )
         .eq("token_hash", tokenHash)
         .maybeSingle();

@@ -3,7 +3,11 @@ import "server-only";
 import {z} from "zod";
 
 import type {RsvpFormInput} from "@entities/rsvp";
-import {isUsPhoneValid, normalizeUsPhoneToE164} from '@shared/lib/phone'
+import {
+    isGuestDisplayNameWithinStoredLimit,
+    normalizeGuestDisplayNameForPartyUniqueness,
+} from "@entities/guest-account";
+import {isUsPhoneValid, normalizeUsPhoneToE164} from "@shared/lib/phone";
 
 import type {GuestEmailLocale} from "./email/guest-confirmation-copy";
 
@@ -25,6 +29,16 @@ const optionalEmail = z.preprocess(
 
 const guestCountInput = z.preprocess(emptyToUndefined, z.unknown());
 
+const companionNamesInput = z.preprocess((v) => {
+    if (v === undefined || v === null) {
+        return [];
+    }
+    if (!Array.isArray(v)) {
+        return [];
+    }
+    return v.map((item) => (typeof item === "string" ? item : String(item)));
+}, z.array(z.string()));
+
 /**
  * Raw JSON body from `POST /api/rsvp` (same keys the client form sends).
  * Validated output is {@link RsvpFormInput} for {@link mapRsvpFormToRow}.
@@ -35,6 +49,7 @@ export const rsvpPayloadSchema = z
         email: optionalEmail,
         phone: optionalPhone,
         guestCount: guestCountInput,
+        companionNames: companionNamesInput,
         dietary: z.preprocess(
             emptyToUndefined,
             z.string().trim().max(2000).optional(),
@@ -50,6 +65,8 @@ export const rsvpPayloadSchema = z
     .superRefine((data, ctx) => {
         if (data.attending) {
             const raw = data.guestCount;
+            let guestCountValid: number | null = null;
+
             if (raw !== undefined && raw !== null) {
                 const n =
                     typeof raw === "number"
@@ -64,6 +81,63 @@ export const rsvpPayloadSchema = z
                             "Guest count must be a whole number from 1 to 100",
                         path: ["guestCount"],
                     });
+                } else {
+                    guestCountValid = n;
+                }
+            } else {
+                guestCountValid = 1;
+            }
+
+            if (guestCountValid !== null) {
+                const expectedCompanions = guestCountValid - 1;
+                const companions = data.companionNames;
+
+                if (companions.length !== expectedCompanions) {
+                    ctx.addIssue({
+                        code: z.ZodIssueCode.custom,
+                        message:
+                            expectedCompanions === 0
+                                ? "No companion names are expected when guest count is 1"
+                                : `Exactly ${expectedCompanions} companion name(s) are required for this guest count`,
+                        path: ["companionNames"],
+                    });
+                }
+
+                companions.forEach((rawName, index) => {
+                    const trimmed = String(rawName ?? "").trim();
+                    if (trimmed.length === 0) {
+                        ctx.addIssue({
+                            code: z.ZodIssueCode.custom,
+                            message: "Companion name cannot be empty",
+                            path: ["companionNames", index],
+                        });
+                    } else if (!isGuestDisplayNameWithinStoredLimit(trimmed)) {
+                        ctx.addIssue({
+                            code: z.ZodIssueCode.custom,
+                            message: "Companion name is too long",
+                            path: ["companionNames", index],
+                        });
+                    }
+                });
+
+                const primaryKey = normalizeGuestDisplayNameForPartyUniqueness(
+                    data.name,
+                );
+                const keys = new Set<string>([primaryKey]);
+                for (const rawName of companions) {
+                    const trimmed = String(rawName ?? "").trim();
+                    const key =
+                        normalizeGuestDisplayNameForPartyUniqueness(trimmed);
+                    if (keys.has(key)) {
+                        ctx.addIssue({
+                            code: z.ZodIssueCode.custom,
+                            message:
+                                "Each guest name in the party must be different",
+                            path: ["companionNames"],
+                        });
+                        break;
+                    }
+                    keys.add(key);
                 }
             }
         }
@@ -92,12 +166,16 @@ export const rsvpPayloadSchema = z
                 rest.phone && String(rest.phone).trim()
                     ? normalizeUsPhoneToE164(String(rest.phone))
                     : undefined;
+            const companionNames = rest.attending
+                ? rest.companionNames.map((s) => String(s ?? "").trim())
+                : [];
             return {
                 form: {
                     name: rest.name,
                     email: rest.email,
                     phone,
                     guestCount: rest.guestCount as RsvpFormInput["guestCount"],
+                    companionNames,
                     dietary: rest.dietary,
                     message: rest.message,
                     attending: rest.attending,

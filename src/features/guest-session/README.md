@@ -3,6 +3,9 @@
 Opaque guest sessions after RSVP: **raw token only in HttpOnly cookie**, **SHA-256 hash** in
 `guest_sessions.token_hash`, JSON error contract for APIs and UI (plan §4–5).
 
+Persistence binds the session to **`guest_accounts.id`** (`guest_sessions.guest_account_id`), not `rsvp.id`.
+Magic-link tokens use the same key (`guest_magic_link_tokens.guest_account_id`).
+
 ## Why this slice exists
 
 - Single place for **token hashing**, **session create/validate**, **cookie descriptors** (Next.js `cookies().set` /
@@ -13,16 +16,17 @@ Opaque guest sessions after RSVP: **raw token only in HttpOnly cookie**, **SHA-2
 
 | Module                           | Use when                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 |----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `@features/guest-session`        | **Client-safe**: shared types, §4 snapshot via `buildGuestSessionClientSnapshot` (alias of `@entities/guest-viewer` `buildGuestViewerSnapshot`), §5 `buildGuestSessionErrorJson`, `httpStatusForGuestSessionErrorCode`, `mapValidateGuestSessionFailureToCode`, **`GuestSessionProvider` / `useGuestSession`** (hydrate from `GET /api/guest/session`, **`restoreSession({ name, email })`** → `POST /api/guest/session`, apply §4 snapshot on success), **`GuestSessionRestoreForm`** (reusable name+email UI; `layout: 'page' \| 'embedded'`). Safe to import from client components (no `server-only` chain). |
-| `@features/guest-session/server` | **Server only**: `createGuestSession`, `validateGuestSession`, `validateGuestSessionFromRequest`, cookie extractors/descriptors, `getGuestSessionRuntimeConfig`, `hashSessionToken`, restore helpers (see HTTP routes below).                                                                                                                                                                                                                                                                                                                                                                                    |
+| `@features/guest-session`        | **Client-safe**: shared types, §4 snapshot via `buildGuestSessionClientSnapshot` (alias of `@entities/guest-viewer` `buildGuestViewerSnapshot`), §5 `buildGuestSessionErrorJson`, `httpStatusForGuestSessionErrorCode`, `mapValidateGuestSessionFailureToCode`, **`GuestSessionProvider` / `useGuestSession`** (hydrate from `GET /api/guest/session`, **`restoreSession({ name, email })`** → `POST /api/guest/session`, apply §4 snapshot on success; **`requestCompanionEmailRebind({ name, email, locale })`** → `POST /api/guest/account/email`, no cookie), **`GuestSessionRestoreForm`** (restore + companion rehome modes; `layout: 'page' \| 'embedded'`). Safe to import from client components (no `server-only` chain). |
+| `@features/guest-session/server` | **Server only**: `createGuestSession`, `validateGuestSession`, `validateGuestSessionFromRequest`, cookie extractors/descriptors, `getGuestSessionRuntimeConfig`, `hashSessionToken`, **`getOrCreatePrimaryGuestAccountId`**, **`loadGuestSessionClientSnapshotForGuestAccount`**, restore helpers, magic-link claim (see HTTP routes below).                                                                                                                                                                                                                                                                            |
 
 ## HTTP: `POST /api/rsvp`
 
-Handled in `app/api/rsvp/route.ts` via `@features/rsvp-submit` (`submitRsvp`). After a successful **`rsvp` upsert**, the
-feature calls `createGuestSession` (same `guest_sessions` row shape as restore). **200** with `Set-Cookie` when session
-insert succeeds, body `{ ok: true, sessionEstablished: true, session }` (§4 snapshot, no raw token). If session insert
-fails, RSVP still succeeds with `sessionEstablished: false`. **502** (`notification_failed`) after save includes the
-same `session` / `sessionEstablished` fields when a session was created before mail failed.
+Handled in `app/api/rsvp/route.ts` via `@features/rsvp-submit` (`submitRsvp`). After a successful **`rsvp` upsert**,
+`submitRsvp` ensures a **primary** `guest_accounts` row (`getOrCreatePrimaryGuestAccountId`), then calls
+`createGuestSession(supabase, primaryGuestAccountId)`. **200** with `Set-Cookie` when session insert succeeds, body
+`{ ok: true, sessionEstablished: true, session }` (§4 snapshot, no raw token). If session insert fails, RSVP still
+succeeds with `sessionEstablished: false`. **502** (`notification_failed`) after save includes the same `session` /
+`sessionEstablished` fields when a session was created before mail failed.
 
 Wrap the app (e.g. `[locale]/layout`) with **`GuestSessionProvider`**; the RSVP widget passes `applyFromApiBody` into
 `submitRsvpFetch` so the UI updates in the same tick as the response (plan §3.3).
@@ -32,16 +36,31 @@ Wrap the app (e.g. `[locale]/layout`) with **`GuestSessionProvider`**; the RSVP 
 `layout="page"`. Gallery and wishes embed the same form with `layout="embedded"` when the user is anonymous so they can
 restore without hunting for a link. Main nav includes **`guestSignIn`** (label `nav.guestSignIn`) whenever the session
 is
-not `authenticated` (hidden after sign-in). Copy for the form lives under **`guestSession.restore.*`** in `messages/*`.
+not `authenticated` (hidden after sign-in). Copy for the form lives under **`guestSession.restore.*`** and
+**`guestSession.rehome.*`** in `messages/*`.
+
+## HTTP: `POST /api/guest/account/email` (companion rehome)
+
+Thin handler in `app/api/guest/account/email/route.ts`.
+
+| Role | Details |
+|------|---------|
+| Body | `{ "name": string, "email": string, "locale"?: "en" \| "ru" }` — strict JSON. `name` is the companion **`guest_accounts.display_name`** as stored from the RSVP party list; `email` is the **new** personal mailbox. **Non-primary** accounts only: if the name matches zero or more than one companion row, the handler still returns **200** `{ "accepted": true }` (no account enumeration). Same for email conflicts with `rsvp.email` or another `guest_accounts.email`. |
+| Success | **200** `{ "accepted": true }` after invalidating **`guest_sessions`** for the matched account, updating **`guest_accounts.email`**, minting **`guest_magic_link_tokens`**, and enqueueing the transactional magic-link email (fire-and-forget; failures logged server-side). |
+| Validation | **400** `{ "error": "validation", "fieldErrors", "formErrors" }` (Zod flatten). |
+| Rate limit | **429** + `buildGuestSessionErrorJson("rate_limited", { retryAfterSec })` — same Postgres RPC / bucket pattern as restore (`guest_session_check_restore_rate`), bucket = IP + normalized name + **new** email. |
+| Server | **500** + `error.code: server_error` on unexpected DB failures during the mutating path. |
+
+Implementation: **`executeGuestCompanionEmailRebind`** and **`parseGuestCompanionRehomeBody`** in `@features/guest-session/server`. Mail: **`notifyGuestCompanionRehomeMagicLink`** (slugs `guest-magic-link-rehome-en` / `ru`, placeholders in `@entities/email-template`).
 
 ## HTTP: `GET` / `POST` `/api/guest/session`
 
 Thin handlers in `app/api/guest/session/route.ts`.
 
-| Method | Role                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-|--------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `GET`  | Reads the guest session cookie. **200** `{ sessionEstablished: true, session }` when valid; **200** `{ sessionEstablished: false }` when there is no cookie; **401** + `error.code` when a cookie is present but invalid or expired; **500** on unexpected DB errors during validation or RSVP load.                                                                                                                                                                                                           |
-| `POST` | Body `{ "name": string, "email": string }` — same field rules as RSVP submit; values are normalized with `mapRsvpFormToRow` before matching `rsvp`. **200** + `Set-Cookie` + `{ sessionEstablished: true, session }` on success; **401** + `restore_credentials_no_match` when no row matches; **400** `validation` (Zod flatten) on bad input; **429** + `rate_limited` + `retryAfterSec` when the fixed-window limit is exceeded (plan §13); **500** on DB/session create failure or rate-limit RPC failure. |
+| Method | Role                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+|--------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `GET`  | Reads the guest session cookie. **200** `{ sessionEstablished: true, session }` when valid; **200** `{ sessionEstablished: false }` when there is no cookie; **401** + `error.code` when a cookie is present but invalid or expired; **401** + `guest_account_missing` when the session row is valid but the linked `guest_accounts` row is gone; **500** on unexpected DB errors during validation or snapshot load.                                                                                                                                                                                                                                               |
+| `POST` | Body `{ "name": string, "email": string }` — same field rules as RSVP submit; values are normalized with `mapRsvpFormToRow` before matching **`guest_accounts`** joined with `rsvp` (primary: `rsvp.name` + `rsvp.email`; companion with own email; companion without email: `display_name` + party `rsvp.email`). **200** + `Set-Cookie` + `{ sessionEstablished: true, session }` on success; **401** + `restore_credentials_no_match` when no row matches; **400** `validation` (Zod flatten) on bad input; **429** + `rate_limited` + `retryAfterSec` when the fixed-window limit is exceeded (plan §13); **500** on DB/session create failure or rate-limit RPC failure. |
 
 ## HTTP: `GET /api/guest/claim` (magic link, plan §8.2)
 
@@ -76,12 +95,22 @@ Do not import `server` from Client Components — the package uses `server-only`
 
 ## Session mechanics
 
-1. **Create:** `createGuestSession(supabase, rsvpId)` generates an opaque token (32 random bytes, base64url), stores *
+1. **Create:** `createGuestSession(supabase, guestAccountId)` generates an opaque token (32 random bytes, base64url), stores *
    *only** `hashSessionToken(raw)` in `guest_sessions`, sets `expires_at` from config TTL.
 2. **Cookie:** `getGuestSessionCookieDescriptor(rawToken)` returns `{ name, value, options }` for `Set-Cookie` (
    HttpOnly, `Secure` in production by default, `SameSite` default `lax`, `Path=/`).
 3. **Validate:** `validateGuestSession(supabase, rawToken)` or `validateGuestSessionFromRequest(supabase, request)`
    loads by hash, checks `expires_at`, updates `last_seen_at` best-effort.
+
+## Primary guest account helper
+
+`getOrCreatePrimaryGuestAccountId(supabase, rsvpId)` selects the primary `guest_accounts` row for the RSVP or inserts
+one using `rsvp.name`. Used by RSVP submit and magic-link URL generation so callers always target **`guest_account_id`**.
+
+## RSC / server components
+
+`getViewerGuestAccountIdFromServerCookies()` returns the current **`guest_accounts.id`** from the HttpOnly cookie, or
+`null`. Call sites that only need “is there a guest session?” treat non-null as signed-in.
 
 ## Environment (optional)
 
@@ -122,7 +151,8 @@ Use **`buildGuestSessionErrorJson(code, { retryAfterSec })`** for the body and *
 | `guest_session_expired`        | Cookie present or DB row found but `expires_at` passed                                    | 401            | `guestSession.errors.guest_session_expired.title` / `.description` / `.action` |
 | `guest_session_missing`        | No session cookie / empty token                                                           | 401            | `…guest_session_missing.…`                                                     |
 | `guest_session_invalid`        | Token does not match any row                                                              | 401            | `…guest_session_invalid.…`                                                     |
-| `restore_credentials_no_match` | Name+email restore did not match an `rsvp` row (single message for all “not found” cases) | 401            | `…restore_credentials_no_match.…`                                              |
+| `guest_account_missing`        | Session valid but `guest_accounts` row missing (orphaned session)                         | 401            | `…guest_account_missing.…`                                                     |
+| `restore_credentials_no_match` | Name+email restore did not match any `guest_accounts` rule (single message for “not found”) | 401            | `…restore_credentials_no_match.…`                                              |
 | `rate_limited`                 | Too many attempts; include `retryAfterSec`                                                | 429            | `…rate_limited.…` (interpolate seconds)                                        |
 | `request_failed`               | Client/network failure (usually client-side mapping)                                      | 400            | `…request_failed.…`                                                            |
 | `server_error`                 | Unexpected server/DB failure                                                              | 500            | `…server_error.…`                                                              |
@@ -141,10 +171,14 @@ All user-visible copy must live in **`messages/en.json`** and **`messages/ru.jso
 Canonical type: **`GuestViewerSnapshot`** in `@entities/guest-viewer` (re-exported as **`GuestSessionClientSnapshot`**
 here for §4 / API stability).
 
-`buildGuestSessionClientSnapshot({ name, email, attending })` returns `{ displayName, emailMasked?, attending }` for
-JSON bodies after RSVP /
-restore / magic link. **`attending`** comes from the persisted `rsvp` row and is the app’s policy hook (e.g. gallery /
-wishes); **Never** put the raw session token in JSON.
+`loadGuestSessionClientSnapshotForGuestAccount` loads **`guest_accounts`** joined with **`rsvp`** and calls
+`buildGuestSessionClientSnapshot` with:
+
+- `name` — `guest_accounts.display_name`
+- `email` — primary: `rsvp.email`; companion: `guest_accounts.email` if set, else party `rsvp.email` (for masking)
+- `attending` — from `rsvp.attending`
+
+**Never** put the raw session token in JSON.
 
 ## Extending
 

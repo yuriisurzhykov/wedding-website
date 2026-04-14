@@ -11,6 +11,15 @@ export type FieldType =
 export type FormValues = Record<string, unknown>
 
 /**
+ * Context passed to optional per-field slots (e.g. RSVP companion names after `guestCount`).
+ * `values` matches what field renderers see, including `attending` merged from form state.
+ */
+export type DynamicFormSlotContext = {
+    values: FormValues
+    setValue: (key: string, value: unknown) => void
+}
+
+/**
  * Declarative field for the config-driven RSVP-style form. Domain slices supply
  * concrete `fields` arrays; this type stays in shared so the UI primitive has no
  * entity imports.

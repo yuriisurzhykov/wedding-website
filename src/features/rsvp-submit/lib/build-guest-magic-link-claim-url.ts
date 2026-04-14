@@ -2,25 +2,12 @@ import "server-only";
 
 import type {SupabaseClient} from "@supabase/supabase-js";
 
-import {createGuestMagicLinkToken} from "@features/guest-session/server";
+import {
+    buildGuestMagicLinkClaimAbsoluteUrl,
+    createGuestMagicLinkToken,
+    getOrCreatePrimaryGuestAccountId,
+} from "@features/guest-session/server";
 import type {GuestEmailLocale} from "./email/guest-confirmation-copy";
-
-/**
- * Builds the absolute **`GET /api/guest/claim`** URL with `token` and `locale` query params.
- * Pure string composition (no I/O).
- */
-export function buildGuestMagicLinkClaimAbsoluteUrl(
-    siteBaseUrl: string,
-    rawToken: string,
-    locale: GuestEmailLocale,
-): string {
-    const base = siteBaseUrl.replace(/\/+$/, "");
-    const params = new URLSearchParams({
-        token: rawToken,
-        locale,
-    });
-    return `${base}/api/guest/claim?${params.toString()}`;
-}
 
 /**
  * Inserts a magic-link row and returns the full claim URL when `siteBase` is known.
@@ -34,7 +21,15 @@ export async function resolveGuestMagicLinkClaimUrl(
     locale: GuestEmailLocale,
     siteBase: string | undefined,
 ): Promise<string | undefined> {
-    const created = await createGuestMagicLinkToken(supabase, rsvpId);
+    const primary = await getOrCreatePrimaryGuestAccountId(supabase, rsvpId);
+    if (!primary.ok) {
+        console.error(`[rsvp-submit] magic link primary account: ${primary.message}`);
+        return undefined;
+    }
+    const created = await createGuestMagicLinkToken(
+        supabase,
+        primary.guestAccountId,
+    );
     if (!created.ok) {
         console.error(`[rsvp-submit] magic link token: ${created.message}`);
         return undefined;

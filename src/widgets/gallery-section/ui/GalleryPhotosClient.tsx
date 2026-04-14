@@ -205,6 +205,8 @@ export function GalleryPhotosClient({
             message = tErr('guest_session_missing.title')
         } else if (code === 'guest_session_invalid') {
             message = tErr('guest_session_invalid.title')
+        } else if (code === 'guest_account_missing') {
+            message = tErr('guest_account_missing.title')
         } else if (code === 'request_failed') {
             message = tErr('request_failed.title')
         } else if (code === 'server_error') {

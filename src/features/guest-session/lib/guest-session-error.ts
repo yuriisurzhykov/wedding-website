@@ -8,6 +8,8 @@ export type GuestSessionPublicErrorCode =
     | "guest_session_expired"
     | "guest_session_missing"
     | "guest_session_invalid"
+    /** Valid session cookie but no matching `guest_accounts` row (orphaned session). */
+    | "guest_account_missing"
     | "restore_credentials_no_match"
     | "rate_limited"
     | "request_failed"
@@ -57,6 +59,7 @@ export function httpStatusForGuestSessionErrorCode(
         case "guest_session_expired":
         case "guest_session_missing":
         case "guest_session_invalid":
+        case "guest_account_missing":
         case "restore_credentials_no_match":
             return 401;
         case "photo_delete_forbidden":

@@ -1,6 +1,6 @@
 'use client'
 
-import React, {useState} from 'react'
+import React, {useCallback, useState} from 'react'
 import {useTranslations} from 'next-intl'
 
 import {formatPhoneAsYouType} from '@shared/lib/phone'
@@ -11,7 +11,7 @@ import {Input} from '../Input'
 import {Select} from '../Select'
 import {TextArea} from '../TextArea'
 
-import type {FormField, FormValues} from './types'
+import type {DynamicFormSlotContext, FormField, FormValues} from './types'
 
 type Status = 'idle' | 'submitting' | 'success' | 'error'
 
@@ -152,18 +152,27 @@ export function DynamicForm({
                                 fields,
                                 onSubmitAction,
                                 namespace,
+                                slotAfterField,
                             }: {
     fields: FormField[]
     onSubmitAction: (values: FormValues) => Promise<void>
     namespace: string
+    /** Render custom UI immediately after a field with this `key` (same `values` / `setValue` contract as fields). */
+    slotAfterField?: Partial<
+        Record<string, (ctx: DynamicFormSlotContext) => React.ReactNode>
+    >
 }) {
     const t = useTranslations(namespace)
     const [values, setValues] = useState<FormValues>({})
     const [attending, setAttending] = useState<boolean | null>(null)
     const [status, setStatus] = useState<Status>('idle')
 
-    function handleChange(key: string, value: unknown) {
+    const setValue = useCallback((key: string, value: unknown) => {
         setValues((prev) => ({...prev, [key]: value}))
+    }, [])
+
+    function handleChange(key: string, value: unknown) {
+        setValue(key, value)
     }
 
     async function handleSubmit(e: React.FormEvent) {
@@ -224,15 +233,21 @@ export function DynamicForm({
             </div>
 
             {attending !== null &&
-                fields.map((field) => (
-                    <FieldRenderer
-                        key={field.key}
-                        field={field}
-                        values={{...values, attending}}
-                        onChange={handleChange}
-                        t={t}
-                    />
-                ))}
+                fields.map((field) => {
+                    const merged: FormValues = {...values, attending}
+                    const slotCtx: DynamicFormSlotContext = {values: merged, setValue}
+                    return (
+                        <React.Fragment key={field.key}>
+                            <FieldRenderer
+                                field={field}
+                                values={merged}
+                                onChange={handleChange}
+                                t={t}
+                            />
+                            {slotAfterField?.[field.key]?.(slotCtx)}
+                        </React.Fragment>
+                    )
+                })}
 
             {attending !== null && (
                 <>

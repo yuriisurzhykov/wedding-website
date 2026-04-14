@@ -17,10 +17,14 @@ export function buildGuestConfirmationMagicLinkEmailParts(
     htmlBlock: string;
     textAppend: string[];
 } {
-    const htmlBlock = `<p style="margin:24px 0 0 0;font-family:${T.fontBody};font-size:14px;line-height:1.55;color:${T.textSecondary};">${escapeHtml(copy.magicLinkIntro)}</p>
-<p style="margin:16px 0 0 0;text-align:center;">
-<a href="${escapeHtml(normalizedHttpsUrl)}" style="display:inline-block;padding:12px 28px;background:${T.primary};color:${T.white};text-decoration:none;border-radius:9999px;font-family:${T.fontBody};font-size:15px;font-weight:600;">${escapeHtml(copy.magicLinkButton)}</a>
-</p>`;
+    const htmlBlock = `<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin-top:28px;">
+<tr><td align="center" style="padding:0 8px;">
+<p style="margin:0 0 20px 0;font-family:${T.fontBody};font-size:14px;line-height:1.6;color:${T.textSecondary};text-align:center;">${escapeHtml(copy.magicLinkIntro)}</p>
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" align="center" style="margin:0 auto;">
+<tr><td align="center" bgcolor="${T.primary}" style="border-radius:4px;background-color:${T.primary};mso-padding-alt:14px 32px;">
+<a href="${escapeHtml(normalizedHttpsUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block;padding:14px 32px;font-family:${T.fontBody},Arial,sans-serif;font-size:13px;font-weight:400;letter-spacing:0.08em;text-transform:uppercase;color:${T.white};text-decoration:none;border-radius:4px;line-height:1.2;">${escapeHtml(copy.magicLinkButton)}</a>
+</td></tr></table>
+</td></tr></table>`;
 
     const textAppend = [
         "",

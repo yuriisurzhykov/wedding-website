@@ -7,7 +7,7 @@ import {createGuestSession} from "./create-session";
 import {fetchMagicLinkTokenByHash} from "./fetch-magic-link-token-by-hash";
 import {getGuestSessionRuntimeConfig} from "./get-guest-session-config";
 import {getMagicLinkClaimEligibility, trimMagicLinkTokenInput,} from "./magic-link-token-pure";
-import {loadGuestSessionClientSnapshotForRsvp} from "./restore-guest-session-by-credentials";
+import {loadGuestSessionClientSnapshotForGuestAccount} from "./load-guest-session-snapshot-for-guest-account";
 import {hashSessionToken} from "./token";
 
 export type ClaimMagicLinkResult =
@@ -60,7 +60,7 @@ export async function claimMagicLink(
 
     const created = await createGuestSession(
         supabase,
-        fetched.row.rsvp_id,
+        fetched.row.guest_account_id,
         getGuestSessionRuntimeConfig(),
     );
 
@@ -72,9 +72,9 @@ export async function claimMagicLink(
         };
     }
 
-    const loaded = await loadGuestSessionClientSnapshotForRsvp(
+    const loaded = await loadGuestSessionClientSnapshotForGuestAccount(
         supabase,
-        fetched.row.rsvp_id,
+        fetched.row.guest_account_id,
     );
 
     if (!loaded.ok) {

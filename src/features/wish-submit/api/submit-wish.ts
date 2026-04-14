@@ -1,12 +1,13 @@
 import "server-only";
 
 import {isFeatureEnabled, isWishPhotoAttachmentAllowedForGuest} from "@entities/site-settings";
-import {loadRsvpIdentityForUpload} from "@features/gallery-upload";
+import {loadGuestIdentityForUpload} from "@features/gallery-upload";
 import {validateGuestSessionFromRequest} from "@features/guest-session/server";
 import {getSiteSettingsCached} from "@features/site-settings";
 import {createServerClient} from "@shared/api/supabase/server";
 import {assertR2UploadConfig} from "@shared/api/r2";
 
+import {assertWishPhotoOwnedByGuestAccount} from "../lib/assert-wish-photo-owned-by-guest-account";
 import {parseWishSubmitPayload} from "../lib/validate-wish-payload";
 import {persistWishRow} from "../lib/persist-wish-row";
 
@@ -27,7 +28,10 @@ export type SubmitWishResult =
  * refer to an object already uploaded under `photos/`; `photo_url` is derived from `R2_PUBLIC_URL`.
  *
  * When the request carries a valid guest session cookie, `authorName` in the body is
- * ignored and `rsvp.name` is used (same source as gallery uploads).
+ * ignored and the session guest’s `display_name` is used (same source as gallery uploads).
+ * The row stores `guest_account_id` for that session; anonymous wishes keep it null.
+ *
+ * A `photoR2Key` must reference a `photos` row with the same `guest_account_id` (session required).
  *
  * `feature_disabled` — `wishSubmit` not `enabled`, or `photoR2Key` when wish photos are not allowed for this caller
  * (see {@link isWishPhotoAttachmentAllowedForGuest}: not-attending guests may attach when `wishSubmit` is `enabled`
@@ -66,14 +70,16 @@ export async function submitWish(
     const sessionResult = await validateGuestSessionFromRequest(supabase, request);
 
     let authorName: string;
+    let guestAccountId: string | null = null;
     let photoAttachAllowed = isWishPhotoAttachmentAllowedForGuest(
         siteSettings.capabilities,
         null,
     );
     if (sessionResult.ok) {
-        const identity = await loadRsvpIdentityForUpload(
+        guestAccountId = sessionResult.session.guest_account_id;
+        const identity = await loadGuestIdentityForUpload(
             supabase,
-            sessionResult.session.rsvp_id,
+            guestAccountId,
         );
         if (!identity.ok) {
             return {ok: false, kind: "database", message: identity.message};
@@ -96,8 +102,40 @@ export async function submitWish(
         authorName = fromClient;
     }
 
+    if (photoR2Key && !guestAccountId) {
+        return {
+            ok: false,
+            kind: "validation",
+            fieldErrors: {
+                photoR2Key: ["Session required for photo attachment"],
+            },
+            formErrors: [],
+        };
+    }
+
     if (photoR2Key && !photoAttachAllowed) {
         return {ok: false, kind: "feature_disabled"};
+    }
+
+    if (photoR2Key && guestAccountId) {
+        const owned = await assertWishPhotoOwnedByGuestAccount(
+            supabase,
+            photoR2Key,
+            guestAccountId,
+        );
+        if (!owned.ok) {
+            if (owned.reason === "query") {
+                return {ok: false, kind: "database", message: owned.message};
+            }
+            return {
+                ok: false,
+                kind: "validation",
+                fieldErrors: {
+                    photoR2Key: ["Invalid or unknown attachment"],
+                },
+                formErrors: [],
+            };
+        }
     }
 
     let photoUrl: string | null = null;
@@ -116,6 +154,7 @@ export async function submitWish(
         message,
         photoR2Key: photoR2Key ?? null,
         photoUrl,
+        guestAccountId,
     });
 
     if (!saved.ok) {

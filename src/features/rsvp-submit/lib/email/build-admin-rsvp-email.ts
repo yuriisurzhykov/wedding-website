@@ -10,6 +10,12 @@ export type AdminRsvpEmailPayload = {
     text: string;
 };
 
+/** Optional extras for the admin RSVP email beyond the `rsvp` row columns. */
+export type NotifyAdminRsvpEmailOptions = {
+    /** Non-primary party members (same order as submitted `companionNames`). */
+    companionDisplayNames?: readonly string[];
+};
+
 function dashIfEmpty(value: string | null | undefined): string {
     if (value === null || value === undefined || value.trim() === "") {
         return "—";
@@ -23,12 +29,25 @@ function dashIfEmpty(value: string | null | undefined): string {
  *
  * @returns Line-oriented summary including the new row `id`.
  */
-export function buildAdminRsvpPlainText(row: RsvpRowInsert, id: string): string {
+export function buildAdminRsvpPlainText(
+    row: RsvpRowInsert,
+    id: string,
+    options?: NotifyAdminRsvpEmailOptions,
+): string {
+    const companions = options?.companionDisplayNames?.filter(
+        (s) => String(s).trim() !== "",
+    );
+    const companionLine =
+        companions && companions.length > 0
+            ? `Companions: ${companions.join("; ")}`
+            : null;
+
     const lines = [
         `New RSVP (${id})`,
         `Name: ${row.name}`,
         `Attending: ${row.attending ? "yes" : "no"}`,
         `Guest count: ${row.guest_count}`,
+        companionLine,
         row.email ? `Email: ${row.email}` : null,
         row.phone ? `Phone: ${row.phone}` : null,
         row.dietary ? `Dietary: ${row.dietary}` : null,
@@ -51,15 +70,17 @@ function adminTableRow(label: string, valueHtml: string): string {
  *
  * @param row — Persisted insert shape (same fields as the `rsvp` table minus id/timestamps).
  * @param id — New row UUID from Supabase.
+ * @param options — Optional companion names for the party list in the message body.
  * @returns {@link AdminRsvpEmailPayload} for `notifyAdminOfNewRsvp` → Resend.
  */
 export function buildAdminRsvpEmail(
     row: RsvpRowInsert,
     id: string,
+    options?: NotifyAdminRsvpEmailOptions,
 ): AdminRsvpEmailPayload {
     const statusLabel = row.attending ? "Attending" : "Not attending";
     const subject = `RSVP: ${row.name} — ${row.attending ? "attending" : "not attending"}`;
-    const text = buildAdminRsvpPlainText(row, id);
+    const text = buildAdminRsvpPlainText(row, id, options);
 
     const badgeBg = row.attending ? T.primaryLight : T.bgSection;
     const badgeText = row.attending ? T.textPrimary : T.textSecondary;
@@ -72,10 +93,19 @@ export function buildAdminRsvpEmail(
     const dietaryCell = escapeHtml(dashIfEmpty(row.dietary ?? undefined));
     const messageCell = escapeHtml(dashIfEmpty(row.message ?? undefined));
 
+    const companions = options?.companionDisplayNames?.filter(
+        (s) => String(s).trim() !== "",
+    );
+    const companionsCell =
+        companions && companions.length > 0
+            ? escapeHtml(companions.join(", "))
+            : escapeHtml("—");
+
     const rowsHtml = [
         adminTableRow("Status", badgeHtml),
         adminTableRow("Name", nameSafe),
         adminTableRow("Guests", escapeHtml(guestCountStr)),
+        adminTableRow("Companions", companionsCell),
         adminTableRow("Email", emailCell),
         adminTableRow("Phone", phoneCell),
         adminTableRow("Dietary", dietaryCell),

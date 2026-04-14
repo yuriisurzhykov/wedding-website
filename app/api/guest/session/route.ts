@@ -13,7 +13,7 @@ import {
     getClientIpFromRequest,
     getGuestSessionCookieDescriptor,
     getGuestSessionRuntimeConfig,
-    loadGuestSessionClientSnapshotForRsvp,
+    loadGuestSessionClientSnapshotForGuestAccount,
     parseGuestSessionRestoreBody,
     restoreGuestSessionByCredentials,
     validateGuestSessionFromRequest,
@@ -58,20 +58,20 @@ export async function GET(request: Request) {
         });
     }
 
-    const loaded = await loadGuestSessionClientSnapshotForRsvp(
+    const loaded = await loadGuestSessionClientSnapshotForGuestAccount(
         supabase,
-        validation.session.rsvp_id,
+        validation.session.guest_account_id,
     );
 
     if (!loaded.ok) {
         if (loaded.kind === "database") {
-            console.error("[api/guest/session] GET rsvp", loaded.message);
+            console.error("[api/guest/session] GET guest account", loaded.message);
             return NextResponse.json(buildGuestSessionErrorJson("server_error"), {
                 status: httpStatusForGuestSessionErrorCode("server_error"),
             });
         }
-        return NextResponse.json(buildGuestSessionErrorJson("guest_session_invalid"), {
-            status: httpStatusForGuestSessionErrorCode("guest_session_invalid"),
+        return NextResponse.json(buildGuestSessionErrorJson("guest_account_missing"), {
+            status: httpStatusForGuestSessionErrorCode("guest_account_missing"),
         });
     }
 

@@ -16,15 +16,15 @@ export async function listGalleryPhotosCached(
 ): Promise<ListGalleryPhotosResult> {
     const limit = options?.limit ?? 48;
     const offset = options?.offset ?? 0;
-    const viewerRsvpId = options?.viewerRsvpId;
+    const viewerGuestAccountId = options?.viewerGuestAccountId;
 
-    if (viewerRsvpId) {
-        return listGalleryPhotos({limit, offset, viewerRsvpId});
+    if (viewerGuestAccountId) {
+        return listGalleryPhotos({limit, offset, viewerGuestAccountId});
     }
 
     const cachedRead = unstable_cache(
         async () =>
-            listGalleryPhotos({limit, offset, viewerRsvpId: null}),
+            listGalleryPhotos({limit, offset, viewerGuestAccountId: null}),
         ["list-gallery-photos", String(limit), String(offset)],
         {revalidate: 60, tags: [GALLERY_PHOTOS_LIST_CACHE_TAG]},
     );

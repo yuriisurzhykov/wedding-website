@@ -36,3 +36,20 @@ export const GUEST_RSVP_CONFIRMATION_PLACEHOLDER_KEYS = [
 
 export type GuestRsvpConfirmationPlaceholderKey =
     (typeof GUEST_RSVP_CONFIRMATION_PLACEHOLDER_KEYS)[number];
+
+/**
+ * Keys for transactional “companion rehome” magic-link mail (`guest-magic-link-rehome-en` / `guest-magic-link-rehome-ru`).
+ */
+export const GUEST_MAGIC_LINK_REHOME_PLACEHOLDER_KEYS = [
+    "subject",
+    "greeting_html",
+    "greeting_text",
+    "lead",
+    "magic_link_html",
+    "magic_link_text",
+    "sign_off_html",
+    "sign_off_text",
+] as const;
+
+export type GuestMagicLinkRehomePlaceholderKey =
+    (typeof GUEST_MAGIC_LINK_REHOME_PLACEHOLDER_KEYS)[number];

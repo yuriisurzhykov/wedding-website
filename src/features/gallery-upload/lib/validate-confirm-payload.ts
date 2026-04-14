@@ -7,7 +7,7 @@ import {GALLERY_MAX_FILE_BYTES} from "@entities/photo";
 export const galleryConfirmPayloadSchema = z
     .object({
         key: z.string().min(1).startsWith("photos/"),
-        /** Ignored when a guest session is present — server uses `rsvp.name`. */
+        /** Ignored when a guest session is present — server uses `guest_accounts.display_name`. */
         uploaderName: z.string().trim().min(1).max(100).optional(),
         sizeBytes: z
             .number()

@@ -3,15 +3,20 @@ import "server-only";
 import {mapRsvpFormToRow, type RsvpRowInsert} from "@entities/rsvp";
 import {isFeatureEnabled} from "@entities/site-settings";
 import {buildGuestSessionClientSnapshot, type GuestSessionClientSnapshot} from "@features/guest-session";
-import {createGuestSession} from "@features/guest-session/server";
+import {
+    createGuestSession,
+    getOrCreatePrimaryGuestAccountId,
+} from "@features/guest-session/server";
 import {getSiteSettingsCached} from "@features/site-settings";
 import {createServerClient} from "@shared/api/supabase/server";
 import {resolvePublicSiteBaseForServerEmail} from "@shared/lib/get-public-site-url";
 
+import {buildGuestPartyMemberInputsForPersist} from "../lib/build-party-members-from-form";
 import {resolveGuestMagicLinkClaimUrl} from "../lib/build-guest-magic-link-claim-url";
 import {notifyAdminOfNewRsvp} from "../lib/notify-admin";
 import {notifyGuestRsvpConfirmation} from "../lib/notify-guest-rsvp-confirmation";
 import {persistRsvpRow} from "../lib/persist-rsvp-row";
+import {syncGuestAccountsPartyForRsvp} from "../lib/sync-guest-accounts-party-for-rsvp";
 import {parseRsvpPayload} from "../lib/validate-payload";
 
 /** Optional server context so guest email can infer absolute URLs when env is not set. */
@@ -36,7 +41,12 @@ async function tryCreateGuestSessionAfterSave(
     rsvpId: string,
     row: RsvpRowInsert,
 ): Promise<SubmitRsvpGuestSession | null> {
-    const created = await createGuestSession(supabase, rsvpId);
+    const primary = await getOrCreatePrimaryGuestAccountId(supabase, rsvpId);
+    if (!primary.ok) {
+        console.error(`[rsvp-submit] primary guest account: ${primary.message}`);
+        return null;
+    }
+    const created = await createGuestSession(supabase, primary.guestAccountId);
     if (!created.ok) {
         console.error(`[rsvp-submit] guest session: ${created.message}`);
         return null;
@@ -126,6 +136,13 @@ export async function submitRsvp(
     }
 
     const id = saved.id;
+    const partyMembers = buildGuestPartyMemberInputsForPersist(parsed.data);
+    const partySync = await syncGuestAccountsPartyForRsvp(supabase, id, partyMembers);
+    if (!partySync.ok) {
+        console.error(`[rsvp-submit] guest_accounts party sync: ${partySync.message}`);
+        return {ok: false, kind: "database", message: partySync.message};
+    }
+
     const guestSession = await tryCreateGuestSessionAfterSave(supabase, id, row);
     const siteBase = resolvePublicSiteBaseForServerEmail(context?.request);
     const magicLinkClaimUrl = await resolveGuestMagicLinkClaimUrl(
@@ -136,7 +153,12 @@ export async function submitRsvp(
     );
 
     try {
-        await notifyAdminOfNewRsvp(row, id);
+        await notifyAdminOfNewRsvp(row, id, {
+            companionDisplayNames:
+                parsed.data.attending && parsed.data.companionNames?.length
+                    ? parsed.data.companionNames
+                    : undefined,
+        });
     } catch (e) {
         const message = e instanceof Error ? e.message : String(e);
         console.error(

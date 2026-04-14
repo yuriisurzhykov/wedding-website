@@ -34,18 +34,18 @@ export async function GET(request: Request) {
 
     const {limit, offset} = parsed.data;
 
-    let viewerRsvpId: string | null = null;
+    let viewerGuestAccountId: string | null = null;
     try {
         const supabase = createServerClient();
         const validation = await validateGuestSessionFromRequest(supabase, request);
         if (validation.ok) {
-            viewerRsvpId = validation.session.rsvp_id;
+            viewerGuestAccountId = validation.session.guest_account_id;
         }
     } catch {
         /* misconfigured env — list still works without per-row canDelete */
     }
 
-    const result = await listGalleryPhotos({limit, offset, viewerRsvpId});
+    const result = await listGalleryPhotos({limit, offset, viewerGuestAccountId});
 
     if (!result.ok) {
         console.error("[api/gallery/photos]", result.kind, result.message);
@@ -59,7 +59,7 @@ export async function GET(request: Request) {
 }
 
 /**
- * Body: `{ "photoId": "<uuid>" }`. Requires guest session cookie; deletes R2 object and DB row when `photos.rsvp_id` matches.
+ * Body: `{ "photoId": "<uuid>" }`. Requires guest session cookie; deletes R2 object and DB row when `photos.guest_account_id` matches.
  */
 export async function DELETE(request: Request) {
     let body: unknown;

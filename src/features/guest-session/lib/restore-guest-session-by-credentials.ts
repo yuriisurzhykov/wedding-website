@@ -5,9 +5,10 @@ import {z} from "zod";
 
 import {mapRsvpFormToRow} from "@entities/rsvp";
 
-import {buildGuestSessionClientSnapshot, type GuestSessionClientSnapshot,} from "./client-snapshot";
+import type {GuestSessionClientSnapshot} from "./client-snapshot";
 import {createGuestSession} from "./create-session";
 import {getGuestSessionRuntimeConfig} from "./get-guest-session-config";
+import {loadGuestSessionClientSnapshotForGuestAccount,} from "./load-guest-session-snapshot-for-guest-account";
 
 /** Name / email string rules aligned with RSVP submit validation; email is required for restore. */
 const restoreCredentialsSchema = z
@@ -35,18 +36,81 @@ export function parseGuestSessionRestoreBody(
     return {ok: true, ...result.data};
 }
 
-export type RestoreGuestSessionByCredentialsResult =
-    | {
-    ok: true;
-    rawToken: string;
-    session: GuestSessionClientSnapshot;
+function idFromMaybeRow(data: unknown): string | null {
+    const id = (data as { id?: string } | null)?.id;
+    return typeof id === "string" ? id : null;
 }
+
+/**
+ * Resolves `guest_accounts.id` for restore: primary by `rsvp.name` + `rsvp.email`, then companion with own email,
+ * then non-primary without `guest_accounts.email` matched by `display_name` + party `rsvp.email`.
+ */
+async function findGuestAccountIdForRestore(
+    supabase: SupabaseClient,
+    normalizedName: string,
+    normalizedEmail: string,
+): Promise<string | null> {
+    const {data: primary, error: ePrimary} = await supabase
+        .from("guest_accounts")
+        .select("id, rsvp!inner(name, email)")
+        .eq("is_primary", true)
+        .eq("rsvp.name", normalizedName)
+        .eq("rsvp.email", normalizedEmail)
+        .limit(1)
+        .maybeSingle();
+
+    if (ePrimary) {
+        console.warn("[guest-session] restore primary lookup", ePrimary.message);
+        return null;
+    }
+    const primaryId = idFromMaybeRow(primary);
+    if (primaryId) {
+        return primaryId;
+    }
+
+    const {data: compOwn, error: eOwn} = await supabase
+        .from("guest_accounts")
+        .select("id")
+        .eq("is_primary", false)
+        .eq("display_name", normalizedName)
+        .eq("email", normalizedEmail)
+        .limit(1)
+        .maybeSingle();
+
+    if (eOwn) {
+        console.warn("[guest-session] restore companion-email lookup", eOwn.message);
+        return null;
+    }
+    const companionOwnId = idFromMaybeRow(compOwn);
+    if (companionOwnId) {
+        return companionOwnId;
+    }
+
+    const {data: compParty, error: eParty} = await supabase
+        .from("guest_accounts")
+        .select("id, rsvp!inner(email)")
+        .eq("is_primary", false)
+        .is("email", null)
+        .eq("display_name", normalizedName)
+        .eq("rsvp.email", normalizedEmail)
+        .limit(1)
+        .maybeSingle();
+
+    if (eParty) {
+        console.warn("[guest-session] restore companion-party-email lookup", eParty.message);
+        return null;
+    }
+    return idFromMaybeRow(compParty);
+}
+
+export type RestoreGuestSessionByCredentialsResult =
+    | { ok: true; rawToken: string; session: GuestSessionClientSnapshot }
     | { ok: false; kind: "no_match" }
     | { ok: false; kind: "database"; message: string };
 
 /**
- * Finds an `rsvp` row using the same normalization as RSVP persistence, creates a new
- * `guest_sessions` row, and returns the raw cookie token plus a safe client snapshot (plan §4).
+ * Finds a `guest_accounts` row using the same name/email normalization as RSVP persistence, creates a new
+ * `guest_sessions` row bound to that account, and returns the raw cookie token plus a safe client snapshot (plan §4).
  */
 export async function restoreGuestSessionByCredentials(
     supabase: SupabaseClient,
@@ -64,24 +128,19 @@ export async function restoreGuestSessionByCredentials(
         return {ok: false, kind: "no_match"};
     }
 
-    const {data, error} = await supabase
-        .from("rsvp")
-        .select("id, name, email, attending")
-        .eq("email", row.email)
-        .eq("name", row.name)
-        .maybeSingle();
+    const guestAccountId = await findGuestAccountIdForRestore(
+        supabase,
+        row.name,
+        row.email,
+    );
 
-    if (error) {
-        return {ok: false, kind: "database", message: error.message};
-    }
-
-    if (!data) {
+    if (!guestAccountId) {
         return {ok: false, kind: "no_match"};
     }
 
     const created = await createGuestSession(
         supabase,
-        data.id,
+        guestAccountId,
         getGuestSessionRuntimeConfig(),
     );
 
@@ -89,53 +148,21 @@ export async function restoreGuestSessionByCredentials(
         return {ok: false, kind: "database", message: created.message};
     }
 
-    const rsvpRow = data as { name: string; email: string | null; attending: boolean };
-    const session = buildGuestSessionClientSnapshot({
-        name: rsvpRow.name,
-        email: rsvpRow.email,
-        attending: rsvpRow.attending,
-    });
+    const loaded = await loadGuestSessionClientSnapshotForGuestAccount(
+        supabase,
+        guestAccountId,
+    );
+
+    if (!loaded.ok) {
+        if (loaded.kind === "database") {
+            return {ok: false, kind: "database", message: loaded.message};
+        }
+        return {ok: false, kind: "no_match"};
+    }
 
     return {
         ok: true,
         rawToken: created.rawToken,
-        session,
-    };
-}
-
-export type LoadGuestSessionSnapshotResult =
-    | { ok: true; snapshot: GuestSessionClientSnapshot }
-    | { ok: false; kind: "not_found" }
-    | { ok: false; kind: "database"; message: string };
-
-/**
- * Loads display fields for §4 JSON after a validated `guest_sessions` row.
- */
-export async function loadGuestSessionClientSnapshotForRsvp(
-    supabase: SupabaseClient,
-    rsvpId: string,
-): Promise<LoadGuestSessionSnapshotResult> {
-    const {data, error} = await supabase
-        .from("rsvp")
-        .select("name, email, attending")
-        .eq("id", rsvpId)
-        .maybeSingle();
-
-    if (error) {
-        return {ok: false, kind: "database", message: error.message};
-    }
-
-    if (!data) {
-        return {ok: false, kind: "not_found"};
-    }
-
-    const row = data as { name: string; email: string | null; attending: boolean };
-    return {
-        ok: true,
-        snapshot: buildGuestSessionClientSnapshot({
-            name: row.name,
-            email: row.email,
-            attending: row.attending,
-        }),
+        session: loaded.snapshot,
     };
 }

@@ -8,7 +8,10 @@ import {
     getTransactionalFromAddress,
 } from "@shared/api/resend";
 
-import {buildAdminRsvpEmail} from "./email/build-admin-rsvp-email";
+import {
+    buildAdminRsvpEmail,
+    type NotifyAdminRsvpEmailOptions,
+} from "./email/build-admin-rsvp-email";
 
 /**
  * Sends a multipart (HTML + plain text) transactional email to the admin inbox with the stored RSVP row.
@@ -18,11 +21,13 @@ import {buildAdminRsvpEmail} from "./email/build-admin-rsvp-email";
  *
  * @param row — Payload that was persisted (same shape as DB row minus id/timestamps).
  * @param id — Row UUID from Supabase after insert or update.
+ * @param options — Optional companion display names when the party lists additional guests.
  * @see {@link buildAdminRsvpEmail} for the `{ subject, html, text }` contract.
  */
 export async function notifyAdminOfNewRsvp(
     row: RsvpRowInsert,
     id: string,
+    options?: NotifyAdminRsvpEmailOptions,
 ): Promise<void> {
     const apiKey = getResendApiKey();
     const to = getAdminEmailForNotifications();
@@ -33,7 +38,7 @@ export async function notifyAdminOfNewRsvp(
     }
 
     const from = getTransactionalFromAddress();
-    const {subject, html, text} = buildAdminRsvpEmail(row, id);
+    const {subject, html, text} = buildAdminRsvpEmail(row, id, options);
     const resend = createResendClient(apiKey);
     const {error} = await resend.emails.send({
         from,

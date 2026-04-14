@@ -12,7 +12,7 @@ import {GALLERY_ALLOWED_CONTENT_TYPES, GALLERY_MAX_FILE_BYTES,} from "@entities/
 import {createServerClient} from "@shared/api/supabase/server";
 import {resolveGalleryImageContentType} from "@shared/lib/gallery-image-content-type";
 
-import {loadRsvpIdentityForUpload} from "../lib/load-rsvp-identity-for-upload";
+import {loadGuestIdentityForUpload} from "../lib/load-guest-identity-for-upload";
 import {persistPhotoRow} from "../lib/persist-photo-row";
 import {putGalleryPhotoToR2} from "../lib/put-photo-to-r2";
 import {uploadSessionErrorCode} from "../lib/upload-session-error-code";
@@ -38,7 +38,7 @@ function validationError(message: string): MultipartGalleryUploadResult {
 
 /**
  * Accepts `multipart/form-data` with `file` (image) for the **shared gallery** only. Wish photos use presign + confirm
- * (`purpose: "wish"` is rejected). Requires a guest session; `photos.rsvp_id` comes from RSVP. Server → R2 (no CORS).
+ * (`purpose: "wish"` is rejected). Requires a guest session; `photos.guest_account_id` comes from the session. Server → R2 (no CORS).
  */
 export async function uploadGalleryPhotoFromMultipart(
     request: Request,
@@ -56,8 +56,8 @@ export async function uploadGalleryPhotoFromMultipart(
         return {ok: false, kind: "no_session", code: uploadSessionErrorCode(sessionResult)};
     }
 
-    const rsvpId = sessionResult.session.rsvp_id;
-    const identity = await loadRsvpIdentityForUpload(supabase, rsvpId);
+    const guestAccountId = sessionResult.session.guest_account_id;
+    const identity = await loadGuestIdentityForUpload(supabase, guestAccountId);
     if (!identity.ok) {
         return {ok: false, kind: "database", message: identity.message};
     }
@@ -129,7 +129,7 @@ export async function uploadGalleryPhotoFromMultipart(
         uploaderName: identity.name,
         publicUrl: uploaded.publicUrl,
         sizeBytes: file.size,
-        rsvpId,
+        guestAccountId,
     });
 
     if (!saved.ok) {

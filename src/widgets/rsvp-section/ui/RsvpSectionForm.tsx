@@ -8,6 +8,7 @@ import {RSVP_FIELDS} from "@entities/rsvp";
 import {DynamicForm} from "@shared/ui";
 
 import {RsvpNotificationError, submitRsvpFetch} from "../lib/submit-rsvp-fetch";
+import {RsvpCompanionNamesSlot} from "./RsvpCompanionNamesSlot";
 
 /**
  * RSVP form wired to the real API. Kept as a client boundary so {@link DynamicForm} can manage state.
@@ -22,6 +23,9 @@ export function RsvpSectionForm() {
         <DynamicForm
             fields={RSVP_FIELDS}
             namespace="rsvp"
+            slotAfterField={{
+                guestCount: (slotCtx) => <RsvpCompanionNamesSlot ctx={slotCtx} />,
+            }}
             onSubmitAction={async (values) => {
                 try {
                     await submitRsvpFetch(

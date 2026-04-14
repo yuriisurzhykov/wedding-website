@@ -20,6 +20,7 @@ export {
 
 export type {
     ApplyGuestSessionFromApiBody,
+    GuestCompanionEmailRebindResult,
     GuestSessionRestoreResult,
     GuestSessionStatus,
 } from "./ui/GuestSessionProvider";
@@ -38,3 +39,9 @@ export {
     httpStatusForGuestSessionErrorCode,
     mapValidateGuestSessionFailureToCode,
 } from "./lib/guest-session-error";
+
+export type {
+    GuestAccountEmailPostGuestErrorBody,
+    GuestAccountEmailPostValidationBody,
+} from "./lib/parse-guest-account-email-post-json";
+export {parseGuestAccountEmailPostJson} from "./lib/parse-guest-account-email-post-json";

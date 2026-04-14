@@ -35,6 +35,11 @@ export interface RsvpFormInput {
     email?: string
     phone?: string
     guestCount?: number | string
+    /**
+     * Names of additional guests when `attending` is true; length must be `guestCount - 1`
+     * after validation in `@features/rsvp-submit`.
+     */
+    companionNames?: string[]
     dietary?: string
     message?: string
     attending: boolean

@@ -11,7 +11,7 @@ import {getSiteSettingsCached} from "@features/site-settings";
 import {createServerClient} from "@shared/api/supabase/server";
 import {assertR2UploadConfig, createPresignedPhotoPutUrl} from "@shared/api/r2";
 
-import {loadRsvpIdentityForUpload} from "../lib/load-rsvp-identity-for-upload";
+import {loadGuestIdentityForUpload} from "../lib/load-guest-identity-for-upload";
 import {uploadSessionErrorCode} from "../lib/upload-session-error-code";
 import {parseGalleryConfirmPayload} from "../lib/validate-confirm-payload";
 import {parseGalleryPresignPayload} from "../lib/validate-presign-payload";
@@ -45,7 +45,7 @@ export type ConfirmGalleryUploadResult =
 
 /**
  * Validates body, then returns a presigned PUT URL and object key for R2.
- * Requires a valid guest session cookie (plan: gallery uploads bound to RSVP).
+ * Requires a valid guest session cookie; uploads are bound to `guest_accounts.id`.
  */
 export async function presignGalleryUpload(
     rawBody: unknown,
@@ -64,9 +64,9 @@ export async function presignGalleryUpload(
         return {ok: false, kind: "no_session", code: uploadSessionErrorCode(sessionResult)};
     }
 
-    const identity = await loadRsvpIdentityForUpload(
+    const identity = await loadGuestIdentityForUpload(
         supabase,
-        sessionResult.session.rsvp_id,
+        sessionResult.session.guest_account_id,
     );
     if (!identity.ok) {
         return {ok: false, kind: "config", message: identity.message};
@@ -116,7 +116,7 @@ export async function presignGalleryUpload(
 }
 
 /**
- * After the browser PUTs to R2, records metadata in `photos` with `rsvp_id` from the guest session.
+ * After the browser PUTs to R2, records metadata in `photos` with `guest_account_id` from the guest session.
  */
 export async function confirmGalleryUpload(
     rawBody: unknown,
@@ -135,8 +135,8 @@ export async function confirmGalleryUpload(
         return {ok: false, kind: "no_session", code: uploadSessionErrorCode(sessionResult)};
     }
 
-    const rsvpId = sessionResult.session.rsvp_id;
-    const identity = await loadRsvpIdentityForUpload(supabase, rsvpId);
+    const guestAccountId = sessionResult.session.guest_account_id;
+    const identity = await loadGuestIdentityForUpload(supabase, guestAccountId);
     if (!identity.ok) {
         return {ok: false, kind: "database", message: identity.message};
     }
@@ -182,7 +182,7 @@ export async function confirmGalleryUpload(
         uploaderName: identity.name,
         publicUrl,
         sizeBytes,
-        rsvpId,
+        guestAccountId,
     });
 
     if (!saved.ok) {

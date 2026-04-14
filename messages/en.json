@@ -116,6 +116,12 @@
         "guest": "Your RSVP was saved, but we couldn't send the confirmation email. We still have your response — reach out if you need anything."
       }
     },
+    "companions": {
+      "heading": "Names of your additional guests",
+      "hint": "We’ll save a separate guest profile for each person. The confirmation email is sent only to the address you entered above.",
+      "fieldLabel": "Guest {n}",
+      "placeholder": "Full name"
+    },
     "previewNotice": "RSVP isn’t open here yet. It will be available during and after the celebration — please check back later."
   },
   "gallery": {
@@ -184,6 +190,7 @@
     },
     "restore": {
       "title": "Guest sign-in",
+      "modeTabStandard": "Sign in with RSVP email",
       "subtitle": "Use the same name and email you entered on the RSVP form. After signing in you can upload gallery photos and post wishes without retyping your name.",
       "nameLabel": "Your name",
       "namePlaceholder": "Jane Doe",
@@ -199,6 +206,23 @@
       "emailFieldHint": "Enter a valid email address (same as on RSVP).",
       "rsvpLink": "Haven’t RSVP’d yet? Go to the RSVP section."
     },
+    "rehome": {
+      "title": "On the list, but someone else sent the RSVP?",
+      "subtitle": "If you are named as an additional guest and another person submitted the RSVP, enter your name as it appears on that list and your own email. We will email you a private sign-in link. This path is only for extra guests, not for the person who filled out the main RSVP.",
+      "switchToRehome": "Someone else submitted the RSVP for me",
+      "switchToRestore": "Sign in with name and RSVP email instead",
+      "nameLabel": "Your name on the guest list",
+      "namePlaceholder": "Jane Doe",
+      "newEmailLabel": "Your personal email",
+      "newEmailPlaceholder": "you@example.com",
+      "submit": "Send sign-in link",
+      "submitting": "Sending…",
+      "successToast": "If your details matched our list, we sent a message to the address you entered. Check your inbox and spam folder.",
+      "validationSummaryTitle": "Check the form",
+      "validationSummaryDescription": "Fix the fields below and try again.",
+      "nameFieldHint": "Use the same spelling as on the party’s RSVP.",
+      "emailFieldHint": "Enter a valid email you can open."
+    },
     "errors": {
       "guest_session_expired": {
         "title": "Your guest session has expired",
@@ -213,6 +237,11 @@
       "guest_session_invalid": {
         "title": "We could not verify your session",
         "description": "Your browser sent a session we no longer recognize. Sign in again with the name and email from your RSVP.",
+        "action": "Sign in again"
+      },
+      "guest_account_missing": {
+        "title": "We could not load your guest profile",
+        "description": "Your session is present but the guest record is missing. Sign in again with the name and email from your RSVP, or use the link from your confirmation email.",
         "action": "Sign in again"
       },
       "restore_credentials_no_match": {
@@ -366,7 +395,7 @@
         "thumbnail": "Preview",
         "uploader": "Uploader",
         "uploadedAt": "Uploaded",
-        "rsvp": "RSVP link"
+        "guestAccount": "Guest account"
       }
     },
     "wishes": {

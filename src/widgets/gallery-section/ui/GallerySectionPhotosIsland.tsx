@@ -1,5 +1,5 @@
 import type {FeatureState} from "@entities/site-settings";
-import {getViewerRsvpIdFromServerCookies} from "@features/guest-session/server";
+import {getViewerGuestAccountIdFromServerCookies} from "@features/guest-session/server";
 import {listGalleryPhotosCached} from "@features/gallery-list";
 
 import {galleryListLimitForPresentation, type GalleryPresentation,} from "../lib/gallery-presentation";
@@ -26,11 +26,11 @@ export async function GallerySectionPhotosIsland({
     slots,
 }: Props) {
     const limit = galleryListLimitForPresentation(presentation);
-    const viewerRsvpId = await getViewerRsvpIdFromServerCookies();
+    const viewerGuestAccountId = await getViewerGuestAccountIdFromServerCookies();
     const result = await listGalleryPhotosCached({
         limit,
         offset: 0,
-        viewerRsvpId,
+        viewerGuestAccountId,
     });
     const initialPhotos = result.ok ? result.photos : [];
     const initialHasMore = result.ok ? result.hasMore : false;

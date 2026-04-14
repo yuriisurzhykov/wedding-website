@@ -17,17 +17,32 @@ CREATE TABLE rsvp
 );
 
 -- =============================================
+-- Guest accounts (party members; one primary per RSVP row)
+-- =============================================
+CREATE TABLE guest_accounts
+(
+    id            UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
+    rsvp_id       UUID        NOT NULL REFERENCES rsvp (id) ON DELETE CASCADE,
+    display_name  TEXT        NOT NULL,
+    is_primary    BOOLEAN     NOT NULL,
+    sort_order    SMALLINT    NOT NULL DEFAULT 0,
+    email         TEXT,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT guest_accounts_email_nonempty CHECK (email IS NULL OR trim(email) <> '')
+);
+
+-- =============================================
 -- Photos
 -- =============================================
 CREATE TABLE photos
 (
-    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    r2_key        TEXT NOT NULL UNIQUE,
-    uploader_name TEXT,
-    public_url    TEXT NOT NULL,
-    size_bytes    INT,
-    rsvp_id       UUID REFERENCES rsvp (id) ON DELETE SET NULL,
-    uploaded_at   TIMESTAMPTZ      DEFAULT now()
+    id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    r2_key             TEXT NOT NULL UNIQUE,
+    uploader_name      TEXT,
+    public_url         TEXT NOT NULL,
+    size_bytes         INT,
+    guest_account_id   UUID REFERENCES guest_accounts (id) ON DELETE CASCADE,
+    uploaded_at        TIMESTAMPTZ      DEFAULT now()
 );
 
 -- =============================================
@@ -35,12 +50,13 @@ CREATE TABLE photos
 -- =============================================
 CREATE TABLE wishes
 (
-    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    author_name  TEXT NOT NULL,
-    message      TEXT NOT NULL,
-    photo_r2_key TEXT,
-    photo_url    TEXT,
-    created_at   TIMESTAMPTZ      DEFAULT now()
+    id                 UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    author_name        TEXT NOT NULL,
+    message            TEXT NOT NULL,
+    photo_r2_key       TEXT,
+    photo_url          TEXT,
+    guest_account_id   UUID REFERENCES guest_accounts (id) ON DELETE SET NULL,
+    created_at         TIMESTAMPTZ      DEFAULT now()
 );
 
 -- =============================================
@@ -48,12 +64,12 @@ CREATE TABLE wishes
 -- =============================================
 CREATE TABLE guest_sessions
 (
-    id            UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
-    rsvp_id       UUID        NOT NULL REFERENCES rsvp (id) ON DELETE CASCADE,
-    token_hash    TEXT        NOT NULL,
-    expires_at    TIMESTAMPTZ NOT NULL,
-    created_at    TIMESTAMPTZ          DEFAULT now(),
-    last_seen_at  TIMESTAMPTZ
+    id                 UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
+    guest_account_id   UUID        NOT NULL REFERENCES guest_accounts (id) ON DELETE CASCADE,
+    token_hash         TEXT        NOT NULL,
+    expires_at         TIMESTAMPTZ NOT NULL,
+    created_at         TIMESTAMPTZ          DEFAULT now(),
+    last_seen_at       TIMESTAMPTZ
 );
 
 -- =============================================
@@ -61,19 +77,20 @@ CREATE TABLE guest_sessions
 -- =============================================
 CREATE TABLE guest_magic_link_tokens
 (
-    id           UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
-    rsvp_id      UUID        NOT NULL REFERENCES rsvp (id) ON DELETE CASCADE,
-    token_hash   TEXT        NOT NULL,
-    expires_at   TIMESTAMPTZ NOT NULL,
+    id                 UUID PRIMARY KEY     DEFAULT gen_random_uuid(),
+    guest_account_id   UUID        NOT NULL REFERENCES guest_accounts (id) ON DELETE CASCADE,
+    token_hash         TEXT        NOT NULL,
+    expires_at         TIMESTAMPTZ NOT NULL,
     -- Legacy (see migration 20260409120000): claim flow no longer sets this; eligibility is expires_at only.
-    used_at      TIMESTAMPTZ,
-    created_at   TIMESTAMPTZ          DEFAULT now()
+    used_at            TIMESTAMPTZ,
+    created_at         TIMESTAMPTZ          DEFAULT now()
 );
 
 -- =============================================
 -- Row Level Security
 -- =============================================
 ALTER TABLE rsvp ENABLE ROW LEVEL SECURITY;
+ALTER TABLE guest_accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE photos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wishes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE guest_sessions ENABLE ROW LEVEL SECURITY;
@@ -91,21 +108,28 @@ CREATE POLICY "wishes_public_read"
 -- Indexes
 -- =============================================
 CREATE INDEX idx_photos_uploaded_at ON photos (uploaded_at DESC);
-CREATE INDEX idx_photos_rsvp_id ON photos (rsvp_id) WHERE rsvp_id IS NOT NULL;
+CREATE INDEX idx_photos_guest_account_id ON photos (guest_account_id) WHERE guest_account_id IS NOT NULL;
 CREATE INDEX idx_wishes_created_at ON wishes (created_at DESC);
+CREATE INDEX idx_wishes_guest_account_id ON wishes (guest_account_id)
+    WHERE guest_account_id IS NOT NULL;
 CREATE INDEX idx_rsvp_created_at ON rsvp (created_at DESC);
 CREATE INDEX idx_rsvp_attending ON rsvp (attending);
+
+CREATE INDEX idx_guest_accounts_rsvp_id ON guest_accounts (rsvp_id);
+CREATE UNIQUE INDEX guest_accounts_one_primary_per_rsvp ON guest_accounts (rsvp_id) WHERE is_primary;
+CREATE UNIQUE INDEX guest_accounts_email_lower_unique ON guest_accounts (lower(trim(email)))
+    WHERE email IS NOT NULL AND trim(email) <> '';
 
 -- One RSVP row per guest contact (NULLs allowed multiple times).
 CREATE UNIQUE INDEX rsvp_email_unique ON rsvp (email) WHERE email IS NOT NULL;
 CREATE UNIQUE INDEX rsvp_phone_unique ON rsvp (phone) WHERE phone IS NOT NULL;
 
 CREATE UNIQUE INDEX guest_sessions_token_hash_key ON guest_sessions (token_hash);
-CREATE INDEX idx_guest_sessions_rsvp_id ON guest_sessions (rsvp_id);
+CREATE INDEX idx_guest_sessions_guest_account_id ON guest_sessions (guest_account_id);
 CREATE INDEX idx_guest_sessions_expires_at ON guest_sessions (expires_at);
 
 CREATE UNIQUE INDEX guest_magic_link_tokens_token_hash_key ON guest_magic_link_tokens (token_hash);
-CREATE INDEX idx_guest_magic_link_tokens_rsvp_id ON guest_magic_link_tokens (rsvp_id);
+CREATE INDEX idx_guest_magic_link_tokens_guest_account_id ON guest_magic_link_tokens (guest_account_id);
 CREATE INDEX idx_guest_magic_link_tokens_expires_at ON guest_magic_link_tokens (expires_at);
 
 -- =============================================

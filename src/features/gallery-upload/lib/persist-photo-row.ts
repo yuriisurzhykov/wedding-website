@@ -16,7 +16,7 @@ export async function persistPhotoRow(
         uploaderName: string;
         publicUrl: string;
         sizeBytes?: number;
-        rsvpId: string;
+        guestAccountId: string;
     },
 ): Promise<PersistPhotoResult> {
     const {error} = await supabase.from("photos").insert({
@@ -24,7 +24,7 @@ export async function persistPhotoRow(
         uploader_name: input.uploaderName,
         public_url: input.publicUrl,
         size_bytes: input.sizeBytes ?? null,
-        rsvp_id: input.rsvpId,
+        guest_account_id: input.guestAccountId,
     });
 
     if (error) {

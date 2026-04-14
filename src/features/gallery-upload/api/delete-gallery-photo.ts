@@ -28,8 +28,8 @@ export type DeleteGalleryPhotoResult =
     | { ok: false; kind: "feature_disabled" };
 
 /**
- * Deletes a gallery photo owned by the current guest session (`photos.rsvp_id` matches).
- * Missing photo, another guest’s photo, or legacy rows without `rsvp_id` → single `forbidden` outcome (plan §5.2).
+ * Deletes a gallery photo owned by the current guest session (`photos.guest_account_id` matches).
+ * Missing photo, another guest’s photo, or rows without `guest_account_id` → single `forbidden` outcome (plan §5.2).
  */
 export async function deleteGalleryPhoto(
     rawBody: unknown,
@@ -53,7 +53,7 @@ export async function deleteGalleryPhoto(
         return {ok: false, kind: "no_session", code: uploadSessionErrorCode(sessionResult)};
     }
 
-    const rsvpId = sessionResult.session.rsvp_id;
+    const guestAccountId = sessionResult.session.guest_account_id;
 
     const parsed = parseDeleteGalleryPhotoPayload(rawBody);
     if (!parsed.success) {
@@ -72,7 +72,7 @@ export async function deleteGalleryPhoto(
         .from("photos")
         .delete()
         .eq("id", photoId)
-        .eq("rsvp_id", rsvpId)
+        .eq("guest_account_id", guestAccountId)
         .select("r2_key");
 
     if (deleteError) {

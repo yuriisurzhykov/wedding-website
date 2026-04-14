@@ -2,7 +2,7 @@
 
 import {Link, useRouter} from "@/i18n/navigation";
 import React, {useState} from "react";
-import {useTranslations} from "next-intl";
+import {useLocale, useTranslations} from "next-intl";
 import {toast} from "sonner";
 import type {GuestSessionPublicErrorCode} from "@features/guest-session";
 import {cn} from "@shared/lib/cn";
@@ -23,6 +23,8 @@ type Props = Readonly<{
     /** Show link to `/guest/sign-in` (useful when `layout` is `embedded`). */
     showFullPageLink?: boolean;
 }>;
+
+type FormMode = "restore" | "rehome";
 
 function guestRestoreErrorCopy(
     code: GuestSessionPublicErrorCode,
@@ -56,7 +58,8 @@ function guestRestoreErrorCopy(
 }
 
 /**
- * Name + email restore for guest session (`POST /api/guest/session`). Plan §3 / §8.3.
+ * Name + email restore for guest session (`POST /api/guest/session`), plus companion rehome
+ * (`POST /api/guest/account/email`). Plan: guest sign-in modes.
  */
 export function GuestSessionRestoreForm({
                                             className,
@@ -65,9 +68,13 @@ export function GuestSessionRestoreForm({
                                             showFullPageLink = layout === "embedded",
                                         }: Props) {
     const router = useRouter();
+    const locale = useLocale();
+    const emailLocale = locale === "ru" ? "ru" : "en";
     const t = useTranslations("guestSession.restore");
+    const tRehome = useTranslations("guestSession.rehome");
     const tErr = useTranslations("guestSession.errors");
-    const {restoreSession} = useGuestSession();
+    const {restoreSession, requestCompanionEmailRebind} = useGuestSession();
+    const [mode, setMode] = useState<FormMode>("restore");
     const [name, setName] = useState("");
     const [email, setEmail] = useState("");
     const [submitting, setSubmitting] = useState(false);
@@ -92,40 +99,95 @@ export function GuestSessionRestoreForm({
         setFieldHint(null);
         setSubmitting(true);
 
-        const result = await restoreSession({name, email});
+        if (mode === "restore") {
+            const result = await restoreSession({name, email});
+            setSubmitting(false);
+
+            if (result.ok) {
+                toast.success(t("successToast"));
+                if (layout === "page") {
+                    router.push("/");
+                }
+                await onSuccess?.();
+                setName("");
+                setEmail("");
+                return;
+            }
+
+            if (result.kind === "validation") {
+                const fe = result.fieldErrors;
+                if (fe?.name?.length) {
+                    setFieldHint("name");
+                } else if (fe?.email?.length) {
+                    setFieldHint("email");
+                }
+                setApiError({
+                    title: t("validationSummaryTitle"),
+                    description: t("validationSummaryDescription"),
+                });
+                return;
+            }
+
+            if (result.kind === "guest_error") {
+                setApiError(
+                    guestRestoreErrorCopy(result.code, tErr, result.retryAfterSec),
+                );
+            }
+            return;
+        }
+
+        const rehomeResult = await requestCompanionEmailRebind({
+            name,
+            email,
+            locale: emailLocale,
+        });
         setSubmitting(false);
 
-        if (result.ok) {
-            toast.success(t("successToast"));
-            if (layout === "page") {
-                router.push("/");
-            }
-            await onSuccess?.();
+        if (rehomeResult.ok) {
+            toast.success(tRehome("successToast"));
             setName("");
             setEmail("");
             return;
         }
 
-        if (result.kind === "validation") {
-            const fe = result.fieldErrors;
+        if (rehomeResult.kind === "validation") {
+            const fe = rehomeResult.fieldErrors;
             if (fe?.name?.length) {
                 setFieldHint("name");
             } else if (fe?.email?.length) {
                 setFieldHint("email");
             }
             setApiError({
-                title: t("validationSummaryTitle"),
-                description: t("validationSummaryDescription"),
+                title: tRehome("validationSummaryTitle"),
+                description: tRehome("validationSummaryDescription"),
             });
             return;
         }
 
-        if (result.kind === "guest_error") {
+        if (rehomeResult.kind === "guest_error") {
             setApiError(
-                guestRestoreErrorCopy(result.code, tErr, result.retryAfterSec),
+                guestRestoreErrorCopy(rehomeResult.code, tErr, rehomeResult.retryAfterSec),
             );
         }
     }
+
+    const title = mode === "restore" ? t("title") : tRehome("title");
+    const subtitle = mode === "restore" ? t("subtitle") : tRehome("subtitle");
+    const nameLabel = mode === "restore" ? t("nameLabel") : tRehome("nameLabel");
+    const namePlaceholder = mode === "restore" ? t("namePlaceholder") : tRehome("namePlaceholder");
+    const emailLabel = mode === "restore" ? t("emailLabel") : tRehome("newEmailLabel");
+    const emailPlaceholder =
+        mode === "restore" ? t("emailPlaceholder") : tRehome("newEmailPlaceholder");
+    const nameHint = mode === "restore" ? t("nameFieldHint") : tRehome("nameFieldHint");
+    const emailHint = mode === "restore" ? t("emailFieldHint") : tRehome("emailFieldHint");
+    const submitLabel =
+        mode === "restore"
+            ? submitting
+                ? t("submitting")
+                : t("submit")
+            : submitting
+              ? tRehome("submitting")
+              : tRehome("submit");
 
     return (
         <Surface
@@ -137,15 +199,48 @@ export function GuestSessionRestoreForm({
             )}
         >
             <div>
-                <HeadingTag className={headingClass}>{t("title")}</HeadingTag>
+                <HeadingTag className={headingClass}>{title}</HeadingTag>
                 <p
                     className={cn(
                         "mt-2 text-small leading-relaxed text-text-secondary",
                         layout === "embedded" && "mx-auto max-w-md",
                     )}
                 >
-                    {t("subtitle")}
+                    {subtitle}
                 </p>
+            </div>
+
+            <div
+                className={cn(
+                    "flex flex-col gap-2 sm:flex-row sm:justify-center sm:gap-3",
+                    layout === "embedded" && "sm:justify-center",
+                    layout === "page" && "sm:justify-start",
+                )}
+            >
+                <Button
+                    type="button"
+                    variant={mode === "restore" ? "secondary" : "ghost"}
+                    size="sm"
+                    onClick={() => {
+                        setMode("restore");
+                        setApiError(null);
+                        setFieldHint(null);
+                    }}
+                >
+                    {t("modeTabStandard")}
+                </Button>
+                <Button
+                    type="button"
+                    variant={mode === "rehome" ? "secondary" : "ghost"}
+                    size="sm"
+                    onClick={() => {
+                        setMode("rehome");
+                        setApiError(null);
+                        setFieldHint(null);
+                    }}
+                >
+                    {tRehome("switchToRehome")}
+                </Button>
             </div>
 
             <form
@@ -160,7 +255,7 @@ export function GuestSessionRestoreForm({
                         htmlFor="guest-restore-name"
                         className="text-small font-medium text-text-primary"
                     >
-                        {t("nameLabel")}
+                        {nameLabel}
                     </label>
                     <Input
                         id="guest-restore-name"
@@ -172,13 +267,13 @@ export function GuestSessionRestoreForm({
                             setFieldHint(null);
                             setApiError(null);
                         }}
-                        placeholder={t("namePlaceholder")}
+                        placeholder={namePlaceholder}
                         required
                         aria-invalid={fieldHint === "name" ? true : undefined}
                     />
                     {fieldHint === "name" ? (
                         <p className="text-small text-red-500" role="alert">
-                            {t("nameFieldHint")}
+                            {nameHint}
                         </p>
                     ) : null}
                 </div>
@@ -187,26 +282,26 @@ export function GuestSessionRestoreForm({
                         htmlFor="guest-restore-email"
                         className="text-small font-medium text-text-primary"
                     >
-                        {t("emailLabel")}
+                        {emailLabel}
                     </label>
                     <Input
                         id="guest-restore-email"
                         name="email"
                         type="email"
-                        autoComplete="email"
+                        autoComplete={mode === "restore" ? "email" : "email"}
                         value={email}
                         onChange={(ev) => {
                             setEmail(ev.target.value);
                             setFieldHint(null);
                             setApiError(null);
                         }}
-                        placeholder={t("emailPlaceholder")}
+                        placeholder={emailPlaceholder}
                         required
                         aria-invalid={fieldHint === "email" ? true : undefined}
                     />
                     {fieldHint === "email" ? (
                         <p className="text-small text-red-500" role="alert">
-                            {t("emailFieldHint")}
+                            {emailHint}
                         </p>
                     ) : null}
                 </div>
@@ -230,7 +325,7 @@ export function GuestSessionRestoreForm({
                         layout === "embedded" ? "sm:mx-auto sm:w-auto" : "sm:w-auto",
                     )}
                 >
-                    {submitting ? t("submitting") : t("submit")}
+                    {submitLabel}
                 </Button>
             </form>
 

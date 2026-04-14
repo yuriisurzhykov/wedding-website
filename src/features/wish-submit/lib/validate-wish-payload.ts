@@ -4,7 +4,7 @@ import {z} from "zod";
 
 /**
  * `authorName` is optional when a valid guest session cookie is present — the server
- * uses `rsvp.name` (same rules as gallery confirm). Otherwise it is required.
+ * uses `guest_accounts.display_name` (same source as gallery confirm). Otherwise it is required.
  */
 export const wishSubmitPayloadSchema = z
     .object({

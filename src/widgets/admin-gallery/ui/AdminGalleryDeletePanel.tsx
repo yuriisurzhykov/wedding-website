@@ -160,7 +160,7 @@ export function AdminGalleryDeletePanel({photos, hasMore}: Props) {
                                     {t('columns.uploadedAt')}
                                 </th>
                                 <th className="py-2 font-medium">
-                                    {t('columns.rsvp')}
+                                    {t('columns.guestAccount')}
                                 </th>
                             </tr>
                         </thead>
@@ -200,7 +200,7 @@ export function AdminGalleryDeletePanel({photos, hasMore}: Props) {
                                     </td>
                                     <td className="max-w-[10rem] py-3 text-text-secondary font-mono text-small">
                                         <span className="line-clamp-2 break-all">
-                                            {p.rsvpId ?? '—'}
+                                            {p.guestAccountId ?? '—'}
                                         </span>
                                     </td>
                                 </tr>

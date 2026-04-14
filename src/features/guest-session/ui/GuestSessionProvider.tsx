@@ -4,6 +4,7 @@ import {createContext, type ReactNode, useCallback, useContext, useEffect, useMe
 
 import type {GuestSessionClientSnapshot} from "../lib/client-snapshot";
 import type {GuestSessionPublicErrorCode} from "../lib/guest-session-error";
+import {parseGuestAccountEmailPostJson} from "../lib/parse-guest-account-email-post-json";
 import {parseGuestSessionPostJson} from "../lib/parse-guest-session-post-json";
 
 export type GuestSessionStatus = "loading" | "anonymous" | "authenticated";
@@ -28,6 +29,21 @@ export type GuestSessionRestoreResult =
     retryAfterSec?: number;
 };
 
+export type GuestCompanionEmailRebindResult =
+    | { ok: true }
+    | {
+          ok: false;
+          kind: "validation";
+          fieldErrors: Record<string, string[] | undefined>;
+          formErrors: string[];
+      }
+    | {
+          ok: false;
+          kind: "guest_error";
+          code: GuestSessionPublicErrorCode;
+          retryAfterSec?: number;
+      };
+
 type GuestSessionContextValue = {
     status: GuestSessionStatus;
     session: GuestSessionClientSnapshot | null;
@@ -40,6 +56,14 @@ type GuestSessionContextValue = {
         name: string;
         email: string;
     }) => Promise<GuestSessionRestoreResult>;
+    /**
+     * Companion rehome: `POST /api/guest/account/email` (name + new email + locale). Does not set a session cookie.
+     */
+    requestCompanionEmailRebind: (input: {
+        name: string;
+        email: string;
+        locale: "en" | "ru";
+    }) => Promise<GuestCompanionEmailRebindResult>;
 };
 
 const GuestSessionContext = createContext<GuestSessionContextValue | null>(null);
@@ -61,6 +85,58 @@ export function GuestSessionProvider({children}: { children: ReactNode }) {
             setStatus("anonymous");
         }
     }, []);
+
+    const requestCompanionEmailRebind = useCallback(
+        async (input: {
+            name: string;
+            email: string;
+            locale: "en" | "ru";
+        }): Promise<GuestCompanionEmailRebindResult> => {
+            let res: Response;
+            try {
+                res = await fetch("/api/guest/account/email", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    credentials: "same-origin",
+                    body: JSON.stringify({
+                        name: input.name.trim(),
+                        email: input.email.trim(),
+                        locale: input.locale,
+                    }),
+                });
+            } catch {
+                return {ok: false, kind: "guest_error", code: "request_failed"};
+            }
+
+            const data: unknown = await res.json().catch(() => null);
+            const parsed = parseGuestAccountEmailPostJson(data);
+
+            if (res.ok && parsed.kind === "accepted") {
+                return {ok: true};
+            }
+
+            if (parsed.kind === "validation") {
+                return {
+                    ok: false,
+                    kind: "validation",
+                    fieldErrors: parsed.body.fieldErrors,
+                    formErrors: parsed.body.formErrors,
+                };
+            }
+
+            if (parsed.kind === "guest_error") {
+                return {
+                    ok: false,
+                    kind: "guest_error",
+                    code: parsed.body.error.code,
+                    retryAfterSec: parsed.body.error.retryAfterSec,
+                };
+            }
+
+            return {ok: false, kind: "guest_error", code: "server_error"};
+        },
+        [],
+    );
 
     const restoreSession = useCallback(
         async (input: { name: string; email: string }): Promise<GuestSessionRestoreResult> => {
@@ -154,8 +230,14 @@ export function GuestSessionProvider({children}: { children: ReactNode }) {
     }, [applyFromApiBody]);
 
     const value = useMemo(
-        () => ({status, session, applyFromApiBody, restoreSession}),
-        [status, session, applyFromApiBody, restoreSession],
+        () => ({
+            status,
+            session,
+            applyFromApiBody,
+            restoreSession,
+            requestCompanionEmailRebind,
+        }),
+        [status, session, applyFromApiBody, restoreSession, requestCompanionEmailRebind],
     );
 
     return (

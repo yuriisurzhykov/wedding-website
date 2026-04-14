@@ -6,7 +6,7 @@ export type PhotoDbRow = {
     public_url: string;
     size_bytes: number | null;
     uploaded_at: string;
-    rsvp_id?: string | null;
+    guest_account_id?: string | null;
 };
 
 /** Safe view for the home gallery grid. */

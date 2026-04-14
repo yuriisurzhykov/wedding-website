@@ -18,7 +18,9 @@ Internal defaults for guest counts live only inside `model/map-form-to-row.ts` (
 
 - **Features / API routes:** after validating JSON with Zod, call `mapRsvpFormToRow` before inserting into Postgres.
 - **UI:** import `RSVP_FIELDS` (and form types if needed) from `@entities/rsvp`; transitional `lib/config/rsvp`
-  re-exports the same. Submit payload should align with `RsvpFormInput` (camelCase, `attending` required).
+  re-exports the same. Submit payload should align with `RsvpFormInput` (camelCase, `attending` required). When
+  `attending` is true, `companionNames` must contain exactly `guestCount - 1` non-empty names (validated in
+  `@features/rsvp-submit`); they are not stored on the `rsvp` row but drive `guest_accounts` companions.
 
 ## Invariants encoded in the mapper
 

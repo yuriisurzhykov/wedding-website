@@ -1,4 +1,4 @@
-import {getViewerRsvpIdFromServerCookies} from '@features/guest-session/server'
+import {getViewerGuestAccountIdFromServerCookies} from '@features/guest-session/server'
 import {getResolvedGuestSchedule} from '@features/wedding-schedule'
 import {
     FeatureGate,
@@ -23,9 +23,9 @@ import {WishesSection} from '@widgets/wishes-section'
 import {getLocale} from 'next-intl/server'
 
 export default async function Home() {
-    const viewerRsvpId = await getViewerRsvpIdFromServerCookies()
+    const viewerGuestAccountId = await getViewerGuestAccountIdFromServerCookies()
     /** Matches client `RsvpSectionGate`: no RSVP band when guest session cookie is present. */
-    const rsvpSlotSkippedOnHome = viewerRsvpId !== null
+    const rsvpSlotSkippedOnHome = viewerGuestAccountId !== null
 
     const locale = await getLocale()
     const [siteSettings, resolvedSchedule] = await Promise.all([
