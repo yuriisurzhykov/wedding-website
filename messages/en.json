@@ -49,7 +49,7 @@
   },
   "dresscode": {
     "title": "Dress code",
-    "subtitle": "Soft pastels and natural tones — please avoid pure white or black.",
+    "subtitle": "Soft pastels and natural tones — please avoid white or blue.",
     "allowed": "Recommended",
     "notAllowed": "Please avoid",
     "yourColor": "This color fits our palette",
@@ -61,7 +61,7 @@
       "umber": "Warm umber",
       "white": "White",
       "black": "Black",
-      "blue": "Blue"
+      "blue": "Sky Blue"
     }
   },
   "story": {
@@ -350,27 +350,31 @@
         "photos": "—",
         "photosLabel": "Gallery photos (coming soon)"
       },
-      "linkGuests": "Guests — RSVP list"
+      "linkGuests": "Guests — participant list"
     },
     "guests": {
       "metaTitle": "Admin — Guests",
       "title": "Guests",
-      "subtitle": "RSVP responses from the database. Use filters to narrow by attendance.",
-      "filtersAria": "Filter RSVPs",
+      "subtitle": "Guest accounts from the database (one row per person). Filters follow the party RSVP attendance.",
+      "filtersAria": "Filter guest list",
       "filterAll": "All",
       "filterAttending": "Attending",
       "filterNotAttending": "Not attending",
-      "empty": "No RSVPs match this filter.",
-      "loadError": "Could not load RSVPs. Try again later.",
+      "empty": "No guests match this filter.",
+      "loadError": "Could not load guests. Try again later.",
       "invalidQuery": "Invalid filter in the URL. Open Guests from the menu and choose All, Attending, or Not attending.",
+      "valueEmpty": "—",
+      "rolePrimary": "Primary",
+      "roleCompanion": "Companion",
       "attendingYes": "Yes",
       "attendingNo": "No",
       "columns": {
-        "name": "Name",
-        "email": "Email",
+        "displayName": "Name",
+        "role": "Role",
+        "contactEmail": "Contact email",
         "phone": "Phone",
         "attending": "Attending",
-        "guestCount": "Guests",
+        "partyGuestCount": "Party size",
         "dietary": "Dietary",
         "message": "Message",
         "submittedAt": "Submitted"
@@ -691,6 +695,6 @@
     "subtitle": "Your presence is the best gift. If you'd like to contribute materially, we'd be very grateful 🤍",
     "zelleCopied": "Number copied! Open your banking app → Zelle",
     "zelleCopyFailed": "Could not copy. Use this number:",
-    "noFees": "All transfers are fee-free — money goes directly to us"
+    "noFees": "All transfers are fee-free"
   }
 }

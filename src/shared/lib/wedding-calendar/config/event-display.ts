@@ -1,8 +1,9 @@
 /**
  * How dates and clock times are *shown* (IANA zone + `Intl` option bundles).
  *
- * **Edit this file only** when presentation rules change: e.g. move to another region,
- * switch long vs short date style, or change 12h/24h in the schedule column.
+ * **Edit this file only** when presentation rules change: e.g. move to another region
+ * or switch long vs short date style. 12h vs 24h for hour/minute fields lives next to
+ * the formatters (`internal/locale-strings.ts` + `hour12ForSiteLocale`).
  *
  * `EVENT_DISPLAY_TIMEZONE` drives calendar-style strings; ISO strings in `instants.ts`
  * still define the exact instants used for countdowns.
@@ -26,7 +27,7 @@ export const DISPLAY_FORMATS = {
     },
     /**
      * Wall-clock start under the hero date — same instant as `weddingCeremony` in `instants.ts`.
-     * 12h vs 24h is chosen in `formatHeroWeddingStartTime` from `locale` (e.g. en vs ru).
+     * 12h vs 24h is set in `internal/locale-strings.ts` via `hour12ForSiteLocale` (same as schedule cells).
      */
     heroWeddingStartTime: {
         hour: 'numeric',
@@ -36,7 +37,6 @@ export const DISPLAY_FORMATS = {
     scheduleClock: {
         hour: 'numeric',
         minute: '2-digit',
-        hour12: false,
         timeZone: 'UTC',
     },
 } as const satisfies Record<string, Intl.DateTimeFormatOptions>
