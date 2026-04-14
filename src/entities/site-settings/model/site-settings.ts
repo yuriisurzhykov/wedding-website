@@ -1,6 +1,13 @@
 import {z} from 'zod'
 
 import {
+    type PublicContact,
+    getDefaultPublicContact,
+    publicContactPatchSchema,
+    publicContactSchema,
+    resolvePublicContactFromDb,
+} from './public-contact'
+import {
     type SiteCapabilities,
     parseFeatureStatesFromDb,
     siteCapabilitiesSchema,
@@ -10,6 +17,7 @@ export type SiteSettings = {
     id: 'default'
     updated_at: string
     capabilities: SiteCapabilities
+    public_contact: PublicContact
 }
 
 export const siteSettingsSchema = z
@@ -17,6 +25,7 @@ export const siteSettingsSchema = z
         id: z.literal('default'),
         updated_at: z.string(),
         capabilities: siteCapabilitiesSchema,
+        public_contact: publicContactSchema,
     })
     .strict()
 
@@ -24,6 +33,7 @@ export const siteSettingsSchema = z
 export const siteSettingsPatchSchema = z
     .object({
         capabilities: siteCapabilitiesSchema.partial().optional(),
+        public_contact: publicContactPatchSchema.optional(),
     })
     .strict()
 
@@ -37,6 +47,7 @@ export function getDefaultSiteSettings(): SiteSettings {
         id: 'default',
         updated_at: new Date(0).toISOString(),
         capabilities: parseFeatureStatesFromDb(undefined),
+        public_contact: getDefaultPublicContact(),
     }
 }
 
@@ -48,6 +59,8 @@ export function normalizeSiteSettingsRow(
     row: {
         id: string
         updated_at: string
+        public_contact_phone?: string | null
+        public_contact_email?: string | null
     } | null,
     featureStatesFromDb?: unknown,
 ): SiteSettings {
@@ -58,5 +71,9 @@ export function normalizeSiteSettingsRow(
         id: 'default',
         updated_at: row.updated_at,
         capabilities: parseFeatureStatesFromDb(featureStatesFromDb),
+        public_contact: resolvePublicContactFromDb({
+            public_contact_phone: row.public_contact_phone,
+            public_contact_email: row.public_contact_email,
+        }),
     }
 }

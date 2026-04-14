@@ -10,8 +10,8 @@ role for upserts, Next cache with tag invalidation on update.
   load the timeline in parallel with **`getResolvedGuestSchedule`** / **`getWeddingScheduleCached`** from
   `@features/wedding-schedule`.
 - **`updateSiteSettings`:** merge a validated patch and persist feature states (for admin API only). **`siteSettingsPatchSchema`**
-  only allows `capabilities` — schedule copy and icons are **not** merged here; use `@features/wedding-schedule` and
-  `PATCH /api/admin/schedule`.
+  allows `capabilities` and optional **`public_contact`** (phone/email). Schedule copy and icons are **not** merged here;
+  use `@features/wedding-schedule` and `PATCH /api/admin/schedule`.
 
 ## Approach
 
@@ -19,7 +19,8 @@ role for upserts, Next cache with tag invalidation on update.
   `site_feature_states`).
 - Writes use `createServerClient` (service role) so INSERT/UPDATE bypass missing anon policies.
 - **`getSiteSettingsCached`** wraps the DB read with `unstable_cache` (60s revalidate) and tag `site-settings`.
-- **`updateSiteSettings`** bumps `site_settings.updated_at` and upserts all `site_feature_states` rows, then calls
+- **`updateSiteSettings`** bumps `site_settings.updated_at`, updates `public_contact_phone` / `public_contact_email` when
+  the patch includes `public_contact`, upserts all `site_feature_states` rows, then calls
   `revalidateTag(SITE_SETTINGS_CACHE_TAG)`.
 
 ## Public API
@@ -37,7 +38,7 @@ role for upserts, Next cache with tag invalidation on update.
   (title + subtitle + `previewNotice` from messages), and
   `SITE_SETTINGS_PUBLIC_API_PATH` (used by the provider to refetch). Do not import the server getters from client
   components.
-- **HTTP:** `GET /api/site-settings/public` — JSON `{ ok: true, updated_at, capabilities }` (feature state map) for
+- **HTTP:** `GET /api/site-settings/public` — JSON `{ ok: true, updated_at, capabilities, public_contact }` for
   guest-tab refetch; validated with `publicSiteSettingsApiSuccessSchema` in `@entities/site-settings`.
 - **Admin:** `PATCH /api/admin/site-settings` — JSON body as `siteSettingsPatchSchema`; requires **rate limit pass** +
   **auth** (`isAdminApiAuthorized`: httpOnly session cookie from `POST /api/admin/login` or legacy `Authorization` /
@@ -63,5 +64,7 @@ string.
 
 - **Feature states:** the only source of truth is Postgres (`site_feature_states`), read through `getSiteSettings` /
   `getSiteSettingsCached`. There is no build-time or runtime merge from public environment variables.
+- **Public contact:** nullable `public_contact_phone` and `public_contact_email` on `site_settings`; empty or NULL uses
+  the same defaults as `@entities/wedding-venue` (`resolvePublicContactFromDb`).
 - Cache: 60s revalidate + tag `site-settings`. Public route `GET /api/site-settings/public` uses `Cache-Control: private,
   no-cache, must-revalidate` so browsers revalidate while Next cache + tag own server freshness.

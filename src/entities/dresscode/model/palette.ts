@@ -15,7 +15,6 @@ export const PALETTE: PaletteColor[] = Array.from(
         {key: 'champagne', hex: '#dbd2c7', allowed: true},
         {key: 'umber', hex: '#59504a', allowed: true},
         {key: 'white', hex: '#FFFFFF', allowed: false},
-        {key: 'black', hex: '#000000', allowed: false},
         {key: 'blue', hex: '#7dafe3', allowed: false},
     ])
 )

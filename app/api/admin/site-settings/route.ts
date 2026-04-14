@@ -9,7 +9,8 @@ import {NextResponse} from "next/server";
 /**
  * PATCH /api/admin/site-settings
  *
- * Body: JSON matching {@link siteSettingsPatchSchema} (partial capabilities only; schedule uses `PATCH /api/admin/schedule`).
+ * Body: JSON matching {@link siteSettingsPatchSchema} (partial `capabilities` and/or `public_contact`; schedule uses
+ * `PATCH /api/admin/schedule`).
  * Auth: valid admin session cookie or legacy `Authorization: Bearer` / `x-admin-token` with `ADMIN_SECRET`.
  * Rate limit: applied before auth (429 + `retry_after`).
  */
@@ -39,5 +40,6 @@ export async function PATCH(request: Request) {
         ok: true,
         updated_at: result.settings.updated_at,
         capabilities: result.settings.capabilities,
+        public_contact: result.settings.public_contact,
     });
 }

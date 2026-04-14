@@ -94,11 +94,11 @@
       },
       "dietary": {
         "label": "Dietary restrictions / allergies",
-        "placeholder": "Vegetarian..."
+        "placeholder": "Vegetarian…"
       },
       "message": {
         "label": "Message",
-        "placeholder": "Write something..."
+        "placeholder": "Write something…"
       },
       "marketing": {
         "label": "Email me occasional updates",
@@ -106,7 +106,7 @@
       }
     },
     "submit": "Submit",
-    "submitting": "Sending...",
+    "submitting": "Sending…",
     "successAttend": "Thank you! We can't wait to see you 🎉",
     "successDecline": "We're sorry you can't join us. Thanks for letting us know 🤍",
     "error": "Something went wrong. Please reach out to us directly.",
@@ -556,6 +556,20 @@
           "persistenceFailed": "The server could not save the program. Try again in a moment.",
           "iconHostedNeedsUrlOrUpload": "Row {row}: paste a public SVG URL or upload a file before saving.",
           "iconInlineNeedsSvg": "Row {row}: paste SVG markup or switch to another icon mode before saving."
+        }
+      },
+      "publicContact": {
+        "title": "Public contact",
+        "subtitle": "Phone and email shown in the Contact section and elsewhere on the site. Guests see updates after the page cache refreshes.",
+        "hint": "Leave a field empty and save to fall back to the built-in default from the site configuration.",
+        "phoneLabel": "Phone (display)",
+        "phoneHint": "Shown as on the public site. Clear the field to use the default number.",
+        "emailLabel": "Email",
+        "emailHint": "Used for mailto links. Clear the field to use the default address.",
+        "save": "Save contact",
+        "saving": "Saving…",
+        "toast": {
+          "saved": "Contact details saved"
         }
       },
       "capabilities": {

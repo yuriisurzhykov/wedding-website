@@ -16,6 +16,8 @@ import {toast} from 'sonner'
 
 import {patchAdminSiteSettings} from '../lib/patch-admin-site-settings'
 
+import {AdminPublicContactForm} from './AdminPublicContactForm'
+
 function cloneCapabilities(settings: SiteSettings): SiteCapabilities {
     return {...settings.capabilities}
 }
@@ -116,6 +118,8 @@ export function AdminFeaturesForm({initialSettings}: Props) {
                     {tSettings('updatedAtLabel')}: {updatedAt}
                 </p>
             </header>
+
+            <AdminPublicContactForm initialSettings={initialSettings} />
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-10">
                 <section className="rounded-card border border-border bg-bg-card p-6 shadow-sm">

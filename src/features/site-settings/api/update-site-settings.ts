@@ -1,10 +1,13 @@
 import 'server-only'
 
 import {
+    mergePublicContactDbColumns,
     normalizeSiteSettingsRow,
+    resolvePublicContactFromDb,
     SITE_FEATURE_KEYS,
     siteSettingsPatchSchema,
     siteSettingsSchema,
+    type PublicContactDbRow,
     type SiteSettings,
     type SiteSettingsPatch,
 } from '@entities/site-settings'
@@ -17,13 +20,23 @@ export type UpdateSiteSettingsResult =
     | {ok: true; settings: SiteSettings}
     | {ok: false; error: string}
 
-function mergePatch(current: SiteSettings, patch: SiteSettingsPatch): SiteSettings {
+function mergeSnapshot(
+    current: SiteSettings,
+    patch: SiteSettingsPatch,
+    rawContact: PublicContactDbRow,
+): SiteSettings {
+    const capabilities =
+        patch.capabilities !== undefined
+            ? {...current.capabilities, ...patch.capabilities}
+            : current.capabilities
+    const mergedColumns: PublicContactDbRow =
+        patch.public_contact !== undefined
+            ? mergePublicContactDbColumns(rawContact, patch.public_contact)
+            : rawContact
     return {
         ...current,
-        capabilities:
-            patch.capabilities !== undefined
-                ? {...current.capabilities, ...patch.capabilities}
-                : current.capabilities,
+        capabilities,
+        public_contact: resolvePublicContactFromDb(mergedColumns),
     }
 }
 
@@ -43,7 +56,11 @@ export async function updateSiteSettings(patch: unknown): Promise<UpdateSiteSett
         const supabase = createServerClient()
 
         const [siteRead, featuresRead] = await Promise.all([
-            supabase.from('site_settings').select('id,updated_at').eq('id', 'default').maybeSingle(),
+            supabase
+                .from('site_settings')
+                .select('id,updated_at,public_contact_phone,public_contact_email')
+                .eq('id', 'default')
+                .maybeSingle(),
             supabase.from('site_feature_states').select('feature_key,state'),
         ])
 
@@ -51,13 +68,19 @@ export async function updateSiteSettings(patch: unknown): Promise<UpdateSiteSett
             return {ok: false, error: siteRead.error.message}
         }
 
+        const rawContact: PublicContactDbRow = {
+            public_contact_phone: siteRead.data?.public_contact_phone,
+            public_contact_email: siteRead.data?.public_contact_email,
+        }
+
         const current = normalizeSiteSettingsRow(siteRead.data, featuresRead.data ?? undefined)
-        const merged = mergePatch(current, parsed.data)
+        const merged = mergeSnapshot(current, parsed.data, rawContact)
 
         const validated = siteSettingsSchema.safeParse({
             id: 'default',
             updated_at: current.updated_at,
             capabilities: merged.capabilities,
+            public_contact: merged.public_contact,
         })
         if (!validated.success) {
             return {ok: false, error: validated.error.message}
@@ -68,9 +91,26 @@ export async function updateSiteSettings(patch: unknown): Promise<UpdateSiteSett
             state: validated.data.capabilities[feature_key],
         }))
 
+        const nextPublicContactColumns =
+            parsed.data.public_contact !== undefined
+                ? mergePublicContactDbColumns(rawContact, parsed.data.public_contact)
+                : undefined
+
+        const settingsUpdate: {
+            updated_at: string
+            public_contact_phone?: string | null
+            public_contact_email?: string | null
+        } = {
+            updated_at: new Date().toISOString(),
+        }
+        if (nextPublicContactColumns !== undefined) {
+            settingsUpdate.public_contact_phone = nextPublicContactColumns.public_contact_phone
+            settingsUpdate.public_contact_email = nextPublicContactColumns.public_contact_email
+        }
+
         const {error: settingsWriteError} = await supabase
             .from('site_settings')
-            .update({updated_at: new Date().toISOString()})
+            .update(settingsUpdate)
             .eq('id', 'default')
 
         if (settingsWriteError) {
@@ -86,7 +126,11 @@ export async function updateSiteSettings(patch: unknown): Promise<UpdateSiteSett
         }
 
         const [siteUpdated, featuresUpdated] = await Promise.all([
-            supabase.from('site_settings').select('id,updated_at').eq('id', 'default').single(),
+            supabase
+                .from('site_settings')
+                .select('id,updated_at,public_contact_phone,public_contact_email')
+                .eq('id', 'default')
+                .single(),
             supabase.from('site_feature_states').select('feature_key,state'),
         ])
 

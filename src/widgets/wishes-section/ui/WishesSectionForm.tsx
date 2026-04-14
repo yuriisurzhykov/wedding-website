@@ -306,7 +306,7 @@ export function WishesSectionForm({
                         </label>
                         {photoBlockedByCelebration ? (
                             <p className="text-small text-text-muted" id="wish-photo-hint">
-                                {t("photoLockedUntilCelebration")}
+                                {t("photoPreviewNotice")}
                             </p>
                         ) : photoPickerDisabled && guestStatus === "anonymous" ? (
                             <p className="text-small text-text-muted" id="wish-photo-hint">

@@ -1,5 +1,7 @@
 /** Form for editing per-feature visibility; saves `{ capabilities }` via `PATCH /api/admin/site-settings`. */
 export {AdminFeaturesForm} from './ui/AdminFeaturesForm'
+/** Public phone and email shown on the site; saves `{ public_contact }` via `PATCH /api/admin/site-settings`. */
+export {AdminPublicContactForm} from './ui/AdminPublicContactForm'
 /** Form for editing the day-of program; saves via `PATCH /api/admin/schedule`. */
 export {AdminScheduleForm} from './ui/AdminScheduleForm'
 export {patchAdminSchedule} from './lib/patch-admin-schedule'

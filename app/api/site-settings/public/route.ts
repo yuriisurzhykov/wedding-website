@@ -13,6 +13,7 @@ export async function GET() {
                 ok: true as const,
                 updated_at: settings.updated_at,
                 capabilities: settings.capabilities,
+                public_contact: settings.public_contact,
             },
             {
                 headers: {

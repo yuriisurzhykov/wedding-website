@@ -18,7 +18,7 @@ async function readNormalizedSiteSettingsFromDatabase(): Promise<SiteSettings> {
         const [siteResult, featuresResult] = await Promise.all([
             supabase
                 .from('site_settings')
-                .select('id,updated_at')
+                .select('id,updated_at,public_contact_phone,public_contact_email')
                 .eq('id', 'default')
                 .maybeSingle(),
             supabase.from('site_feature_states').select('feature_key,state'),

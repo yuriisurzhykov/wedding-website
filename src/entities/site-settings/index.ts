@@ -25,6 +25,16 @@ export {
     type SiteFeatureStates,
 } from './model/site-capabilities'
 export {
+    getDefaultPublicContact,
+    mergePublicContactDbColumns,
+    publicContactPatchSchema,
+    publicContactSchema,
+    resolvePublicContactFromDb,
+    type PublicContact,
+    type PublicContactDbRow,
+    type PublicContactPatch,
+} from './model/public-contact'
+export {
     getDefaultSiteSettings,
     normalizeSiteSettingsRow,
     siteSettingsPatchSchema,
