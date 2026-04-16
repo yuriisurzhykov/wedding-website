@@ -2,14 +2,11 @@ import {getLocale, getTranslations} from "next-intl/server";
 
 import {Countdown} from "@shared/ui";
 import {ExternalLinkIcon} from "@shared/ui/icons/ExternalLinkIcon";
-import {
-    formatHeroWeddingLine,
-    formatHeroWeddingStartTime,
-    getWeddingCeremonyDate,
-} from "@shared/lib/wedding-calendar";
+import {formatHeroWeddingLine, formatHeroWeddingStartTime, getWeddingCeremonyDate,} from "@shared/lib/wedding-calendar";
 import {VENUE} from '@entities/wedding-venue'
 
 import {HeroBotanicalBackdrop} from "./HeroBotanicalBackdrop";
+import {HeroGoToRsvpButton} from "@widgets/hero-section/ui/HeroGoToRsvpButton";
 
 export async function HeroSection() {
     const locale = await getLocale();
@@ -52,8 +49,8 @@ export async function HeroSection() {
                     <span>{translator("venue")}</span>
                     <ExternalLinkIcon className="h-4 w-4 shrink-0 text-primary opacity-90"/>
                 </a>
-
                 <Countdown targetDate={getWeddingCeremonyDate()}/>
+                <HeroGoToRsvpButton>{translator("goToRsvp")}</HeroGoToRsvpButton>
             </div>
         </section>
     );

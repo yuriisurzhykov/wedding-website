@@ -19,16 +19,18 @@ const sizes: Record<Size, string> = {
     lg: 'px-8 py-4 text-h3',
 }
 
-export function Button({
-                           variant = 'primary',
-                           size = 'md',
-                           className,
-                           type = 'button',
-                           ...props
-                       }: ButtonHTMLAttributes<HTMLButtonElement> & {
-    variant?: Variant
-    size?: Size
-}) {
+export function Button(
+    {
+        variant = 'primary',
+        size = 'md',
+        className,
+        type = 'button',
+        ...props
+    }: ButtonHTMLAttributes<HTMLButtonElement> & {
+        variant?: Variant
+        size?: Size
+    }
+) {
     return (
         <button
             type={type}

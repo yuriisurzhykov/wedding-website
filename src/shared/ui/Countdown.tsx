@@ -71,11 +71,11 @@ export function Countdown({targetDate}: { targetDate: Date }) {
             aria-live={mounted ? 'polite' : undefined}
         >
             {segments.map(({key, value, label}) => (
-                <div key={key} className="flex flex-col items-center gap-1">
+                <div key={key} className="flex flex-col items-center">
                     <span className="font-display text-hero text-text-primary tabular-nums">
                         {String(value).padStart(2, '0')}
                     </span>
-                    <span className="text-xs uppercase tracking-widest text-text-muted">{label}</span>
+                    <span className="text-xs mb-6 uppercase tracking-widest text-text-muted">{label}</span>
                 </div>
             ))}
         </div>

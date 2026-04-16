@@ -35,7 +35,8 @@
       "minutes": "minutes",
       "seconds": "seconds",
       "passed": "The big day has arrived! 🎉"
-    }
+    },
+    "goToRsvp": "Send your RSVP"
   },
   "welcome": {
     "title": "Dear guests"
