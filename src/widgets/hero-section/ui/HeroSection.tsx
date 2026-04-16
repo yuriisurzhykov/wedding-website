@@ -1,16 +1,18 @@
 import {getLocale, getTranslations} from "next-intl/server";
 
+import {getViewerGuestAccountIdFromServerCookies} from "@features/guest-session/server";
 import {Countdown} from "@shared/ui";
 import {ExternalLinkIcon} from "@shared/ui/icons/ExternalLinkIcon";
 import {formatHeroWeddingLine, formatHeroWeddingStartTime, getWeddingCeremonyDate,} from "@shared/lib/wedding-calendar";
 import {VENUE} from '@entities/wedding-venue'
 
 import {HeroBotanicalBackdrop} from "./HeroBotanicalBackdrop";
-import {HeroGoToRsvpButton} from "@widgets/hero-section/ui/HeroGoToRsvpButton";
+import {HeroGoToRsvpButton} from "./HeroGoToRsvpButton";
 
 export async function HeroSection() {
     const locale = await getLocale();
     const translator = await getTranslations("hero");
+    const viewerGuestAccountId = await getViewerGuestAccountIdFromServerCookies();
     const weddingDateLabel = formatHeroWeddingLine(locale);
     const weddingStartTimeLabel = formatHeroWeddingStartTime(locale);
 
@@ -50,7 +52,9 @@ export async function HeroSection() {
                     <ExternalLinkIcon className="h-4 w-4 shrink-0 text-primary opacity-90"/>
                 </a>
                 <Countdown targetDate={getWeddingCeremonyDate()}/>
-                <HeroGoToRsvpButton>{translator("goToRsvp")}</HeroGoToRsvpButton>
+                {viewerGuestAccountId === null ? (
+                    <HeroGoToRsvpButton>{translator("goToRsvp")}</HeroGoToRsvpButton>
+                ) : null}
             </div>
         </section>
     );
