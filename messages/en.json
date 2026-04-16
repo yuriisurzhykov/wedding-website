@@ -693,7 +693,7 @@
   },
   "donate": {
     "title": "Gift the couple",
-    "subtitle": "Your presence is the best gift. If you'd like to contribute materially, we'd be very grateful 🤍",
+    "subtitle": "Your presence is the best gift. But if you'd like to contribute materially, we'd be very grateful 🤍",
     "zelleCopied": "Number copied! Open your banking app → Zelle",
     "zelleCopyFailed": "Could not copy. Use this number:",
     "noFees": "All transfers are fee-free"
