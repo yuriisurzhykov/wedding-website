@@ -7,8 +7,8 @@ import type {GuestAccountRowInsert, GuestPartyMemberInput} from './types'
 /**
  * Maps one party member draft to a `guest_accounts` insert row.
  *
- * - Primary rows omit companion email: `email` is always `null` (party contact lives on `rsvp`).
- * - Companions may carry `companionEmail` when they later bind their own mailbox.
+ * - Primary: `email` mirrors `primaryRsvpEmail` (same as `rsvp.email` when present).
+ * - Companions: `email` from `companionEmail` when they bind their own mailbox.
  */
 export function mapGuestPartyMemberToRowInsert(
     rsvpId: string,
@@ -16,7 +16,7 @@ export function mapGuestPartyMemberToRowInsert(
 ): GuestAccountRowInsert {
     const display_name = normalizeGuestDisplayNameForStorage(member.displayName)
     const email = member.isPrimary
-        ? null
+        ? normalizeGuestAccountEmailForStorage(member.primaryRsvpEmail ?? null)
         : normalizeGuestAccountEmailForStorage(member.companionEmail ?? null)
 
     return {

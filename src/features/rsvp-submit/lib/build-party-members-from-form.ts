@@ -16,6 +16,15 @@ function effectiveGuestCountWhenAttending(form: RsvpFormInput): number {
     return parseGuestCount(form.guestCount) ?? 1;
 }
 
+function primaryRsvpEmailFromForm(form: RsvpFormInput): string | null {
+    const raw = form.email;
+    if (raw === undefined || raw === null) {
+        return null;
+    }
+    const s = String(raw).trim();
+    return s === "" ? null : s;
+}
+
 /**
  * Builds ordered party members for `guest_accounts` sync after an RSVP row is saved.
  * Primary is always first (`sort_order` 0); companions follow in form order.
@@ -24,6 +33,7 @@ export function buildGuestPartyMemberInputsForPersist(
     form: RsvpFormInput,
 ): GuestPartyMemberInput[] {
     const displayName = String(form.name ?? "").trim();
+    const primaryRsvpEmail = primaryRsvpEmailFromForm(form);
 
     if (!form.attending) {
         return [
@@ -31,6 +41,7 @@ export function buildGuestPartyMemberInputsForPersist(
                 displayName,
                 isPrimary: true,
                 sortOrder: 0,
+                primaryRsvpEmail,
             },
         ];
     }
@@ -42,6 +53,7 @@ export function buildGuestPartyMemberInputsForPersist(
             displayName,
             isPrimary: true,
             sortOrder: 0,
+            primaryRsvpEmail,
         },
     ];
     for (let i = 0; i < n - 1; i++) {

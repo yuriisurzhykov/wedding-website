@@ -14,8 +14,9 @@ Supabase clients, or session logic.
 ## Approach
 
 - Types mirror `supabase/schema.sql` (`GuestAccountRow` uses snake_case column names).
-- **Contact source:** primary guest email and phone remain on `rsvp`; `guest_accounts.email` is for companions who
-  attach their own address. `mapGuestPartyMemberToRowInsert` always sets `email` to `null` for the primary row.
+- **Contact source:** phone stays on `rsvp` only. Email is stored on `rsvp` and mirrored on the primary
+  `guest_accounts` row (`primaryRsvpEmail` → `guest_accounts.email`) when the guest provided one. Companion rows use
+  `companionEmail` when they attach their own address.
 - **Duplicate names in one party:** use `guestDisplayNamesCollideInParty` / `normalizeGuestDisplayNameForPartyUniqueness`
   in feature-layer `refine` (trim + case-insensitive comparison via `toLocaleLowerCase`).
 
@@ -41,7 +42,12 @@ import {
 } from '@entities/guest-account'
 
 const members: GuestPartyMemberInput[] = [
-    {displayName: 'Alex', isPrimary: true, sortOrder: 0},
+    {
+        displayName: 'Alex',
+        isPrimary: true,
+        sortOrder: 0,
+        primaryRsvpEmail: 'alex@example.com',
+    },
     {displayName: 'Jordan', isPrimary: false, sortOrder: 1, companionEmail: null},
 ]
 

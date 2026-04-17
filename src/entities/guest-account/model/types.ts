@@ -25,8 +25,9 @@ export type GuestAccountRowInsert = Pick<
  * Callers build an ordered list (primary first, then companions) and map each row with
  * {@link mapGuestPartyMemberToRowInsert}.
  *
- * **Contact model:** the primary member’s mailbox for product flows is the parent `rsvp.email`;
- * `companionEmail` is only for non-primary members who claim their own address (otherwise `null`).
+ * **Contact model:** the canonical mailbox on the RSVP row is `rsvp.email`. For convenience and joins,
+ * the primary `guest_accounts` row also stores the same address in `guest_accounts.email` when the guest
+ * provided one. Companions use `companionEmail` when they bind their own address (otherwise `null`).
  */
 export interface GuestPartyMemberInput {
     displayName: string
@@ -36,6 +37,11 @@ export interface GuestPartyMemberInput {
      * Must match `guest_accounts.sort_order` semantics enforced in the database.
      */
     sortOrder: number
+    /**
+     * Primary only: same value as persisted `rsvp.email` (trimmed); stored on `guest_accounts.email`.
+     * Omit or null when the RSVP has no email.
+     */
+    primaryRsvpEmail?: string | null
     /** Optional email for companions; ignored when `isPrimary` is true. */
     companionEmail?: string | null
 }

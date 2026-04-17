@@ -1,5 +1,6 @@
 import "server-only";
 
+import {normalizeGuestAccountEmailForStorage} from "@entities/guest-account";
 import type {SupabaseClient} from "@supabase/supabase-js";
 
 export type EnsurePrimaryGuestAccountResult =
@@ -31,7 +32,7 @@ export async function getOrCreatePrimaryGuestAccountId(
 
     const {data: rsvpRow, error: rsvpErr} = await supabase
         .from("rsvp")
-        .select("name")
+        .select("name, email")
         .eq("id", rsvpId)
         .maybeSingle();
 
@@ -43,6 +44,12 @@ export async function getOrCreatePrimaryGuestAccountId(
         return {ok: false, message: "RSVP not found"};
     }
 
+    const rawEmail = (rsvpRow as { email?: unknown } | null)?.email;
+    const emailFromRsvp =
+        typeof rawEmail === "string"
+            ? normalizeGuestAccountEmailForStorage(rawEmail)
+            : null;
+
     const {data: inserted, error: insErr} = await supabase
         .from("guest_accounts")
         .insert({
@@ -50,7 +57,7 @@ export async function getOrCreatePrimaryGuestAccountId(
             display_name: name.trim(),
             is_primary: true,
             sort_order: 0,
-            email: null,
+            email: emailFromRsvp,
         })
         .select("id")
         .single();

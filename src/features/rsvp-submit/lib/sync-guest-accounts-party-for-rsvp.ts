@@ -3,6 +3,7 @@ import "server-only";
 import {
     checkPartyHasSinglePrimary,
     mapGuestPartyMemberToRowInsert,
+    normalizeGuestAccountEmailForStorage,
     normalizeGuestDisplayNameForStorage,
     type GuestPartyMemberInput,
 } from "@entities/guest-account";
@@ -38,9 +39,12 @@ export async function syncGuestAccountsPartyForRsvp(
     }
 
     const displayName = normalizeGuestDisplayNameForStorage(primary.displayName);
+    const primaryEmail = normalizeGuestAccountEmailForStorage(
+        primary.primaryRsvpEmail ?? null,
+    );
     const {error: updErr} = await supabase
         .from("guest_accounts")
-        .update({display_name: displayName})
+        .update({display_name: displayName, email: primaryEmail})
         .eq("id", ensured.guestAccountId);
 
     if (updErr) {
