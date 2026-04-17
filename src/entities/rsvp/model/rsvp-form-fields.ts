@@ -27,6 +27,7 @@ export const RSVP_FIELDS: FormField[] = [
             {value: 2, labelKey: '2'},
             {value: 3, labelKey: '3'},
             {value: 4, labelKey: '4'},
+            {value: 5, labelKey: '5'},
         ],
         transform: (v) => (v === '' ? '' : Number(v)),
     },
