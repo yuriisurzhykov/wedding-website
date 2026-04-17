@@ -1,7 +1,12 @@
 import type {PublicContact, SiteSettingsPatch} from '@entities/site-settings'
 
 export type AdminSiteSettingsPatchResult =
-    | {ok: true; updated_at?: string; public_contact?: PublicContact}
+    | {
+          ok: true
+          updated_at?: string
+          public_contact?: PublicContact
+          public_contact_sender_id?: string | null
+      }
     | {ok: false; status: number; data: unknown}
 
 /**
@@ -49,5 +54,19 @@ export async function patchAdminSiteSettings(
         }
     }
 
-    return {ok: true, updated_at, public_contact}
+    let public_contact_sender_id: string | null | undefined
+    if (
+        typeof data === 'object' &&
+        data !== null &&
+        'public_contact_sender_id' in data
+    ) {
+        const raw = (data as {public_contact_sender_id: unknown}).public_contact_sender_id
+        if (raw === null) {
+            public_contact_sender_id = null
+        } else if (typeof raw === 'string') {
+            public_contact_sender_id = raw
+        }
+    }
+
+    return {ok: true, updated_at, public_contact, public_contact_sender_id}
 }

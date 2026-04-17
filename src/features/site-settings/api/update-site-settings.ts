@@ -11,6 +11,7 @@ import {
     type SiteSettings,
     type SiteSettingsPatch,
 } from '@entities/site-settings'
+import {getEmailSenderByIdForAdmin} from '@features/admin-email-senders'
 import {getResendWebhookPublicUrl, syncResendInboundWebhook} from '@features/resend-webhook-subscription'
 import {createServerClient} from '@shared/api/supabase/server'
 import {revalidateTag} from 'next/cache'
@@ -42,10 +43,15 @@ function mergeSnapshot(
         patch.public_contact !== undefined
             ? mergePublicContactDbColumns(rawContact, patch.public_contact)
             : rawContact
+    const public_contact_sender_id =
+        patch.public_contact_sender_id !== undefined
+            ? patch.public_contact_sender_id
+            : current.public_contact_sender_id
     return {
         ...current,
         capabilities,
         public_contact: resolvePublicContactFromDb(mergedColumns),
+        public_contact_sender_id,
     }
 }
 
@@ -67,7 +73,9 @@ export async function updateSiteSettings(patch: unknown): Promise<UpdateSiteSett
         const [siteRead, featuresRead] = await Promise.all([
             supabase
                 .from('site_settings')
-                .select('id,updated_at,public_contact_phone,public_contact_email')
+                .select(
+                    'id,updated_at,public_contact_phone,public_contact_email,public_contact_sender_id',
+                )
                 .eq('id', 'default')
                 .maybeSingle(),
             supabase.from('site_feature_states').select('feature_key,state'),
@@ -83,13 +91,34 @@ export async function updateSiteSettings(patch: unknown): Promise<UpdateSiteSett
         }
 
         const current = normalizeSiteSettingsRow(siteRead.data, featuresRead.data ?? undefined)
-        const merged = mergeSnapshot(current, parsed.data, rawContact)
+        let merged = mergeSnapshot(current, parsed.data, rawContact)
+
+        if (merged.public_contact_sender_id) {
+            const senderResult = await getEmailSenderByIdForAdmin(merged.public_contact_sender_id)
+            if (!senderResult.ok) {
+                if (senderResult.kind === 'not_found') {
+                    merged = {...merged, public_contact_sender_id: null}
+                } else {
+                    return {
+                        ok: false,
+                        error: senderResult.message ?? 'Could not verify email sender.',
+                    }
+                }
+            } else {
+                const mb = senderResult.row.mailbox.trim().toLowerCase()
+                const em = merged.public_contact.email.trim().toLowerCase()
+                if (mb !== em) {
+                    merged = {...merged, public_contact_sender_id: null}
+                }
+            }
+        }
 
         const validated = siteSettingsSchema.safeParse({
             id: 'default',
             updated_at: current.updated_at,
             capabilities: merged.capabilities,
             public_contact: merged.public_contact,
+            public_contact_sender_id: merged.public_contact_sender_id,
         })
         if (!validated.success) {
             return {ok: false, error: validated.error.message}
@@ -109,8 +138,10 @@ export async function updateSiteSettings(patch: unknown): Promise<UpdateSiteSett
             updated_at: string
             public_contact_phone?: string | null
             public_contact_email?: string | null
+            public_contact_sender_id?: string | null
         } = {
             updated_at: new Date().toISOString(),
+            public_contact_sender_id: merged.public_contact_sender_id,
         }
         if (nextPublicContactColumns !== undefined) {
             settingsUpdate.public_contact_phone = nextPublicContactColumns.public_contact_phone
@@ -137,7 +168,9 @@ export async function updateSiteSettings(patch: unknown): Promise<UpdateSiteSett
         const [siteUpdated, featuresUpdated] = await Promise.all([
             supabase
                 .from('site_settings')
-                .select('id,updated_at,public_contact_phone,public_contact_email')
+                .select(
+                    'id,updated_at,public_contact_phone,public_contact_email,public_contact_sender_id',
+                )
                 .eq('id', 'default')
                 .single(),
             supabase.from('site_feature_states').select('feature_key,state'),

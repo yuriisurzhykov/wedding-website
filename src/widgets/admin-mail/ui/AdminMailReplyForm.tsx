@@ -1,6 +1,7 @@
 "use client";
 
 import {useRouter} from "@/i18n/navigation";
+import {formatSenderDisplay} from "@entities/inbound-email";
 import type {InboundEmailRow, ReplyTemplateRow} from "@entities/inbound-email";
 import {Button} from "@shared/ui/Button";
 import {Input} from "@shared/ui/Input";
@@ -94,6 +95,11 @@ export function AdminMailReplyForm({inbound, templates}: Props) {
         <div className="rounded-lg border border-border bg-bg-section/40 p-4">
             <h3 className="font-display text-h3 text-text-primary">{t("title")}</h3>
             <p className="mt-1 text-small text-text-secondary">{t("hint")}</p>
+
+            <p className="mt-3 text-small text-text-secondary">
+                <span className="text-text-primary">{t("toLabel")}</span>{" "}
+                {formatSenderDisplay(inbound)}
+            </p>
 
             <div className="mt-4 space-y-4">
                 <div>

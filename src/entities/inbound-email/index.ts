@@ -5,6 +5,7 @@ export type {
     InboundEmailAttachmentRow,
     InboundEmailRow,
 } from "./model/inbound-email";
+export {formatSenderDisplay} from "./model/inbound-email";
 export type {
     ReplyTemplatePlaceholderKey,
     ReplyTemplateRow,

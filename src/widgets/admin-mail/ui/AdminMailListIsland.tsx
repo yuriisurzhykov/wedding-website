@@ -9,6 +9,10 @@ import {useCallback, useMemo, useState} from "react";
 
 import {fetchAdminMailList} from "../lib/fetch-admin-mail-api";
 
+function senderPrimary(row: AdminInboundEmailListItem): string {
+    return row.from_name?.trim() || row.from_address;
+}
+
 type Props = Readonly<{
     initialEmails: AdminInboundEmailListItem[];
     initialNextCursor: string | null;
@@ -66,9 +70,9 @@ export function AdminMailListIsland({initialEmails, initialNextCursor}: Props) {
             <ul className="max-h-[min(70vh,560px)] divide-y divide-border overflow-y-auto">
                 {sorted.map((row) => {
                     const active = row.id === selectedId;
-                    const subject =
-                        row.subject?.trim() ||
-                        (row.from_name?.trim() ? row.from_name.trim() : row.from_address);
+                    const sender = senderPrimary(row);
+                    const hasName = Boolean(row.from_name?.trim());
+                    const subject = row.subject?.trim() || t("list.noSubject");
                     return (
                         <li key={row.id}>
                             <Link
@@ -81,10 +85,17 @@ export function AdminMailListIsland({initialEmails, initialNextCursor}: Props) {
                                     row.status === "unread" && "font-semibold text-text-primary",
                                 )}
                             >
-                                <span className="line-clamp-2 text-small leading-snug">{subject}</span>
-                                <span className="mt-1 block text-caption text-text-muted">
-                                    {row.from_address}
+                                <span className="block truncate text-small leading-snug text-text-primary">
+                                    {sender}
                                 </span>
+                                <span className="mt-1 block line-clamp-2 text-small leading-snug text-text-secondary">
+                                    {subject}
+                                </span>
+                                {hasName ? (
+                                    <span className="mt-1 block truncate text-caption text-text-muted">
+                                        {row.from_address}
+                                    </span>
+                                ) : null}
                             </Link>
                         </li>
                     );

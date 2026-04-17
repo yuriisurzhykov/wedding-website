@@ -18,6 +18,11 @@ export type SiteSettings = {
     updated_at: string
     capabilities: SiteCapabilities
     public_contact: PublicContact
+    /**
+     * When set, inbound mail replies use this `email_senders` row for the Resend `from` line
+     * (`formatResendFromLine`). The sender `mailbox` must match `public_contact.email`.
+     */
+    public_contact_sender_id: string | null
 }
 
 export const siteSettingsSchema = z
@@ -26,6 +31,7 @@ export const siteSettingsSchema = z
         updated_at: z.string(),
         capabilities: siteCapabilitiesSchema,
         public_contact: publicContactSchema,
+        public_contact_sender_id: z.union([z.string().uuid(), z.null()]),
     })
     .strict()
 
@@ -34,6 +40,7 @@ export const siteSettingsPatchSchema = z
     .object({
         capabilities: siteCapabilitiesSchema.partial().optional(),
         public_contact: publicContactPatchSchema.optional(),
+        public_contact_sender_id: z.union([z.string().uuid(), z.null()]).optional(),
     })
     .strict()
 
@@ -48,6 +55,7 @@ export function getDefaultSiteSettings(): SiteSettings {
         updated_at: new Date(0).toISOString(),
         capabilities: parseFeatureStatesFromDb(undefined),
         public_contact: getDefaultPublicContact(),
+        public_contact_sender_id: null,
     }
 }
 
@@ -61,12 +69,18 @@ export function normalizeSiteSettingsRow(
         updated_at: string
         public_contact_phone?: string | null
         public_contact_email?: string | null
+        public_contact_sender_id?: string | null
     } | null,
     featureStatesFromDb?: unknown,
 ): SiteSettings {
     if (!row || row.id !== 'default') {
         return getDefaultSiteSettings()
     }
+    const senderId =
+        typeof row.public_contact_sender_id === 'string' &&
+        row.public_contact_sender_id.trim() !== ''
+            ? row.public_contact_sender_id.trim()
+            : null
     return {
         id: 'default',
         updated_at: row.updated_at,
@@ -75,5 +89,6 @@ export function normalizeSiteSettingsRow(
             public_contact_phone: row.public_contact_phone,
             public_contact_email: row.public_contact_email,
         }),
+        public_contact_sender_id: senderId,
     }
 }

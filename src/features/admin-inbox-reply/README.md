@@ -1,6 +1,6 @@
 # Feature: admin-inbox-reply
 
-Sends admin replies to stored inbound messages: merges allow-listed `{{senderName}}`, `{{heading}}`, `{{body}}` placeholders when a `reply_templates` row is selected, renders HTML with the shared wedding transactional theme and fixed footer, sends via Resend with `In-Reply-To` / `References`, `replyTo` set to site `public_contact` email, then writes `inbound_email_replies` and `email_send_log`.
+Sends admin replies to stored inbound messages: merges allow-listed `{{senderName}}`, `{{heading}}`, `{{body}}` placeholders when a `reply_templates` row is selected, renders HTML with the shared wedding transactional theme and fixed footer, sends via Resend with **`from`** = `formatResendFromLine` from `@features/admin-email-senders` using **`site_settings.public_contact_sender_id`** when set (mailbox must match `public_contact.email`), otherwise the **`email_senders`** row whose `mailbox` matches the public contact email; `In-Reply-To` / `References` for threading, then writes `inbound_email_replies` and `email_send_log`.
 
 ## Purpose
 
@@ -40,7 +40,7 @@ if (!result.ok) {
 
 - **validation:** Zod failure or empty resolved subject after template merge — caller returns **400**.
 - **not_found:** missing inbound row or `template_id` — **404**.
-- **config:** missing `RESEND_API_KEY`, empty recipient/`public_contact` email — **500** / **503** per route policy.
+- **config:** missing `RESEND_API_KEY`, empty recipient/`public_contact` email, no matching **`email_senders`** row for that mailbox (and no valid `public_contact_sender_id`) — **500** / **503** per route policy.
 - **database:** Supabase errors — **500**.
 - **resend:** provider error; `email_send_log` records `failed` before returning — **502** or **500** per route.
 

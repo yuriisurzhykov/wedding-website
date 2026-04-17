@@ -241,10 +241,11 @@ export async function ingestInboundEmail(input: {
         return {ok: false, kind: "database", message: msg};
     }
 
-    const senderLabel = fromParsed.name ?? fromParsed.address;
     void notifyAdminOfInboundEmail({
         inboundEmailId: rowId,
-        senderLabel,
+        senderName: fromParsed.name,
+        senderAddress: fromParsed.address,
+        originalSubject: insertRow.subject,
         request: input.request,
     }).catch((err) => {
         console.error(

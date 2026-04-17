@@ -11,6 +11,10 @@ export {
     type GetEmailSenderByIdForAdminResult,
 } from "./api/get-email-sender-by-id-for-admin";
 export {
+    getEmailSenderByMailboxForAdmin,
+    type GetEmailSenderByMailboxForAdminResult,
+} from "./api/get-email-sender-by-mailbox-for-admin";
+export {
     listEmailSendersForAdmin,
     type ListEmailSendersForAdminResult,
 } from "./api/list-email-senders-for-admin";

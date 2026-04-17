@@ -1,12 +1,13 @@
 import "server-only";
 
 import type {InboundEmailRow, ReplyTemplateRow} from "@entities/inbound-email";
-import {getSiteSettings} from "@features/site-settings";
 import {
-    createResendClient,
-    getResendApiKey,
-    getTransactionalFromAddress,
-} from "@shared/api/resend";
+    formatResendFromLine,
+    getEmailSenderByIdForAdmin,
+    getEmailSenderByMailboxForAdmin,
+} from "@features/admin-email-senders";
+import {getSiteSettings} from "@features/site-settings";
+import {createResendClient, getResendApiKey} from "@shared/api/resend";
 import {createServerClient} from "@shared/api/supabase/server";
 import {escapeHtml} from "@shared/lib/html-escape";
 
@@ -41,8 +42,9 @@ function parseRecipientEmail(fromAddress: string): string {
 
 /**
  * Sends an admin reply for a stored inbound message: merges optional `reply_templates` placeholders,
- * renders HTML with the wedding transactional theme, sends via Resend with threading headers,
- * writes `inbound_email_replies` and `email_send_log`.
+ * renders HTML with the wedding transactional theme, sends via Resend with **`from`** from
+ * `site_settings.public_contact_sender_id` → {@link formatResendFromLine}, or else a matching `email_senders`
+ * row by mailbox, then threading headers, writes `inbound_email_replies` and `email_send_log`.
  *
  * Call only from trusted admin API routes (service-role Supabase + auth already enforced).
  */
@@ -148,13 +150,63 @@ export async function sendInboxReply(
     }
 
     const settings = await getSiteSettings();
-    const replyTo = settings.public_contact.email.trim();
-    if (!replyTo) {
+    const contactMailbox = settings.public_contact.email.trim();
+    if (!contactMailbox) {
         return {
             ok: false,
             kind: "config",
             message: "public_contact email is not configured",
         };
+    }
+
+    let from: string;
+    if (settings.public_contact_sender_id) {
+        const senderResult = await getEmailSenderByIdForAdmin(
+            settings.public_contact_sender_id,
+        );
+        if (!senderResult.ok) {
+            if (senderResult.kind === "not_found") {
+                return {
+                    ok: false,
+                    kind: "config",
+                    message:
+                        "Configured public contact sender was not found; update Site settings → Public contact.",
+                };
+            }
+            return {
+                ok: false,
+                kind: senderResult.kind === "config" ? "config" : "database",
+                message: senderResult.message,
+            };
+        }
+        const mb = senderResult.row.mailbox.trim().toLowerCase();
+        if (mb !== contactMailbox.toLowerCase()) {
+            return {
+                ok: false,
+                kind: "config",
+                message:
+                    "Public contact email does not match the selected sender mailbox; fix Site settings.",
+            };
+        }
+        from = formatResendFromLine(senderResult.row);
+    } else {
+        const byMailbox = await getEmailSenderByMailboxForAdmin(contactMailbox);
+        if (!byMailbox.ok) {
+            if (byMailbox.kind === "not_found") {
+                return {
+                    ok: false,
+                    kind: "config",
+                    message:
+                        "No email sender matches the public contact address. Add it under Admin → Email → Senders, or pick that sender under Site settings → Public contact.",
+                };
+            }
+            return {
+                ok: false,
+                kind: byMailbox.kind === "config" ? "config" : "database",
+                message: byMailbox.message,
+            };
+        }
+        from = formatResendFromLine(byMailbox.row);
     }
 
     const apiKey = getResendApiKey();
@@ -165,8 +217,6 @@ export async function sendInboxReply(
             message: "RESEND_API_KEY is not set",
         };
     }
-
-    const from = getTransactionalFromAddress();
     const to = parseRecipientEmail(inboundRow.from_address);
     if (!to) {
         return {
@@ -216,7 +266,6 @@ export async function sendInboxReply(
         subject: subjectFinal,
         html: fullHtml,
         text: plainText,
-        replyTo: [replyTo],
         ...(threadHeaders ? {headers: threadHeaders} : {}),
     });
 

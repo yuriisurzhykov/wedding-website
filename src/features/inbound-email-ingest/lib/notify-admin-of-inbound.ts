@@ -2,6 +2,7 @@ import "server-only";
 
 import {routing} from "@/i18n/routing";
 
+import {formatSenderDisplay} from "@entities/inbound-email";
 import {
     createResendClient,
     getAdminEmailForNotifications,
@@ -13,10 +14,16 @@ import {resolvePublicSiteBaseForServerEmail} from "@shared/lib/get-public-site-u
 
 /**
  * Sends a short admin alert with a link to the inbox row. Fire-and-forget: callers attach `.catch(…)`.
+ *
+ * Subject uses the display name when known; body always spells out both
+ * `From: Name <addr>` and the original `Subject:` so the admin can triage from
+ * the notification alone.
  */
 export function notifyAdminOfInboundEmail(input: {
     inboundEmailId: string;
-    senderLabel: string;
+    senderName: string | null;
+    senderAddress: string;
+    originalSubject: string | null;
     request?: Request;
 }): Promise<void> {
     const to = getAdminEmailForNotifications();
@@ -40,10 +47,27 @@ export function notifyAdminOfInboundEmail(input: {
 
     const from = getTransactionalFromAddress();
     const resend = createResendClient(apiKey);
-    const subject = `New message from ${input.senderLabel}`;
 
-    const text = `Open in admin: ${url}`;
-    const html = `<p>${escapeHtml(subject)}</p><p><a href="${escapeAttr(url)}">Open in admin</a></p>`;
+    const senderDisplay = formatSenderDisplay({
+        from_name: input.senderName,
+        from_address: input.senderAddress,
+    });
+    const senderSubjectPart = input.senderName?.trim() || input.senderAddress;
+    const subject = `New message from ${senderSubjectPart}`;
+    const originalSubject = input.originalSubject?.trim() || "(No subject)";
+
+    const text = [
+        `From: ${senderDisplay}`,
+        `Subject: ${originalSubject}`,
+        "",
+        `Open in admin: ${url}`,
+    ].join("\n");
+
+    const html = [
+        `<p><strong>From:</strong> ${escapeHtml(senderDisplay)}</p>`,
+        `<p><strong>Subject:</strong> ${escapeHtml(originalSubject)}</p>`,
+        `<p><a href="${escapeAttr(url)}">Open in admin</a></p>`,
+    ].join("");
 
     return resend.emails
         .send({

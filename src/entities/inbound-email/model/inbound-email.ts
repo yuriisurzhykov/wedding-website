@@ -48,3 +48,19 @@ export type InboundEmail = InboundEmailRow;
  * Domain alias for a stored attachment (same fields as {@link InboundEmailAttachmentRow}).
  */
 export type InboundEmailAttachment = InboundEmailAttachmentRow;
+
+/**
+ * Canonical RFC 5322-style display of the sender: `Name <addr@host>` when a display
+ * name is known, falls back to the bare address otherwise.
+ *
+ * Used by admin UI and outbound notification emails so that the sender string is
+ * formatted identically everywhere the admin sees it.
+ */
+export function formatSenderDisplay(input: {
+    from_name: string | null;
+    from_address: string;
+}): string {
+    const name = input.from_name?.trim();
+    const address = input.from_address.trim();
+    return name ? `${name} <${address}>` : address;
+}

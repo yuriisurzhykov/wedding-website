@@ -528,7 +528,8 @@
         "empty": "No messages yet.",
         "loadError": "Could not load messages. Try again later.",
         "loadMore": "Load more",
-        "loadMoreLoading": "Loading…"
+        "loadMoreLoading": "Loading…",
+        "noSubject": "(No subject)"
       },
       "detail": {
         "selectMessage": "Select a message in the list, or open a notification link.",
@@ -536,7 +537,6 @@
         "loadError": "Could not load this message. Try again later.",
         "noSubject": "(No subject)",
         "fromLabel": "From:",
-        "senderNameLabel": "Name:",
         "toLabel": "To:",
         "receivedLabel": "Received:",
         "badgeArchived": "Archived",
@@ -561,6 +561,7 @@
       "reply": {
         "title": "Reply",
         "hint": "Values you enter are merged into the template as the `heading` and `body` placeholders (and related placeholders).",
+        "toLabel": "To:",
         "templateLabel": "Template",
         "templateNone": "None (custom subject)",
         "templateDefaultBadge": "default",
@@ -713,6 +714,9 @@
         "phoneHint": "Shown as on the public site. Clear the field to use the default number.",
         "emailLabel": "Email",
         "emailHint": "Used for mailto links. Clear the field to use the default address.",
+        "senderLabel": "Email sender (From)",
+        "senderHint": "Choose a row from Admin → Email → Senders so replies and the public address use the same display name and mailbox. If you leave this empty, the site still matches the contact email to a sender by mailbox when possible.",
+        "senderOptionNone": "Match by mailbox only (no fixed sender)",
         "save": "Save contact",
         "saving": "Saving…",
         "toast": {

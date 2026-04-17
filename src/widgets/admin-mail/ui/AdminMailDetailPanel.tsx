@@ -1,6 +1,7 @@
 "use client";
 
 import {useRouter} from "@/i18n/navigation";
+import {formatSenderDisplay} from "@entities/inbound-email";
 import type {InboundEmailAttachmentRow, InboundEmailRow, ReplyTemplateRow} from "@entities/inbound-email";
 import {Button} from "@shared/ui/Button";
 import {useFormatter} from "next-intl";
@@ -114,13 +115,9 @@ export function AdminMailDetailPanel({email, attachments, templates}: Props) {
                             {email.subject?.trim() || t("noSubject")}
                         </h1>
                         <p className="mt-2 text-body text-text-secondary">
-                            <span className="text-text-primary">{t("fromLabel")}</span> {email.from_address}
+                            <span className="text-text-primary">{t("fromLabel")}</span>{" "}
+                            {formatSenderDisplay(email)}
                         </p>
-                        {email.from_name?.trim() ? (
-                            <p className="mt-1 text-small text-text-muted">
-                                {t("senderNameLabel")} {email.from_name.trim()}
-                            </p>
-                        ) : null}
                         <p className="mt-1 text-small text-text-muted">
                             <span className="text-text-secondary">{t("toLabel")}</span> {email.to_address}
                         </p>
