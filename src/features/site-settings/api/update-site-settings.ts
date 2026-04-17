@@ -11,10 +11,19 @@ import {
     type SiteSettings,
     type SiteSettingsPatch,
 } from '@entities/site-settings'
+import {getResendWebhookPublicUrl, syncResendInboundWebhook} from '@features/resend-webhook-subscription'
 import {createServerClient} from '@shared/api/supabase/server'
 import {revalidateTag} from 'next/cache'
 
 import {SITE_SETTINGS_CACHE_TAG} from './get-site-settings'
+
+function normalizeEmailColumn(value: string | null | undefined): string | null {
+    if (value == null) {
+        return null
+    }
+    const t = value.trim()
+    return t === '' ? null : t.toLowerCase()
+}
 
 export type UpdateSiteSettingsResult =
     | {ok: true; settings: SiteSettings}
@@ -141,6 +150,26 @@ export async function updateSiteSettings(patch: unknown): Promise<UpdateSiteSett
         revalidateTag(SITE_SETTINGS_CACHE_TAG, 'max')
 
         const settings = normalizeSiteSettingsRow(siteUpdated.data, featuresUpdated.data ?? undefined)
+
+        if (parsed.data.public_contact !== undefined) {
+            const mergedContact = mergePublicContactDbColumns(rawContact, parsed.data.public_contact)
+            const prevCol = normalizeEmailColumn(rawContact.public_contact_email)
+            const nextCol = normalizeEmailColumn(mergedContact.public_contact_email)
+            if (prevCol !== nextCol) {
+                const endpointUrl = getResendWebhookPublicUrl()
+                if (endpointUrl) {
+                    void syncResendInboundWebhook({
+                        filterEmail: settings.public_contact.email.trim(),
+                        endpointUrl,
+                    }).catch((e) => {
+                        console.error(
+                            '[site-settings] resend-webhook-sync failed:',
+                            e instanceof Error ? e.message : e,
+                        )
+                    })
+                }
+            }
+        }
 
         return {ok: true, settings}
     } catch (e) {

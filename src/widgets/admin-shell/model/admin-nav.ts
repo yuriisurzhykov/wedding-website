@@ -9,6 +9,7 @@ export const ADMIN_NAV_ITEMS = [
     {href: "/admin/gallery", navKey: "gallery"},
     {href: "/admin/wishes", navKey: "wishes"},
     {href: "/admin/email", navKey: "email"},
+    {href: "/admin/mail", navKey: "mail"},
 ] as const;
 
 export type AdminNavKey = (typeof ADMIN_NAV_ITEMS)[number]["navKey"];

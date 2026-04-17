@@ -324,7 +324,8 @@
         "schedule": "Schedule",
         "gallery": "Gallery",
         "wishes": "Wishes",
-        "email": "Email"
+        "email": "Email",
+        "mail": "Inbox"
       }
     },
     "login": {
@@ -514,6 +515,118 @@
         "senderDeleted": "Sender removed",
         "senderSaveFailed": "Could not save sender.",
         "senderDeleteFailed": "Could not delete sender."
+      }
+    },
+    "mail": {
+      "metaTitle": "Admin — Inbox",
+      "metaTitleDetail": "Admin — Message",
+      "title": "Inbox",
+      "subtitle": "Messages sent to your public contact address (delivered via Resend inbound).",
+      "manageTemplates": "Reply templates",
+      "list": {
+        "heading": "Messages",
+        "empty": "No messages yet.",
+        "loadError": "Could not load messages. Try again later.",
+        "loadMore": "Load more",
+        "loadMoreLoading": "Loading…"
+      },
+      "detail": {
+        "selectMessage": "Select a message in the list, or open a notification link.",
+        "notFound": "This message was not found or was deleted.",
+        "loadError": "Could not load this message. Try again later.",
+        "noSubject": "(No subject)",
+        "fromLabel": "From:",
+        "senderNameLabel": "Name:",
+        "toLabel": "To:",
+        "receivedLabel": "Received:",
+        "badgeArchived": "Archived",
+        "messageHeading": "Message",
+        "iframeTitle": "Message content preview",
+        "attachmentsHeading": "Attachments",
+        "archive": "Archive",
+        "archiving": "Archiving…",
+        "markUnread": "Mark unread",
+        "markingUnread": "Updating…",
+        "delete": "Delete",
+        "deleting": "Deleting…",
+        "confirmDelete": "Delete this message from the inbox? This cannot be undone.",
+        "toast": {
+          "statusFailed": "Could not update status.",
+          "archived": "Message archived.",
+          "markedUnread": "Marked as unread.",
+          "deleteFailed": "Could not delete the message.",
+          "deleted": "Message deleted."
+        }
+      },
+      "reply": {
+        "title": "Reply",
+        "hint": "Values you enter are merged into the template as {{heading}} and {{body}} (and related placeholders).",
+        "templateLabel": "Template",
+        "templateNone": "None (custom subject)",
+        "templateDefaultBadge": "default",
+        "subjectLabel": "Subject",
+        "headingLabel": "Heading value",
+        "bodyLabel": "Body (HTML)",
+        "previewLabel": "Preview",
+        "previewTitle": "Reply preview",
+        "send": "Send reply",
+        "sending": "Sending…",
+        "toast": {
+          "subjectRequired": "Enter a subject when not using a template.",
+          "headingRequired": "Enter a heading value.",
+          "bodyRequired": "Enter a body.",
+          "sendFailed": "Could not send the reply.",
+          "sent": "Reply sent."
+        }
+      },
+      "templates": {
+        "metaTitle": "Admin — Reply templates",
+        "title": "Reply templates",
+        "subtitle": "Placeholders: {{senderName}}, {{heading}}, {{body}}. The email footer is fixed when sending.",
+        "backToInbox": "Back to inbox",
+        "loadError": "Could not load templates. Try again later.",
+        "tableTitle": "Saved templates",
+        "empty": "No templates yet.",
+        "edit": "Edit",
+        "delete": "Delete",
+        "defaultBadge": "Default",
+        "confirmDelete": "Delete this template?",
+        "form": {
+          "createTitle": "New template",
+          "editTitle": "Edit template",
+          "name": "Name",
+          "subject": "Subject",
+          "heading": "Heading pattern",
+          "bodyHtml": "Body HTML pattern",
+          "bodyText": "Plain text (optional)",
+          "default": "Default template",
+          "defaultYes": "Yes",
+          "defaultNo": "No",
+          "create": "Create",
+          "save": "Save",
+          "saving": "Saving…",
+          "cancelEdit": "Cancel"
+        },
+        "toast": {
+          "validation": "Fill in name, subject, heading, and body HTML.",
+          "saveFailed": "Could not save the template.",
+          "created": "Template created.",
+          "updated": "Template updated.",
+          "deleteFailed": "Could not delete the template.",
+          "deleted": "Template deleted."
+        }
+      },
+      "webhook": {
+        "lastErrorLabel": "Last sync error:",
+        "missingWebhook": "Inbound webhook is not registered yet — use Sync now after DNS is ready.",
+        "filterMismatch": "Allow-list email ({current}) differs from the site contact address ({expected}).",
+        "filterEmpty": "empty",
+        "noSigningSecret": "No signing secret is stored yet — complete a successful webhook sync.",
+        "syncNow": "Sync now",
+        "syncing": "Syncing…",
+        "toastOk": "Webhook sync completed.",
+        "toastFailed": "Webhook sync failed.",
+        "statusLoadFailed": "Could not load webhook status: {message}"
       }
     },
     "stubs": {

@@ -8,7 +8,7 @@ alwaysApply: true
 ## Env at the server boundary only
 
 - Read `process.env` inside **server-only** helpers (`getXConfig()`, `assertXEnv()`), return a **typed object** or fail with a clear error.
-- **Do not** export raw secrets from modules, global `const FROM = '...'` for production, etc. Variable names must match **ARCHITECTURE.md** and `.env.example` (e.g. `SUPABASE_*`, `RESEND_API_KEY`, `ADMIN_EMAIL`, `RESEND_FROM_EMAIL`).
+- **Do not** export raw secrets from modules, global `const FROM = '...'` for production, etc. Variable names must match **ARCHITECTURE.md** and the root **`env.example`** template (e.g. `SUPABASE_*`, `RESEND_API_KEY`, `ADMIN_EMAIL`, `RESEND_FROM_EMAIL`).
 - Dev fallbacks live in **one** place with a short comment explaining why (e.g. inside `getTransactionalFromAddress()`).
 
 ## Thin API route

@@ -196,7 +196,7 @@ wedding/
 Prefer **`@shared/*`**, **`@entities/*`**, **`@features/*`**, **`@widgets/*`** in new code; keep `@/lib/*` only where a
 shim still exists.
 
-Env block for local secrets (unchanged):
+Env block for local secrets:
 
 ```
 .env.local
@@ -209,6 +209,9 @@ Env block for local secrets (unchanged):
     R2_BUCKET_NAME
     R2_PUBLIC_URL                        # Bucket CDN URL (custom domain)
     RESEND_API_KEY
+    RESEND_WEBHOOK_PUBLIC_URL            # Public URL of POST /api/webhooks/resend/inbound (Resend webhook subscription)
+    RESEND_WEBHOOK_SIGNING_SECRET        # Svix signing secret for email.received (fallback; DB row preferred after sync)
+    RESEND_INBOUND_DOMAIN                # Domain verified in Resend for inbound MX (asserted when syncing webhook)
     ADMIN_EMAIL                          # Where to send RSVP notifications
     ADMIN_SECRET                         # Optional legacy Bearer token for /api/admin (scripts)
     ADMIN_SESSION_SECRET                 # Signs admin session JWT (httpOnly cookie); admin password lives in DB (admin_site_credential)
@@ -1184,6 +1187,7 @@ export function createBrowserClient() {
 1. Sign up at resend.com
 2. Domains → Add Domain → verify DNS records
 3. API Keys → Create API Key → copy → `RESEND_API_KEY`
+4. Inbound mail (optional — admin inbox): verify the domain for inbound in Resend (MX to Resend), then set `RESEND_WEBHOOK_PUBLIC_URL`, `RESEND_WEBHOOK_SIGNING_SECRET`, and `RESEND_INBOUND_DOMAIN` as in §0.5.
 
 ### 0.5 `.env.local`
 
@@ -1203,11 +1207,17 @@ R2_PUBLIC_URL=https://media.yourdomain.com
 
 # Resend
 RESEND_API_KEY=re_xxx
+# Inbound mail (Resend email.received → Svix webhook); see Phase 0.4 / inbound-mail feature README
+RESEND_WEBHOOK_PUBLIC_URL=https://yourdomain.com/api/webhooks/resend/inbound
+RESEND_WEBHOOK_SIGNING_SECRET=whsec_xxx
+RESEND_INBOUND_DOMAIN=yourdomain.com
 
 # Admin
 ADMIN_EMAIL=your@email.com
 ADMIN_SECRET=choose-a-long-random-string-here
 ```
+
+The repository root includes **`env.example`** with the same keys and placeholders; copy it to `.env.local`. You can also duplicate it as **`.env.example`** locally if your workflow expects that filename (`.gitignore` allows tracking `.env.example`).
 
 ---
 

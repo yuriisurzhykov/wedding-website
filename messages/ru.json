@@ -324,7 +324,8 @@
         "schedule": "Программа",
         "gallery": "Галерея",
         "wishes": "Пожелания",
-        "email": "Почта"
+        "email": "Почта",
+        "mail": "Входящие"
       }
     },
     "login": {
@@ -514,6 +515,118 @@
         "senderDeleted": "Отправитель удалён",
         "senderSaveFailed": "Не удалось сохранить отправителя.",
         "senderDeleteFailed": "Не удалось удалить отправителя."
+      }
+    },
+    "mail": {
+      "metaTitle": "Админка — входящие",
+      "metaTitleDetail": "Админка — сообщение",
+      "title": "Входящие",
+      "subtitle": "Сообщения на публичный контактный адрес (через Resend inbound).",
+      "manageTemplates": "Шаблоны ответов",
+      "list": {
+        "heading": "Сообщения",
+        "empty": "Пока нет сообщений.",
+        "loadError": "Не удалось загрузить сообщения. Попробуйте позже.",
+        "loadMore": "Ещё",
+        "loadMoreLoading": "Загрузка…"
+      },
+      "detail": {
+        "selectMessage": "Выберите сообщение в списке или откройте ссылку из уведомления.",
+        "notFound": "Сообщение не найдено или удалено.",
+        "loadError": "Не удалось загрузить сообщение. Попробуйте позже.",
+        "noSubject": "(Без темы)",
+        "fromLabel": "От:",
+        "senderNameLabel": "Имя:",
+        "toLabel": "Кому:",
+        "receivedLabel": "Получено:",
+        "badgeArchived": "В архиве",
+        "messageHeading": "Текст",
+        "iframeTitle": "Предпросмотр содержимого",
+        "attachmentsHeading": "Вложения",
+        "archive": "В архив",
+        "archiving": "Архивируем…",
+        "markUnread": "Не прочитано",
+        "markingUnread": "Обновляем…",
+        "delete": "Удалить",
+        "deleting": "Удаляем…",
+        "confirmDelete": "Удалить это сообщение? Действие необратимо.",
+        "toast": {
+          "statusFailed": "Не удалось обновить статус.",
+          "archived": "Сообщение в архиве.",
+          "markedUnread": "Помечено как непрочитанное.",
+          "deleteFailed": "Не удалось удалить сообщение.",
+          "deleted": "Сообщение удалено."
+        }
+      },
+      "reply": {
+        "title": "Ответ",
+        "hint": "Введённые значения подставляются в шаблон как {{heading}} и {{body}} (и другие плейсхолдеры).",
+        "templateLabel": "Шаблон",
+        "templateNone": "Нет (своя тема)",
+        "templateDefaultBadge": "по умолчанию",
+        "subjectLabel": "Тема",
+        "headingLabel": "Значение заголовка",
+        "bodyLabel": "Текст (HTML)",
+        "previewLabel": "Предпросмотр",
+        "previewTitle": "Предпросмотр ответа",
+        "send": "Отправить",
+        "sending": "Отправка…",
+        "toast": {
+          "subjectRequired": "Укажите тему, если не выбран шаблон.",
+          "headingRequired": "Введите значение заголовка.",
+          "bodyRequired": "Введите текст письма.",
+          "sendFailed": "Не удалось отправить ответ.",
+          "sent": "Ответ отправлен."
+        }
+      },
+      "templates": {
+        "metaTitle": "Админка — шаблоны ответов",
+        "title": "Шаблоны ответов",
+        "subtitle": "Плейсхолдеры: {{senderName}}, {{heading}}, {{body}}. Подпись внизу письма фиксирована при отправке.",
+        "backToInbox": "Ко входящим",
+        "loadError": "Не удалось загрузить шаблоны. Попробуйте позже.",
+        "tableTitle": "Сохранённые шаблоны",
+        "empty": "Пока нет шаблонов.",
+        "edit": "Изменить",
+        "delete": "Удалить",
+        "defaultBadge": "По умолчанию",
+        "confirmDelete": "Удалить этот шаблон?",
+        "form": {
+          "createTitle": "Новый шаблон",
+          "editTitle": "Редактирование",
+          "name": "Название",
+          "subject": "Тема",
+          "heading": "Шаблон заголовка",
+          "bodyHtml": "HTML тела",
+          "bodyText": "Простой текст (необязательно)",
+          "default": "Шаблон по умолчанию",
+          "defaultYes": "Да",
+          "defaultNo": "Нет",
+          "create": "Создать",
+          "save": "Сохранить",
+          "saving": "Сохраняем…",
+          "cancelEdit": "Отмена"
+        },
+        "toast": {
+          "validation": "Заполните название, тему, заголовок и HTML тела.",
+          "saveFailed": "Не удалось сохранить шаблон.",
+          "created": "Шаблон создан.",
+          "updated": "Шаблон обновлён.",
+          "deleteFailed": "Не удалось удалить шаблон.",
+          "deleted": "Шаблон удалён."
+        }
+      },
+      "webhook": {
+        "lastErrorLabel": "Ошибка последней синхронизации:",
+        "missingWebhook": "Вебхук inbound ещё не зарегистрирован — нажмите «Синхронизировать», когда готовы DNS.",
+        "filterMismatch": "Адрес фильтра ({current}) не совпадает с контактом сайта ({expected}).",
+        "filterEmpty": "пусто",
+        "noSigningSecret": "Секрет подписи ещё не сохранён — выполните успешную синхронизацию вебхука.",
+        "syncNow": "Синхронизировать",
+        "syncing": "Синхронизация…",
+        "toastOk": "Синхронизация выполнена.",
+        "toastFailed": "Не удалось синхронизировать.",
+        "statusLoadFailed": "Не удалось загрузить статус вебхука: {message}"
       }
     },
     "stubs": {
