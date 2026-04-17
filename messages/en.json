@@ -560,7 +560,7 @@
       },
       "reply": {
         "title": "Reply",
-        "hint": "Values you enter are merged into the template as {{heading}} and {{body}} (and related placeholders).",
+        "hint": "Values you enter are merged into the template as the `heading` and `body` placeholders (and related placeholders).",
         "templateLabel": "Template",
         "templateNone": "None (custom subject)",
         "templateDefaultBadge": "default",
@@ -582,7 +582,7 @@
       "templates": {
         "metaTitle": "Admin — Reply templates",
         "title": "Reply templates",
-        "subtitle": "Placeholders: {{senderName}}, {{heading}}, {{body}}. The email footer is fixed when sending.",
+        "subtitle": "Placeholders: `senderName`, `heading`, `body`. The email footer is fixed when sending.",
         "backToInbox": "Back to inbox",
         "loadError": "Could not load templates. Try again later.",
         "tableTitle": "Saved templates",
