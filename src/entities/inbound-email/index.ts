@@ -3,6 +3,7 @@ export type {
     InboundEmail,
     InboundEmailAttachment,
     InboundEmailAttachmentRow,
+    InboundEmailReplyRow,
     InboundEmailRow,
 } from "./model/inbound-email";
 export {formatSenderDisplay} from "./model/inbound-email";

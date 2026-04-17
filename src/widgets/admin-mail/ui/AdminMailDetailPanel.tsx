@@ -2,7 +2,12 @@
 
 import {useRouter} from "@/i18n/navigation";
 import {formatSenderDisplay} from "@entities/inbound-email";
-import type {InboundEmailAttachmentRow, InboundEmailRow, ReplyTemplateRow} from "@entities/inbound-email";
+import type {
+    InboundEmailAttachmentRow,
+    InboundEmailReplyRow,
+    InboundEmailRow,
+    ReplyTemplateRow,
+} from "@entities/inbound-email";
 import {Button} from "@shared/ui/Button";
 import {useFormatter} from "next-intl";
 import {useTranslations} from "next-intl";
@@ -20,10 +25,11 @@ import {AdminMailReplyForm} from "./AdminMailReplyForm";
 type Props = Readonly<{
     email: InboundEmailRow;
     attachments: InboundEmailAttachmentRow[];
+    replies: InboundEmailReplyRow[];
     templates: ReplyTemplateRow[];
 }>;
 
-export function AdminMailDetailPanel({email, attachments, templates}: Props) {
+export function AdminMailDetailPanel({email, attachments, replies, templates}: Props) {
     const t = useTranslations("admin.mail.detail");
     const router = useRouter();
     const format = useFormatter();
@@ -199,6 +205,43 @@ export function AdminMailDetailPanel({email, attachments, templates}: Props) {
                     </div>
                 ) : null}
             </div>
+
+            {replies.length > 0 ? (
+                <div className="rounded-lg border border-border bg-bg-card p-6 shadow-card">
+                    <h2 className="mb-4 font-display text-h3 text-text-primary">
+                        {t("repliesHeading", {count: replies.length})}
+                    </h2>
+                    <ul className="space-y-6">
+                        {replies.map((r) => {
+                            const sentLabel = format.dateTime(new Date(r.sent_at), {
+                                dateStyle: "medium",
+                                timeStyle: "short",
+                            });
+                            return (
+                                <li key={r.id} className="border-l-2 border-primary/40 pl-4">
+                                    <div className="flex flex-wrap items-baseline justify-between gap-2">
+                                        <p className="text-small text-text-secondary">
+                                            <span className="text-text-primary">{t("replyToLabel")}</span>{" "}
+                                            {r.to_address}
+                                        </p>
+                                        <p className="text-caption text-text-muted">{sentLabel}</p>
+                                    </div>
+                                    <p className="mt-1 text-body text-text-primary">
+                                        <span className="text-text-secondary">{t("replySubjectLabel")}</span>{" "}
+                                        {r.subject}
+                                    </p>
+                                    <iframe
+                                        title={t("replyIframeTitle")}
+                                        className="mt-3 h-[min(45vh,360px)] w-full rounded-md border border-border bg-bg-card"
+                                        sandbox=""
+                                        srcDoc={r.html}
+                                    />
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </div>
+            ) : null}
 
             <AdminMailReplyForm inbound={email} templates={templates} />
         </div>

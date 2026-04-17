@@ -1,20 +1,31 @@
 import "server-only";
 
-import type {InboundEmailAttachmentRow, InboundEmailRow} from "@entities/inbound-email";
+import type {
+    InboundEmailAttachmentRow,
+    InboundEmailReplyRow,
+    InboundEmailRow,
+} from "@entities/inbound-email";
 import {createServerClient} from "@shared/api/supabase/server";
 
-type InboundEmailWithAttachmentsRow = InboundEmailRow & {
+type InboundEmailWithRelationsRow = InboundEmailRow & {
     inbound_email_attachments: InboundEmailAttachmentRow[] | null;
+    inbound_email_replies: InboundEmailReplyRow[] | null;
 };
 
 export type GetInboundEmailForAdminResult =
-    | {ok: true; email: InboundEmailRow; attachments: InboundEmailAttachmentRow[]}
+    | {
+          ok: true;
+          email: InboundEmailRow;
+          attachments: InboundEmailAttachmentRow[];
+          replies: InboundEmailReplyRow[];
+      }
     | {ok: false; kind: "database"; message: string}
     | {ok: false; kind: "config"; message: string}
     | {ok: false; kind: "not_found"};
 
 /**
- * Loads one inbound message and its attachment rows (service role).
+ * Loads one inbound message with its attachments and admin-sent replies (service role).
+ * Replies are returned in chronological order (oldest first) for threaded display.
  */
 export async function getInboundEmailForAdmin(id: string): Promise<GetInboundEmailForAdminResult> {
     let supabase;
@@ -27,7 +38,9 @@ export async function getInboundEmailForAdmin(id: string): Promise<GetInboundEma
 
     const {data, error} = await supabase
         .from("inbound_emails")
-        .select("*, inbound_email_attachments (*)")
+        .select(
+            "*, inbound_email_attachments (*), inbound_email_replies (*)",
+        )
         .eq("id", id)
         .maybeSingle();
 
@@ -38,17 +51,24 @@ export async function getInboundEmailForAdmin(id: string): Promise<GetInboundEma
         return {ok: false, kind: "not_found"};
     }
 
-    const row = data as InboundEmailWithAttachmentsRow;
+    const row = data as InboundEmailWithRelationsRow;
     const {
-        inbound_email_attachments: embedded,
+        inbound_email_attachments: embeddedAtt,
+        inbound_email_replies: embeddedRep,
         ...email
     } = row;
 
-    const attachments = Array.isArray(embedded) ? embedded : [];
+    const attachments = Array.isArray(embeddedAtt) ? embeddedAtt : [];
+    const replies = Array.isArray(embeddedRep)
+        ? [...embeddedRep].sort(
+              (a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime(),
+          )
+        : [];
 
     return {
         ok: true,
         email: email as InboundEmailRow,
         attachments,
+        replies,
     };
 }

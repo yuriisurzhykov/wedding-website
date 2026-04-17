@@ -1,17 +1,20 @@
 "use client";
 
-import {Link, usePathname} from "@/i18n/navigation";
+import {Link, usePathname, useRouter} from "@/i18n/navigation";
 import type {AdminInboundEmailListItem} from "@features/admin-inbox";
 import {cn} from "@shared/lib/cn";
 import {Button} from "@shared/ui/Button";
 import {useTranslations} from "next-intl";
-import {useCallback, useMemo, useState} from "react";
+import {useCallback, useEffect, useMemo, useState} from "react";
 
 import {fetchAdminMailList} from "../lib/fetch-admin-mail-api";
 
 function senderPrimary(row: AdminInboundEmailListItem): string {
     return row.from_name?.trim() || row.from_address;
 }
+
+/** Auto-refresh cadence for the mailbox list (ms). Only runs while the tab is visible. */
+const POLL_INTERVAL_MS = 20_000;
 
 type Props = Readonly<{
     initialEmails: AdminInboundEmailListItem[];
@@ -26,11 +29,64 @@ function extractSelectedId(pathname: string): string | undefined {
 export function AdminMailListIsland({initialEmails, initialNextCursor}: Props) {
     const t = useTranslations("admin.mail");
     const pathname = usePathname();
+    const router = useRouter();
     const selectedId = extractSelectedId(pathname);
 
     const [emails, setEmails] = useState(initialEmails);
     const [nextCursor, setNextCursor] = useState(initialNextCursor);
     const [loading, setLoading] = useState(false);
+
+    // Re-sync with the server-rendered first page on every parent refresh
+    // (router.refresh() after archive/delete/mark-unread, and the polling tick below).
+    // Any locally-appended "Load more" pages are reset intentionally — they'll reload
+    // on next scroll if needed.
+    useEffect(() => {
+        setEmails(initialEmails);
+        setNextCursor(initialNextCursor);
+    }, [initialEmails, initialNextCursor]);
+
+    // Poll for newly-arrived webhook mail while the tab is visible.
+    useEffect(() => {
+        if (typeof document === "undefined") {
+            return;
+        }
+        let timer: ReturnType<typeof setInterval> | null = null;
+
+        const stop = () => {
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+        };
+
+        const tick = () => {
+            if (document.visibilityState === "visible") {
+                router.refresh();
+            }
+        };
+
+        const start = () => {
+            stop();
+            timer = setInterval(tick, POLL_INTERVAL_MS);
+        };
+
+        const onVisibility = () => {
+            if (document.visibilityState === "visible") {
+                // Refresh immediately when coming back to the tab, then resume the interval.
+                router.refresh();
+                start();
+            } else {
+                stop();
+            }
+        };
+
+        start();
+        document.addEventListener("visibilitychange", onVisibility);
+        return () => {
+            stop();
+            document.removeEventListener("visibilitychange", onVisibility);
+        };
+    }, [router]);
 
     const loadMore = useCallback(async () => {
         if (!nextCursor || loading) {

@@ -40,6 +40,24 @@ export type InboundEmailAttachmentRow = Readonly<{
 }>;
 
 /**
+ * Row shape for `inbound_email_replies`: outbound admin replies linked to an inbound row for UI history.
+ */
+export type InboundEmailReplyRow = Readonly<{
+    id: string;
+    inbound_email_id: string;
+    to_address: string;
+    subject: string;
+    /** Full rendered reply HTML (produced via the site's transactional theme). */
+    html: string;
+    text: string | null;
+    resend_email_id: string | null;
+    from_address: string;
+    template_id: string | null;
+    sent_at: string;
+    created_at: string;
+}>;
+
+/**
  * Domain alias for a stored inbound message (same fields as {@link InboundEmailRow}).
  */
 export type InboundEmail = InboundEmailRow;

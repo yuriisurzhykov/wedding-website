@@ -39,6 +39,7 @@ export async function AdminMailDetailSection({id}: Props) {
         <AdminMailDetailPanel
             email={detail.email}
             attachments={detail.attachments}
+            replies={detail.replies}
             templates={templates}
         />
     );

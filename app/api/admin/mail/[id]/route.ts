@@ -47,6 +47,7 @@ export async function GET(request: Request, context: RouteContext) {
     return NextResponse.json({
         email: result.email,
         attachments: result.attachments,
+        replies: result.replies,
     });
 }
 

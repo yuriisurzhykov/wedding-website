@@ -1,4 +1,9 @@
-import type {InboundEmailAttachmentRow, InboundEmailRow, ReplyTemplateRow} from "@entities/inbound-email";
+import type {
+    InboundEmailAttachmentRow,
+    InboundEmailReplyRow,
+    InboundEmailRow,
+    ReplyTemplateRow,
+} from "@entities/inbound-email";
 import type {AdminInboundEmailListItem} from "@features/admin-inbox";
 import type {ReplyTemplateCreateInput, ReplyTemplateUpdateInput} from "@features/admin-reply-templates";
 
@@ -54,11 +59,15 @@ export async function fetchAdminMailList(args?: {
     };
 }
 
+export type AdminMailDetailPayload = {
+    email: InboundEmailRow;
+    attachments: InboundEmailAttachmentRow[];
+    replies: InboundEmailReplyRow[];
+};
+
 export async function fetchAdminMailDetail(
     id: string,
-): Promise<
-    AdminMailApiOk<{email: InboundEmailRow; attachments: InboundEmailAttachmentRow[]}> | AdminMailApiError
-> {
+): Promise<AdminMailApiOk<AdminMailDetailPayload> | AdminMailApiError> {
     const res = await fetch(`/api/admin/mail/${encodeURIComponent(id)}`, {
         credentials: "include",
     });
@@ -68,7 +77,7 @@ export async function fetchAdminMailDetail(
     }
     return {
         ok: true,
-        data: data as {email: InboundEmailRow; attachments: InboundEmailAttachmentRow[]},
+        data: data as AdminMailDetailPayload,
     };
 }
 
