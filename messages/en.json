@@ -345,14 +345,47 @@
     "dashboard": {
       "metaTitle": "Admin overview",
       "title": "Overview",
-      "subtitle": "Quick links and placeholders until detailed dashboards ship.",
-      "placeholders": {
-        "rsvp": "—",
-        "rsvpLabel": "RSVP count (coming soon)",
-        "photos": "—",
-        "photosLabel": "Gallery photos (coming soon)"
+      "subtitle": "Summary of RSVPs, guests, wishes, gallery, and inbox.",
+      "loadErrorConfig": "Dashboard could not load (configuration).",
+      "loadErrorDatabase": "Dashboard could not load (database).",
+      "stats": {
+        "rsvpTotal": "RSVPs",
+        "attending": "Attending",
+        "declined": "Declined",
+        "rsvpBreakdown": "{attending} attending · {declined} declined",
+        "totalGuests": "Guests expected",
+        "wishes": "Wishes",
+        "photos": "Gallery photos",
+        "storageUsed": "Gallery storage",
+        "accounts": "Guest accounts",
+        "onlineNow": "{count, plural, =0 {Nobody online} one {# online} other {# online}}",
+        "unreadMail": "Unread inbox",
+        "inboundTotal": "{count, plural, =0 {No messages} one {# message in inbox} other {# messages in inbox}}",
+        "emailsSent": "Outbound emails sent"
       },
-      "linkGuests": "Guests — participant list"
+      "allergies": {
+        "title": "Dietary notes",
+        "empty": "No dietary notes on file.",
+        "name": "Guest / party",
+        "note": "Note",
+        "expand": "Show {count, plural, one {# note} other {# notes}}",
+        "unnamed": "(unnamed)",
+        "viewGuests": "Open guests list"
+      },
+      "alerts": {
+        "title": "Problems & signals",
+        "subtitle": "Lightweight checks on RSVP data, guest sessions, and outbound email. Not a full incident log.",
+        "periodTabsAria": "Time window for session and email counts",
+        "last24h": "Last 24 hours",
+        "last7d": "Last 7 days",
+        "noProblems": "No anomalies detected for this window.",
+        "issueCount": "{count, plural, one {# issue} other {# issues}}",
+        "rsvpAttendingZeroGuests": "RSVP marked attending but party size is 0",
+        "sessionsExpired": "Guest sessions expired in this period",
+        "emailsFailed": "Outbound emails failed in this period",
+        "viewGuests": "Open guests list",
+        "viewEmailLog": "Open email send log"
+      }
     },
     "guests": {
       "metaTitle": "Admin — Guests",
