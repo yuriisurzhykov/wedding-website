@@ -3,48 +3,81 @@ import {cn} from '@shared/lib/cn'
 import type {ReactNode} from 'react'
 
 export type DashboardStatCardProps = Readonly<{
-    /** Primary metric; usually a pre-formatted string from the server. */
     value: ReactNode
-    /** Short description under the value; pass translated copy from the parent. */
     label: ReactNode
-    /** When set, the whole card is a locale-aware link to an admin route. */
     href?: string
-    /** Optional pill or count (e.g. “online now”); pass translated copy from the parent. */
+    icon?: ReactNode
+    iconVariant?: 'default' | 'warning' | 'danger'
     badge?: ReactNode
-    /** Optional second line (breakdown, delta, or formatted sub-stat). */
     secondary?: ReactNode
+    secondaryVariant?: 'default' | 'warning'
+    progress?: number
     className?: string
 }>
 
 /**
- * KPI tile for the admin dashboard: display font metric, muted label, optional badge and sub-line.
- * With `href`, the surface is a single focusable link for keyboard and screen-reader users.
+ * KPI tile for the admin dashboard: icon in a tinted circle, label, display-font metric,
+ * optional badge, sub-line, and progress bar. With `href` the surface is a single
+ * focusable link for keyboard and screen-reader users.
  */
-export function DashboardStatCard({value, label, href, badge, secondary, className}: DashboardStatCardProps) {
-    const labelClass = cn(
-        'mt-2 text-small text-text-muted transition-colors',
-        href && 'group-hover:text-text-secondary',
+export function DashboardStatCard({
+    value,
+    label,
+    href,
+    icon,
+    iconVariant = 'default',
+    badge,
+    secondary,
+    secondaryVariant = 'default',
+    progress,
+    className,
+}: DashboardStatCardProps) {
+    const iconWrapperClass = cn(
+        'flex size-10 shrink-0 items-center justify-center rounded-full',
+        iconVariant === 'default' && 'bg-primary/10 text-primary',
+        iconVariant === 'warning' && 'bg-status-warning-subtle text-status-warning',
+        iconVariant === 'danger' && 'bg-status-danger-subtle text-status-danger',
     )
 
     const body = (
         <>
-            <div className="flex flex-wrap items-start justify-between gap-2">
-                <p className="font-display text-h1 tabular-nums leading-none text-primary">{value}</p>
+            <div className="flex items-center gap-3">
+                {icon ? <div className={iconWrapperClass}>{icon}</div> : null}
+                <p className="text-small font-medium text-text-secondary">{label}</p>
+            </div>
+            <div className="mt-3 flex flex-wrap items-end justify-between gap-2">
+                <p className="font-display text-h1 tabular-nums leading-none text-text-primary">{value}</p>
                 {badge ? (
-                    <span className="shrink-0 rounded-full bg-bg-section px-2.5 py-0.5 text-caption font-medium text-text-secondary">
+                    <span className="shrink-0 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                         {badge}
                     </span>
                 ) : null}
             </div>
-            <p className={labelClass}>{label}</p>
-            {secondary ? <p className="mt-2 text-caption text-text-secondary">{secondary}</p> : null}
+            {secondary ? (
+                <p
+                    className={cn(
+                        'mt-2 text-xs',
+                        secondaryVariant === 'warning' ? 'font-medium text-status-warning' : 'text-text-muted',
+                    )}
+                >
+                    {secondary}
+                </p>
+            ) : null}
+            {typeof progress === 'number' ? (
+                <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-bg-section">
+                    <div
+                        className="h-full rounded-full bg-primary transition-all"
+                        style={{width: `${Math.min(100, Math.max(0, progress))}%`}}
+                    />
+                </div>
+            ) : null}
         </>
     )
 
     const shellClass = cn(
-        'rounded-lg border border-border bg-bg-card p-6 shadow-card transition-colors',
+        'rounded-xl border border-border bg-bg-card p-5 shadow-sm transition-colors',
         href &&
-            'group hover:border-primary/25 hover:bg-bg-section/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus',
+            'group hover:border-primary/25 hover:shadow-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-border-focus',
         className,
     )
 

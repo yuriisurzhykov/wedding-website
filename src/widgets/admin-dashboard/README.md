@@ -11,7 +11,7 @@ Server components call `@features/admin-dashboard` (when present) and render pre
 ## Public contract
 
 From `index.ts`: `AdminDashboardSection` (async server component), `DashboardAllergyList`, `DashboardAlertsPanel`,
-`DashboardStatCard`, and matching `*Props` types.
+`DashboardMessagesPanel`, `DashboardStatCard`, and matching `*Props` types.
 
 ## Usage
 
@@ -44,6 +44,12 @@ import {DashboardAllergyList} from '@widgets/admin-dashboard'
 import {DashboardAlertsPanel} from '@widgets/admin-dashboard'
 
 <DashboardAlertsPanel alerts={stats.alerts} />
+```
+
+```tsx
+import {DashboardMessagesPanel} from '@widgets/admin-dashboard'
+
+<DashboardMessagesPanel mail={stats.mail} />
 ```
 
 ## Errors & edge cases
