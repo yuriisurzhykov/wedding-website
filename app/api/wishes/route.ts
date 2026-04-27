@@ -1,10 +1,6 @@
 import {NextResponse} from "next/server";
 import {z} from "zod";
 
-import {
-    buildGuestSessionErrorJson,
-    httpStatusForGuestSessionErrorCode,
-} from "@features/guest-session";
 import {listWishes} from "@features/wish-list";
 import {submitWish} from "@features/wish-submit";
 import {IpRateLimiter, rateLimit, readJsonBody} from "@shared/lib";

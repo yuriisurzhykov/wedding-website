@@ -25,7 +25,7 @@ import {PhotoFileInput} from "@shared/ui";
 import {TextArea} from "@shared/ui/TextArea";
 
 import {uploadWishAttachment} from "../lib/upload-wish-attachment";
-import type {WishesPresentation} from "../lib/wishes-presentation";
+import type {WishesPresentation} from "@widgets/wishes-section";
 
 const MAX_MB = Math.floor(GALLERY_MAX_FILE_BYTES / (1024 * 1024));
 const SOURCE_MAX_MB = Math.floor(
@@ -84,8 +84,7 @@ export function WishesSectionForm({
     const photoBlockedByCelebration =
         photoInteractive &&
         guestStatus === "authenticated" &&
-        session !== null &&
-        session.attending === true &&
+        session !== null && session.attending &&
         !celebrationLive;
     const photoPickerDisabled =
         guestStatus === "loading" ||
