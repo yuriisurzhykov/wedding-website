@@ -5,21 +5,30 @@ export type GalleryPhotosPage = {
     hasMore: boolean
 }
 
+export type GalleryPhotosPageResult =
+    | (GalleryPhotosPage & { status: 'ok' })
+    | { status: 'rate_limited' }
+    | { status: 'error' }
+
 export async function fetchGalleryPhotosPage(
     offset: number,
     limit: number,
-): Promise<GalleryPhotosPage | null> {
-    const params = new URLSearchParams({
-        limit: String(limit),
-        offset: String(offset),
-    })
-    const res = await fetch(`/api/gallery/photos?${params}`, {
-        cache: 'no-store',
-        credentials: 'same-origin',
-    })
-    if (!res.ok) {
-        return null
+): Promise<GalleryPhotosPageResult> {
+    let res: Response
+    try {
+        const params = new URLSearchParams({
+            limit: String(limit),
+            offset: String(offset),
+        })
+        res = await fetch(`/api/gallery/photos?${params}`, {
+            cache: 'no-store',
+            credentials: 'same-origin',
+        })
+    } catch {
+        return {status: 'error'}
     }
+    if (res.status === 429) return {status: 'rate_limited'}
+    if (!res.ok) return {status: 'error'}
     const data = (await res.json()) as {
         photos?: GalleryPhotoView[]
         hasMore?: boolean
@@ -29,6 +38,7 @@ export async function fetchGalleryPhotosPage(
         canDelete: Boolean(p.canDelete),
     }))
     return {
+        status: 'ok',
         photos,
         hasMore: Boolean(data.hasMore),
     }

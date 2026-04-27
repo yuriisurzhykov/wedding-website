@@ -7,8 +7,12 @@ import {
 } from "@features/guest-session";
 import {listWishes} from "@features/wish-list";
 import {submitWish} from "@features/wish-submit";
+import {IpRateLimiter, rateLimit, readJsonBody} from "@shared/lib";
 
 export const dynamic = "force-dynamic";
+
+const getLimiter = new IpRateLimiter({maxRequests: 30, windowMs: 60_000});
+const postLimiter = new IpRateLimiter({maxRequests: 5, windowMs: 15 * 60_000});
 
 const listQuerySchema = z.object({
     limit: z.coerce.number().int().min(1).max(100).default(50),
@@ -19,6 +23,14 @@ const listQuerySchema = z.object({
  * Public paginated wish list (same contract as `GET /api/gallery/photos`). See `@features/wish-list` README.
  */
 export async function GET(request: Request) {
+    const rl = rateLimit(getLimiter, request);
+    if (!rl.allowed) {
+        return NextResponse.json(
+            {error: "too_many_requests"},
+            {status: 429, headers: {"Retry-After": String(Math.ceil(rl.retryAfterMs / 1000))}},
+        );
+    }
+
     const sp = new URL(request.url).searchParams;
     const parsed = listQuerySchema.safeParse({
         limit: sp.get("limit") || undefined,
@@ -44,17 +56,18 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-    let body: unknown;
-    try {
-        body = await request.json();
-    } catch {
+    const rl = rateLimit(postLimiter, request);
+    if (!rl.allowed) {
         return NextResponse.json(
-            {error: "invalid_json", message: "Request body must be valid JSON"},
-            {status: 400},
+            {error: "too_many_requests"},
+            {status: 429, headers: {"Retry-After": String(Math.ceil(rl.retryAfterMs / 1000))}},
         );
     }
 
-    const result = await submitWish(body, request);
+    const parsed = await readJsonBody(request);
+    if (!parsed.ok) return parsed.errorResponse;
+
+    const result = await submitWish(parsed.data, request);
 
     if (result.ok) {
         return NextResponse.json({ok: true}, {status: 200});

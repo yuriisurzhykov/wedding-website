@@ -44,6 +44,20 @@ transactional emails (magic links, RSVP), sitemap, and robots.
 **API:** `getPublicSiteUrl()` — steps 1–3. `resolvePublicSiteBaseForServerEmail(request?)` — `getPublicSiteUrl()` first,
 then request inference.
 
+## In-memory IP rate limiter (server)
+
+[`rate-limit.ts`](rate-limit.ts) — sliding-window rate limiter for public API routes.
+
+| Export | Role |
+|---|---|
+| `IpRateLimiter` | Class holding per-IP hit buckets. Create one instance per route at module scope. |
+| `rateLimit(limiter, request)` | Convenience wrapper: extracts the client IP and calls `limiter.check()`. |
+| `getClientIp(request)` | Reads `x-forwarded-for` (leftmost entry) or falls back to `"unknown"`. |
+| `RateLimitOptions` | `{ maxRequests, windowMs }` constructor options. |
+| `RateLimitResult` | `{ allowed, retryAfterMs }` returned by every check. |
+
+Each `IpRateLimiter` instance is independent, so distinct routes have separate windows. Expired buckets are evicted on every check — no background timer needed. **Do not** use this for admin routes; those use the DB-backed limiter in `@features/admin-api`.
+
 ## Imports
 
 Prefer `@shared/lib` or `@shared/lib/wedding-calendar` over legacy `@/lib/utils`, `@/lib/phone`,

@@ -26,7 +26,7 @@ export async function listGalleryPhotosCached(
         async () =>
             listGalleryPhotos({limit, offset, viewerGuestAccountId: null}),
         ["list-gallery-photos", String(limit), String(offset)],
-        {revalidate: 60, tags: [GALLERY_PHOTOS_LIST_CACHE_TAG]},
+        {revalidate: 86_400, tags: [GALLERY_PHOTOS_LIST_CACHE_TAG]},
     );
 
     return cachedRead();

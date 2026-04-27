@@ -4,7 +4,7 @@ import {
     getWebhookSubscriptionStatus,
     syncResendInboundWebhook,
 } from "@features/resend-webhook-subscription";
-import {getSiteSettings} from "@features/site-settings";
+import {getSiteSettingsCached} from "@features/site-settings";
 import {getTranslations} from "next-intl/server";
 import type {ReactNode} from "react";
 
@@ -19,7 +19,7 @@ type Props = Readonly<{
  */
 export async function AdminMailInboxChrome({children}: Props) {
     const t = await getTranslations("admin.mail");
-    const [settings, wh] = await Promise.all([getSiteSettings(), getWebhookSubscriptionStatus()]);
+    const [settings, wh] = await Promise.all([getSiteSettingsCached(), getWebhookSubscriptionStatus()]);
 
     const expectedEmail = settings.public_contact.email.trim();
     const endpointUrl = getResendWebhookPublicUrl();

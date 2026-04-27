@@ -7,6 +7,7 @@ import {toast} from 'sonner'
 import {GALLERY_MAX_FILE_BYTES, GALLERY_MAX_SOURCE_FILE_BYTES,} from '@entities/photo'
 import {cn} from '@shared/lib/cn'
 import {formatUploadApiErrorResponse} from '@shared/lib/format-upload-api-error'
+import {UploadApiError} from '@shared/lib/upload-api-error'
 import {postMultipartGalleryPhoto} from '@shared/lib/gallery-client-upload'
 import {resolveGalleryImageContentType} from '@shared/lib/gallery-image-content-type'
 import {GALLERY_USE_SERVER_MULTIPART_UPLOAD} from '@shared/lib/gallery-upload-mode'
@@ -67,7 +68,7 @@ export async function presignedPhotoUploadAdapter(
     })
     if (!presignRes.ok) {
         const detail = await formatUploadApiErrorResponse(presignRes)
-        throw new Error(`Presign failed: ${detail}`)
+        throw new UploadApiError(`Presign failed: ${detail}`, presignRes.status)
     }
     const {url, key} = (await presignRes.json()) as { url: string; key: string }
     onProgress(30)
@@ -79,8 +80,9 @@ export async function presignedPhotoUploadAdapter(
     })
     if (!uploadRes.ok) {
         const detail = await uploadRes.text().catch(() => uploadRes.statusText)
-        throw new Error(
+        throw new UploadApiError(
             `Upload to storage failed (${uploadRes.status}). ${detail.slice(0, 120)}`,
+            uploadRes.status,
         )
     }
     onProgress(80)
@@ -98,7 +100,7 @@ export async function presignedPhotoUploadAdapter(
     })
     if (!confirmRes.ok) {
         const detail = await formatUploadApiErrorResponse(confirmRes)
-        throw new Error(`Confirm failed: ${detail}`)
+        throw new UploadApiError(`Confirm failed: ${detail}`, confirmRes.status)
     }
     onProgress(100)
 }
@@ -171,6 +173,7 @@ export function PhotoUploader({
 }) {
     const t = useTranslations('gallery')
     const tu = useTranslations('upload')
+    const tApi = useTranslations('apiErrors')
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [files, setFiles] = useState<UploadFile[]>([])
     const [name, setName] = useState('')
@@ -267,6 +270,11 @@ export function PhotoUploader({
                                 } else {
                                     toast.error(tu('photoOptimizeFailed'))
                                 }
+                            } else if (err instanceof UploadApiError) {
+                                if (err.httpStatus === 429) toast.error(tApi('tooManyRequests'))
+                                else if (err.httpStatus === 413) toast.error(tApi('payloadTooLarge'))
+                                else if (err.httpStatus === 403) toast.error(tApi('featureDisabled'))
+                                else toast.error(tApi('uploadFailed'))
                             }
                         })
                 }),

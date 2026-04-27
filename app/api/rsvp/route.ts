@@ -2,6 +2,9 @@ import {NextResponse} from "next/server";
 
 import {submitRsvp, type SubmitRsvpGuestSession} from "@features/rsvp-submit";
 import {getGuestSessionCookieDescriptor, getGuestSessionRuntimeConfig} from "@features/guest-session/server";
+import {IpRateLimiter, rateLimit, readJsonBody} from "@shared/lib";
+
+const limiter = new IpRateLimiter({maxRequests: 1, windowMs: 30 * 60_000});
 
 function jsonWithOptionalGuestSessionCookie(
     body: Record<string, unknown>,
@@ -20,15 +23,17 @@ function jsonWithOptionalGuestSessionCookie(
 }
 
 export async function POST(request: Request) {
-    let body: unknown;
-    try {
-        body = await request.json();
-    } catch {
+    const rl = rateLimit(limiter, request);
+    if (!rl.allowed) {
         return NextResponse.json(
-            {error: "invalid_json", message: "Request body must be valid JSON"},
-            {status: 400},
+            {error: "too_many_requests"},
+            {status: 429, headers: {"Retry-After": String(Math.ceil(rl.retryAfterMs / 1000))}},
         );
     }
+
+    const parsed = await readJsonBody(request);
+    if (!parsed.ok) return parsed.errorResponse;
+    const body = parsed.data;
 
     const result = await submitRsvp(body, {request});
 

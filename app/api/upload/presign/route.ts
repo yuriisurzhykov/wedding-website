@@ -5,19 +5,23 @@ import {
     httpStatusForGuestSessionErrorCode,
 } from "@features/guest-session";
 import {presignGalleryUpload} from "@features/gallery-upload";
+import {IpRateLimiter, rateLimit, readJsonBody} from "@shared/lib";
+
+const limiter = new IpRateLimiter({maxRequests: 10, windowMs: 15 * 60_000});
 
 export async function POST(request: Request) {
-    let body: unknown;
-    try {
-        body = await request.json();
-    } catch {
+    const rl = rateLimit(limiter, request);
+    if (!rl.allowed) {
         return NextResponse.json(
-            {error: "invalid_json", message: "Request body must be valid JSON"},
-            {status: 400},
+            {error: "too_many_requests"},
+            {status: 429, headers: {"Retry-After": String(Math.ceil(rl.retryAfterMs / 1000))}},
         );
     }
 
-    const result = await presignGalleryUpload(body, request);
+    const parsed = await readJsonBody(request);
+    if (!parsed.ok) return parsed.errorResponse;
+
+    const result = await presignGalleryUpload(parsed.data, request);
 
     if (result.ok) {
         return NextResponse.json({url: result.url, key: result.key}, {status: 200});

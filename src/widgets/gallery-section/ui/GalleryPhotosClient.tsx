@@ -56,6 +56,7 @@ export function GalleryPhotosClient({
     const uploadPreviewOnly = isFeaturePreview(galleryUpload)
     const uploadInteractive = isFeatureEnabled(galleryUpload)
     const t = useTranslations('gallery')
+    const tApi = useTranslations('apiErrors')
     const tErr = useTranslations('guestSession.errors')
     const pageSize = galleryListLimitForPresentation(presentation)
     const serverSigRef = useRef(
@@ -79,12 +80,15 @@ export function GalleryPhotosClient({
 
     const refetchPhotos = useCallback(async () => {
         const next = await fetchGalleryPhotosPage(0, pageSize)
-        if (next) {
-            setPhotos(next.photos)
-            setHasMore(next.hasMore)
-            serverSigRef.current = `${next.photos.map((p) => p.id).join(',')}:${next.hasMore}`
+        if (next.status === 'rate_limited') {
+            toast.error(tApi('tooManyRequests'))
+            return
         }
-    }, [pageSize])
+        if (next.status === 'error') return
+        setPhotos(next.photos)
+        setHasMore(next.hasMore)
+        serverSigRef.current = `${next.photos.map((p) => p.id).join(',')}:${next.hasMore}`
+    }, [pageSize, tApi])
 
     const prevGuestStatusRef = useRef(guestStatus)
     useEffect(() => {
@@ -106,12 +110,14 @@ export function GalleryPhotosClient({
         setLoadingMore(true)
         const next = await fetchGalleryPhotosPage(photos.length, pageSize)
         setLoadingMore(false)
-        if (!next) {
+        if (next.status === 'rate_limited') {
+            toast.error(tApi('tooManyRequests'))
             return
         }
+        if (next.status === 'error') return
         setPhotos((prev) => [...prev, ...next.photos])
         setHasMore(next.hasMore)
-    }, [hasMore, loadingMore, pageSize, photos.length, presentation])
+    }, [hasMore, loadingMore, pageSize, photos.length, presentation, tApi])
 
     const goPrev = useCallback(() => {
         setOpenIndex((i) => {
@@ -195,7 +201,9 @@ export function GalleryPhotosClient({
 
         const code = result.code
         let message = t('deleteErrorGeneric')
-        if (code === 'photo_delete_forbidden') {
+        if (code === 'too_many_requests') {
+            message = tApi('tooManyRequests')
+        } else if (code === 'photo_delete_forbidden') {
             message = tErr('photo_delete_forbidden.title')
         } else if (code === 'upload_no_session') {
             message = tErr('upload_no_session.title')

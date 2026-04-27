@@ -1,6 +1,8 @@
 'use client'
 
 import {type ReactNode, useCallback, useEffect, useRef, useState,} from 'react'
+import {useTranslations} from 'next-intl'
+import {toast} from 'sonner'
 
 import type {WishView} from '@entities/wish'
 
@@ -35,6 +37,7 @@ export function WishesFeedClient({
                                      presentation,
                                      slots,
                                  }: WishesFeedClientProps) {
+    const tApi = useTranslations('apiErrors')
     const pageSize = wishesListLimitForPresentation(presentation)
     const serverSigRef = useRef(
         `${initialWishes.map((w) => w.id).join(',')}:${initialHasMore}`,
@@ -59,12 +62,16 @@ export function WishesFeedClient({
         setLoadingMore(true)
         const next = await fetchWishesPage(wishes.length, pageSize)
         setLoadingMore(false)
-        if (!next) {
+        if (next.status === 'rate_limited') {
+            toast.error(tApi('tooManyRequests'))
+            return
+        }
+        if (next.status === 'error') {
             return
         }
         setWishes((prev) => [...prev, ...next.wishes])
         setHasMore(next.hasMore)
-    }, [hasMore, loadingMore, pageSize, presentation, wishes.length])
+    }, [hasMore, loadingMore, pageSize, presentation, tApi, wishes.length])
 
     if (wishes.length === 0) {
         return (

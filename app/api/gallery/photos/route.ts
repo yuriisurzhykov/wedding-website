@@ -9,8 +9,12 @@ import {validateGuestSessionFromRequest} from "@features/guest-session/server";
 import {deleteGalleryPhoto} from "@features/gallery-upload";
 import {listGalleryPhotos} from "@features/gallery-list";
 import {createServerClient} from "@shared/api/supabase/server";
+import {IpRateLimiter, rateLimit} from "@shared/lib";
 
 export const dynamic = "force-dynamic";
+
+const getLimiter = new IpRateLimiter({maxRequests: 60, windowMs: 60_000});
+const deleteLimiter = new IpRateLimiter({maxRequests: 10, windowMs: 20 * 60_000});
 
 const querySchema = z.object({
     limit: z.coerce.number().int().min(1).max(100).default(48),
@@ -22,6 +26,14 @@ const querySchema = z.object({
  * Query: `limit` (1–100, default 48), `offset` (default 0). Response: `{ photos, hasMore }`.
  */
 export async function GET(request: Request) {
+    const rl = rateLimit(getLimiter, request);
+    if (!rl.allowed) {
+        return NextResponse.json(
+            {error: "too_many_requests"},
+            {status: 429, headers: {"Retry-After": String(Math.ceil(rl.retryAfterMs / 1000))}},
+        );
+    }
+
     const sp = new URL(request.url).searchParams;
     const parsed = querySchema.safeParse({
         limit: sp.get("limit") || undefined,
@@ -62,6 +74,14 @@ export async function GET(request: Request) {
  * Body: `{ "photoId": "<uuid>" }`. Requires guest session cookie; deletes R2 object and DB row when `photos.guest_account_id` matches.
  */
 export async function DELETE(request: Request) {
+    const rl = rateLimit(deleteLimiter, request);
+    if (!rl.allowed) {
+        return NextResponse.json(
+            {error: "too_many_requests"},
+            {status: 429, headers: {"Retry-After": String(Math.ceil(rl.retryAfterMs / 1000))}},
+        );
+    }
+
     let body: unknown;
     try {
         body = await request.json();

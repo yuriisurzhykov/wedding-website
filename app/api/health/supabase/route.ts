@@ -1,11 +1,16 @@
 import {createClient} from "@supabase/supabase-js";
 import {NextResponse} from "next/server";
 
+import {assertBearer} from "@shared/lib";
+
 /**
- * Smoke test: server env + DB schema. Remove or protect if you do not want a public probe.
+ * Smoke test: server env + DB schema.
  * GET /api/health/supabase
+ * Header: Authorization: Bearer <ADMIN_SECRET>
  */
-export async function GET() {
+export async function GET(request: Request) {
+    const authError = assertBearer(request, process.env.ADMIN_SECRET, "ADMIN_SECRET");
+    if (authError) return authError;
     const url =
         process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL;
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;

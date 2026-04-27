@@ -71,6 +71,13 @@
     "vowsLead": "On {date}, we will say our vows surrounded by the people who shaped our path. We cannot wait to celebrate with you.",
     "previewNotice": "The full story will appear here soon — during and after the celebration you’ll be able to read it here."
   },
+  "apiErrors": {
+    "tooManyRequests": "Too many requests. Please wait a moment and try again.",
+    "payloadTooLarge": "The data you sent is too large. Please shorten the message or reduce the file size.",
+    "featureDisabled": "This feature is not available right now.",
+    "loadFailed": "Could not load data. Please try again later.",
+    "uploadFailed": "Could not upload the file. Please try again."
+  },
   "rsvp": {
     "title": "RSVP",
     "subtitle": "Please respond by {deadline}",
@@ -309,6 +316,8 @@
     "serverErrorTitle": "Something went wrong",
     "serverErrorDescription": "We couldn’t complete sign-in. Please try again in a moment or open the site and use name + email to restore access.",
     "backHome": "Back to the wedding site",
+    "rateLimitedTitle": "Too many attempts",
+    "rateLimitedDescription": "Please wait a minute before using this link again, or sign in with your name and email on the site.",
     "signInCta": "Guest sign-in (name and email)"
   },
   "admin": {

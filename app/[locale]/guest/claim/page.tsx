@@ -21,11 +21,21 @@ export default async function GuestClaimPage({searchParams}: Props) {
     const t = await getTranslations("guestClaim");
 
     const isServerError = error === "server_error";
+    const isRateLimited = error === "too_many_requests";
 
     return (
         <Section id="guest-claim" theme="base">
             <div className="mx-auto max-w-lg py-8">
-                {isServerError ? (
+                {isRateLimited ? (
+                    <>
+                        <h1 className="font-display text-2xl text-text-primary">
+                            {t("rateLimitedTitle")}
+                        </h1>
+                        <p className="mt-4 text-base leading-relaxed text-text-secondary">
+                            {t("rateLimitedDescription")}
+                        </p>
+                    </>
+                ) : isServerError ? (
                     <>
                         <h1 className="font-display text-2xl text-text-primary">
                             {t("serverErrorTitle")}

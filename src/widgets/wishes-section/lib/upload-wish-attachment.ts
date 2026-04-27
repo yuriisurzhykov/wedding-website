@@ -1,6 +1,7 @@
 import {formatUploadApiErrorResponse} from "@shared/lib/format-upload-api-error";
 import {resolveGalleryImageContentType} from "@shared/lib/gallery-image-content-type";
 import {prepareGalleryPhotoFileForUpload} from "@shared/lib/prepare-gallery-photo-for-upload";
+import {UploadApiError} from "@shared/lib/upload-api-error";
 
 /**
  * Returns the R2 object `key` for `POST /api/wishes` (`photoR2Key`).
@@ -37,7 +38,7 @@ export async function uploadWishAttachment(
     if (!presignRes.ok) {
         const detail = await formatUploadApiErrorResponse(presignRes);
         console.error("[uploadWishAttachment] presign", presignRes.status, detail);
-        throw new Error(`Presign failed: ${detail}`);
+        throw new UploadApiError(`Presign failed: ${detail}`, presignRes.status);
     }
     const {url, key} = (await presignRes.json()) as { url: string; key: string };
     onProgress(30);
@@ -50,8 +51,9 @@ export async function uploadWishAttachment(
     if (!uploadRes.ok) {
         const detail = await uploadRes.text().catch(() => uploadRes.statusText);
         console.error("[uploadWishAttachment] put R2", uploadRes.status, detail);
-        throw new Error(
+        throw new UploadApiError(
             `Upload to storage failed (${uploadRes.status}). ${detail.slice(0, 120)}`,
+            uploadRes.status,
         );
     }
     onProgress(80);
@@ -69,7 +71,7 @@ export async function uploadWishAttachment(
     if (!confirmRes.ok) {
         const detail = await formatUploadApiErrorResponse(confirmRes);
         console.error("[uploadWishAttachment] confirm", confirmRes.status, detail);
-        throw new Error(`Confirm failed: ${detail}`);
+        throw new UploadApiError(`Confirm failed: ${detail}`, confirmRes.status);
     }
     onProgress(100);
 

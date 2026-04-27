@@ -61,7 +61,7 @@ const getSiteSettingsCachedInner = unstable_cache(
     async () => readNormalizedSiteSettingsFromDatabase(),
     ['site-settings'],
     {
-        revalidate: 60,
+        revalidate: 86_400,
         tags: [SITE_SETTINGS_CACHE_TAG],
     },
 )

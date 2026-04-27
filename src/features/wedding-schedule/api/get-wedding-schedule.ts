@@ -73,7 +73,7 @@ const getWeddingScheduleCachedInner = unstable_cache(
     async () => readWeddingScheduleFromDatabase(),
     ['wedding-schedule'],
     {
-        revalidate: 60,
+        revalidate: 86_400,
         tags: [WEDDING_SCHEDULE_CACHE_TAG],
     },
 )

@@ -1,6 +1,8 @@
 import {ListObjectsV2Command, S3Client} from "@aws-sdk/client-s3";
 import {NextResponse} from "next/server";
 
+import {assertBearer} from "@shared/lib";
+
 function r2Endpoint(): string | null {
     const fromEnv = process.env.R2_ACCOUNT_ENDPOINT?.trim();
     if (fromEnv) {
@@ -14,10 +16,13 @@ function r2Endpoint(): string | null {
 }
 
 /**
- * Smoke test: S3 API credentials + bucket. Remove or protect if you do not want a public probe.
+ * Smoke test: S3 API credentials + bucket.
  * GET /api/health/r2
+ * Header: Authorization: Bearer <ADMIN_SECRET>
  */
-export async function GET() {
+export async function GET(request: Request) {
+    const authError = assertBearer(request, process.env.ADMIN_SECRET, "ADMIN_SECRET");
+    if (authError) return authError;
     const endpoint = r2Endpoint();
     const accessKeyId = process.env.R2_ACCESS_KEY_ID;
     const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;

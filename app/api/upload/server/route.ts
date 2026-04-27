@@ -5,13 +5,24 @@ import {
     httpStatusForGuestSessionErrorCode,
 } from "@features/guest-session";
 import {uploadGalleryPhotoFromMultipart} from "@features/gallery-upload";
+import {IpRateLimiter, rateLimit} from "@shared/lib";
 
 export const runtime = "nodejs";
 
 /** Large multipart uploads (Vercel / platforms may cap body size below 5 MB). */
 export const maxDuration = 60;
 
+const limiter = new IpRateLimiter({maxRequests: 10, windowMs: 15 * 60_000});
+
 export async function POST(request: Request) {
+    const rl = rateLimit(limiter, request);
+    if (!rl.allowed) {
+        return NextResponse.json(
+            {error: "too_many_requests"},
+            {status: 429, headers: {"Retry-After": String(Math.ceil(rl.retryAfterMs / 1000))}},
+        );
+    }
+
     const result = await uploadGalleryPhotoFromMultipart(request);
 
     if (result.ok) {

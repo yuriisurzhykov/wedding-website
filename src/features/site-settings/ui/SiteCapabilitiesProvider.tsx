@@ -8,6 +8,7 @@ import {
     useContext,
     useEffect,
     useMemo,
+    useRef,
     useState,
 } from 'react'
 
@@ -59,14 +60,23 @@ export function SiteCapabilitiesProvider({
         setUpdatedAt(parsed.data.updated_at)
     }, [])
 
+    const lastRefreshRef = useRef(0)
+
+    const throttledRefresh = useCallback(() => {
+        const now = Date.now()
+        if (now - lastRefreshRef.current < 30_000) return
+        lastRefreshRef.current = now
+        void refresh()
+    }, [refresh])
+
     useEffect(() => {
         const onVisible = () => {
             if (document.visibilityState === 'visible') {
-                void refresh()
+                throttledRefresh()
             }
         }
         const onFocus = () => {
-            void refresh()
+            throttledRefresh()
         }
         document.addEventListener('visibilitychange', onVisible)
         window.addEventListener('focus', onFocus)
@@ -74,7 +84,7 @@ export function SiteCapabilitiesProvider({
             document.removeEventListener('visibilitychange', onVisible)
             window.removeEventListener('focus', onFocus)
         }
-    }, [refresh])
+    }, [throttledRefresh])
 
     const value = useMemo(
         () => ({capabilities, updatedAt, refresh}),

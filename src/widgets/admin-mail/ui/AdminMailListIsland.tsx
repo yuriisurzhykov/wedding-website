@@ -1,11 +1,11 @@
 "use client";
 
-import {Link, usePathname, useRouter} from "@/i18n/navigation";
+import {Link, usePathname} from "@/i18n/navigation";
 import type {AdminInboundEmailListItem} from "@features/admin-inbox";
 import {cn} from "@shared/lib/cn";
 import {Button} from "@shared/ui/Button";
 import {useTranslations} from "next-intl";
-import {useCallback, useEffect, useMemo, useState} from "react";
+import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 
 import {fetchAdminMailList} from "../lib/fetch-admin-mail-api";
 
@@ -13,8 +13,7 @@ function senderPrimary(row: AdminInboundEmailListItem): string {
     return row.from_name?.trim() || row.from_address;
 }
 
-/** Auto-refresh cadence for the mailbox list (ms). Only runs while the tab is visible. */
-const POLL_INTERVAL_MS = 20_000;
+const POLL_INTERVAL_MS = 60_000;
 
 type Props = Readonly<{
     initialEmails: AdminInboundEmailListItem[];
@@ -29,27 +28,35 @@ function extractSelectedId(pathname: string): string | undefined {
 export function AdminMailListIsland({initialEmails, initialNextCursor}: Props) {
     const t = useTranslations("admin.mail");
     const pathname = usePathname();
-    const router = useRouter();
     const selectedId = extractSelectedId(pathname);
 
     const [emails, setEmails] = useState(initialEmails);
     const [nextCursor, setNextCursor] = useState(initialNextCursor);
     const [loading, setLoading] = useState(false);
 
-    // Re-sync with the server-rendered first page on every parent refresh
-    // (router.refresh() after archive/delete/mark-unread, and the polling tick below).
-    // Any locally-appended "Load more" pages are reset intentionally — they'll reload
-    // on next scroll if needed.
     useEffect(() => {
         setEmails(initialEmails);
         setNextCursor(initialNextCursor);
     }, [initialEmails, initialNextCursor]);
 
-    // Poll for newly-arrived webhook mail while the tab is visible.
-    useEffect(() => {
-        if (typeof document === "undefined") {
-            return;
+    const pollInFlight = useRef(false);
+
+    const pollLatest = useCallback(async () => {
+        if (pollInFlight.current) return;
+        pollInFlight.current = true;
+        try {
+            const res = await fetchAdminMailList({limit: 50});
+            if (res.ok) {
+                setEmails(res.data.emails);
+                setNextCursor(res.data.nextCursor);
+            }
+        } finally {
+            pollInFlight.current = false;
         }
+    }, []);
+
+    useEffect(() => {
+        if (typeof document === "undefined") return;
         let timer: ReturnType<typeof setInterval> | null = null;
 
         const stop = () => {
@@ -61,7 +68,7 @@ export function AdminMailListIsland({initialEmails, initialNextCursor}: Props) {
 
         const tick = () => {
             if (document.visibilityState === "visible") {
-                router.refresh();
+                void pollLatest();
             }
         };
 
@@ -72,8 +79,7 @@ export function AdminMailListIsland({initialEmails, initialNextCursor}: Props) {
 
         const onVisibility = () => {
             if (document.visibilityState === "visible") {
-                // Refresh immediately when coming back to the tab, then resume the interval.
-                router.refresh();
+                void pollLatest();
                 start();
             } else {
                 stop();
@@ -86,7 +92,7 @@ export function AdminMailListIsland({initialEmails, initialNextCursor}: Props) {
             stop();
             document.removeEventListener("visibilitychange", onVisibility);
         };
-    }, [router]);
+    }, [pollLatest]);
 
     const loadMore = useCallback(async () => {
         if (!nextCursor || loading) {

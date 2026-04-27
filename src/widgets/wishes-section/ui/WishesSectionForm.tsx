@@ -18,6 +18,7 @@ import {cn} from "@shared/lib/cn";
 import {GalleryPhotoPrepareError} from "@shared/lib/prepare-gallery-photo-for-upload";
 import {isCelebrationLive} from "@shared/lib/wedding-calendar";
 import {isGalleryUploadOversizeMessage} from "@shared/lib/validate-gallery-photo-file";
+import {UploadApiError} from "@shared/lib/upload-api-error";
 import {Button} from "@shared/ui/Button";
 import {Input} from "@shared/ui/Input";
 import {PhotoFileInput} from "@shared/ui";
@@ -40,6 +41,7 @@ export function WishesSectionForm({
 }) {
     const t = useTranslations("wishes");
     const tu = useTranslations("upload");
+    const tApi = useTranslations("apiErrors");
     const tGuestErr = useTranslations("guestSession.errors");
     const router = useRouter();
     const {status: guestStatus, session} = useGuestSession();
@@ -149,6 +151,21 @@ export function WishesSectionForm({
             });
 
             if (!res.ok) {
+                if (res.status === 429) {
+                    toast.error(tApi("tooManyRequests"));
+                    setSubmitting(false);
+                    return;
+                }
+                if (res.status === 413) {
+                    toast.error(tApi("payloadTooLarge"));
+                    setSubmitting(false);
+                    return;
+                }
+                if (res.status === 403) {
+                    toast.error(tApi("featureDisabled"));
+                    setSubmitting(false);
+                    return;
+                }
                 let fieldAuthor: string[] | undefined;
                 let celebrationCode: string | undefined;
                 try {
@@ -195,6 +212,15 @@ export function WishesSectionForm({
                 } else {
                     toast.error(tu("photoOptimizeFailed"));
                 }
+                setError(null);
+                setSubmitting(false);
+                return;
+            }
+            if (err instanceof UploadApiError) {
+                if (err.httpStatus === 429) toast.error(tApi("tooManyRequests"));
+                else if (err.httpStatus === 413) toast.error(tApi("payloadTooLarge"));
+                else if (err.httpStatus === 403) toast.error(tApi("featureDisabled"));
+                else toast.error(tApi("uploadFailed"));
                 setError(null);
                 setSubmitting(false);
                 return;

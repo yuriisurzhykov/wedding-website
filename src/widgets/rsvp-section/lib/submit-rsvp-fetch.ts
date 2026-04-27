@@ -52,6 +52,15 @@ export class RsvpNotificationError extends Error {
     }
 }
 
+export class RsvpApiError extends Error {
+    readonly errorCode: string;
+    constructor(code: string, status: number) {
+        super(`RSVP request failed: ${status}`);
+        this.name = "RsvpApiError";
+        this.errorCode = code;
+    }
+}
+
 function isNotificationFailurePayload(
     data: unknown,
 ): data is { error: string; step: "admin" | "guest"; id: string } {
@@ -87,7 +96,14 @@ export async function submitRsvpFetch(
             options?.onGuestSessionFromResponse?.(extractGuestSessionFromRsvpJson(data));
             throw new RsvpNotificationError(data.step, data.id);
         }
-        throw new Error(`RSVP request failed: ${res.status}`);
+        const errorCode =
+            data && typeof data === "object" && "error" in data && typeof (data as Record<string, unknown>).error === "string"
+                ? (data as Record<string, unknown>).error as string
+                : undefined;
+        if (res.status === 429) throw new RsvpApiError(errorCode ?? "too_many_requests", res.status);
+        if (res.status === 413) throw new RsvpApiError(errorCode ?? "payload_too_large", res.status);
+        if (res.status === 403) throw new RsvpApiError(errorCode ?? "feature_disabled", res.status);
+        throw new RsvpApiError(errorCode ?? "server_error", res.status);
     }
 
     options?.onGuestSessionFromResponse?.(extractGuestSessionFromRsvpJson(data));
