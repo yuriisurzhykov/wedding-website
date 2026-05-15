@@ -11,7 +11,7 @@ export const WEDDING_INSTANTS = {
     weddingCeremony: '2026-06-13T16:00:00-07:00',
     /** When the celebration segment begins; keep in sync with the dinner / celebration row in `schedule_items`. */
     celebrationStart: '2026-06-13T18:00:00-07:00',
-    rsvpDeadline: '2026-05-15T23:59:59-07:00',
+    rsvpDeadline: '2026-05-20T23:59:59-07:00',
 } as const
 
 export type WeddingInstantId = keyof typeof WEDDING_INSTANTS
