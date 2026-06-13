@@ -1,13 +1,14 @@
 import type {RsvpRow} from "@entities/rsvp";
 
-import type {EmailTemplatePlaceholderKey} from "@entities/email-template";
+import type {RsvpPlaceholderKey} from "@entities/email-template";
 
 /**
- * Maps an RSVP row to placeholder values for email templates.
+ * Maps an RSVP row to per-recipient placeholder values. Send-time globals (e.g. `site_url`)
+ * are merged in by the caller; this builder only owns RSVP-derived keys.
  */
 export function buildRsvpPlaceholderVars(
     row: RsvpRow,
-): Record<EmailTemplatePlaceholderKey, string> {
+): Record<RsvpPlaceholderKey, string> {
     return {
         name: row.name,
         email: row.email ?? "",

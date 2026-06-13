@@ -5,6 +5,7 @@ import {
     getEmailSenderByIdForAdmin,
 } from "@features/admin-email-senders";
 import {getEmailTemplateByIdForAdmin} from "@features/admin-email-templates";
+import type {EmailTemplatePlaceholderKey} from "@entities/email-template";
 import type {RsvpRow} from "@entities/rsvp";
 import {
     createResendClient,
@@ -12,6 +13,7 @@ import {
     getTransactionalFromAddress,
 } from "@shared/api/resend";
 import {createServerClient} from "@shared/api/supabase/server";
+import {getPublicSiteUrl} from "@shared/lib/get-public-site-url";
 
 import type {AdminEmailSendInput} from "../lib/admin-email-send-schema";
 import {adminEmailSendSchema} from "../lib/admin-email-send-schema";
@@ -29,6 +31,14 @@ function defaultPlaceholderVars(email: string) {
         message: "",
         attending: "yes",
     } as const;
+}
+
+/**
+ * Absolute site base for `{{site_url}}` in templates (e.g. gallery CTA). Empty when unresolved
+ * so templates degrade to relative-looking links rather than `undefined`.
+ */
+function resolveSiteUrlVar(): string {
+    return getPublicSiteUrl() ?? "";
 }
 
 async function sleep(ms: number): Promise<void> {
@@ -142,9 +152,11 @@ export async function sendAdminEmail(body: unknown): Promise<SendAdminEmailResul
         }
     }
 
+    const siteUrl = resolveSiteUrlVar();
+
     async function sendOne(args: {
         to: string;
-        vars: ReturnType<typeof buildRsvpPlaceholderVars> | ReturnType<typeof defaultPlaceholderVars>;
+        vars: Record<EmailTemplatePlaceholderKey, string>;
         segmentLabel: string;
     }): Promise<boolean> {
         const subject = applyEmailTemplateString(
@@ -195,16 +207,16 @@ export async function sendAdminEmail(body: unknown): Promise<SendAdminEmailResul
     }
 
     if (payload.mode === "test") {
-        const {data: sample} = await supabase
+        const {data: match} = await supabase
             .from("rsvp")
             .select("*")
-            .not("email", "is", null)
+            .ilike("email", payload.test_email)
             .limit(1)
             .maybeSingle();
 
-        const vars = sample
-            ? buildRsvpPlaceholderVars(sample as RsvpRow)
-            : defaultPlaceholderVars(payload.test_email);
+        const vars: Record<EmailTemplatePlaceholderKey, string> = match
+            ? {...buildRsvpPlaceholderVars(match as RsvpRow), site_url: siteUrl}
+            : {...defaultPlaceholderVars(payload.test_email), site_url: siteUrl};
 
         const ok = await sendOne({
             to: payload.test_email,
@@ -251,7 +263,10 @@ export async function sendAdminEmail(body: unknown): Promise<SendAdminEmailResul
         if (!email) {
             continue;
         }
-        const vars = buildRsvpPlaceholderVars(row);
+        const vars: Record<EmailTemplatePlaceholderKey, string> = {
+            ...buildRsvpPlaceholderVars(row),
+            site_url: siteUrl,
+        };
         const ok = await sendOne({
             to: email,
             vars,

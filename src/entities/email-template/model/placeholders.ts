@@ -1,5 +1,5 @@
-/** Keys allowed in `{{key}}` placeholders in admin email templates (unknown keys are stripped at send time). */
-export const EMAIL_TEMPLATE_PLACEHOLDER_KEYS = [
+/** Placeholder keys whose values come from a single RSVP row (per-recipient personalization). */
+export const RSVP_PLACEHOLDER_KEYS = [
     "name",
     "email",
     "phone",
@@ -7,6 +7,17 @@ export const EMAIL_TEMPLATE_PLACEHOLDER_KEYS = [
     "dietary",
     "message",
     "attending",
+] as const;
+
+export type RsvpPlaceholderKey = (typeof RSVP_PLACEHOLDER_KEYS)[number];
+
+/**
+ * Keys allowed in `{{key}}` placeholders in admin email templates (unknown keys are stripped at send time).
+ * Combines per-recipient RSVP keys with send-time globals (e.g. `site_url` for CTA links).
+ */
+export const EMAIL_TEMPLATE_PLACEHOLDER_KEYS = [
+    ...RSVP_PLACEHOLDER_KEYS,
+    "site_url",
 ] as const;
 
 export type EmailTemplatePlaceholderKey =
