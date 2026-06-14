@@ -19,7 +19,17 @@ Read-only fetch of `photos` (service role). Used by `@widgets/gallery-section` (
 
 `{ ok: true, photos, hasMore }` with `GalleryPhotoView[]`.
 
+## `getGalleryPhotoDownload(photoId)`
+
+- **Gated** on `galleryBrowse`; looks the row up by `id` to resolve its private `r2_key` (never trusts a
+  client-supplied key), then reads the object via `@shared/api/r2` `getR2Object`.
+- **Returns**: `{ ok: true, bytes, contentType, filename }` (filename `wedding-photo-<id8>.<ext>`), or
+  `{ ok: false, kind }` with `kind` ∈ `disabled | not_found | config | database | storage`.
+
 ## HTTP mirror
 
-`GET /api/gallery/photos?limit=&offset=` — Zod-validated query; **400** `invalid_query`; **500** `server_error`. JSON:
-`{ photos, hasMore }`.
+- `GET /api/gallery/photos?limit=&offset=` — Zod-validated query; **400** `invalid_query`; **500** `server_error`.
+  JSON: `{ photos, hasMore }`.
+- `GET /api/gallery/photos/[id]/download` — same-origin proxy that streams the photo with
+  `Content-Disposition: attachment`; **400** `invalid_id`, **404** `not_found` (missing or `galleryBrowse` off),
+  **429** `too_many_requests`, **500** `server_error`.

@@ -13,3 +13,7 @@ export {
     type ListGalleryPhotosOptions,
     type ListGalleryPhotosResult,
 } from "./api/list-gallery-photos";
+export {
+    getGalleryPhotoDownload,
+    type GetGalleryPhotoDownloadResult,
+} from "./api/get-gallery-photo-download";

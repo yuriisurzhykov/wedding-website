@@ -1,67 +1,21 @@
 'use client'
 
-import Image from 'next/image'
 import {useCallback, useEffect, useLayoutEffect, useRef, useState} from 'react'
 import {useTranslations} from 'next-intl'
+import {toast} from 'sonner'
 
 import type {GalleryPhotoView} from '@entities/photo'
 import {cn} from '@shared/lib/cn'
 
+import {downloadGalleryPhotoRequest} from '../lib/download-gallery-photo-client'
+import {GalleryDownloadIcon} from './GalleryDownloadIcon'
 import {GalleryTrashIcon} from './GalleryTrashIcon'
-
-/** Horizontal distance (px) before a drag counts as prev/next. */
-const LIGHTBOX_SWIPE_THRESHOLD_PX = 50
-
-/** Slide-in offset when changing slides (motion is disabled via `motion-reduce:`). */
-const LIGHTBOX_SLIDE_OFFSET_CLASS = 'motion-safe:translate-x-10'
-
-type SlideDirection = -1 | 0 | 1
-
-function slideOffsetClassForDirection(dir: SlideDirection): string {
-    if (dir === 0) {
-        return 'translate-x-0'
-    }
-    if (dir === 1) {
-        return LIGHTBOX_SLIDE_OFFSET_CLASS
-    }
-    return 'motion-safe:-translate-x-10'
-}
-
-/**
- * Viewport rectangle of the painted bitmap for `object-fit: contain` inside a box
- * with natural size `nw`×`nh`.
- */
-function getObjectContainPaintedRectViewport(
-    containerViewport: DOMRectReadOnly,
-    nw: number,
-    nh: number,
-): { left: number; top: number; right: number; bottom: number } {
-    if (nw <= 0 || nh <= 0) {
-        const {left, top, right, bottom} = containerViewport
-        return {left, top, right, bottom}
-    }
-    const W = containerViewport.width
-    const H = containerViewport.height
-    const scale = Math.min(W / nw, H / nh)
-    const dispW = nw * scale
-    const dispH = nh * scale
-    const left = containerViewport.left + (W - dispW) / 2
-    const top = containerViewport.top + (H - dispH) / 2
-    return {
-        left,
-        top,
-        right: left + dispW,
-        bottom: top + dispH,
-    }
-}
-
-function isPointInsideRect(
-    x: number,
-    y: number,
-    r: { left: number; top: number; right: number; bottom: number },
-): boolean {
-    return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom
-}
+import {GalleryZoomIcon} from './GalleryZoomIcon'
+import {
+    GalleryZoomablePhoto,
+    type GalleryZoomablePhotoHandle,
+    type SlideDirection,
+} from './GalleryZoomablePhoto'
 
 type GalleryLightboxProps = {
     photos: GalleryPhotoView[]
@@ -76,11 +30,8 @@ type GalleryLightboxProps = {
 /**
  * Full-screen viewer: native `<dialog>` (focus trap, Escape), prev/next, backdrop click to close.
  *
- * Tap outside the **painted** image (`object-contain` letterboxing, margins, chrome) closes;
- * tap on the bitmap does not.
- *
- * Touch/pointer on the photo area: swipe **left** → `onNext`, swipe **right** → `onPrev`
- * (same as ArrowRight / ArrowLeft). Vertical intent is ignored when horizontal delta dominates.
+ * The photo area ({@link GalleryZoomablePhoto}) handles pinch / wheel / double-tap zoom,
+ * panning, swipe navigation, and the tap-outside-bitmap-to-close decision.
  */
 export function GalleryLightbox(
     {
@@ -93,7 +44,10 @@ export function GalleryLightbox(
     }: GalleryLightboxProps
 ) {
     const t = useTranslations('gallery')
+    const tApi = useTranslations('apiErrors')
     const dialogRef = useRef<HTMLDialogElement>(null)
+    const zoomRef = useRef<GalleryZoomablePhotoHandle>(null)
+    const [downloadBusy, setDownloadBusy] = useState(false)
 
     useEffect(() => {
         const el = dialogRef.current
@@ -137,30 +91,6 @@ export function GalleryLightbox(
     const activeEpochRef = useRef('')
     const prevNavIndexRef = useRef<number | null>(null)
 
-    const photoColumnRef = useRef<HTMLDivElement>(null)
-    const photoImgRef = useRef<HTMLImageElement | null>(null)
-
-    const swipePointerRef = useRef<{
-        id: number
-        x: number
-        y: number
-    } | null>(null)
-
-    const handleSwipePointerDown = useCallback(
-        (e: React.PointerEvent<HTMLDivElement>) => {
-            if (!multi || e.button !== 0) {
-                return
-            }
-            swipePointerRef.current = {
-                id: e.pointerId,
-                x: e.clientX,
-                y: e.clientY,
-            }
-            e.currentTarget.setPointerCapture(e.pointerId)
-        },
-        [multi],
-    )
-
     const handleShellClick = useCallback(
         (e: React.MouseEvent<HTMLDivElement>) => {
             if (
@@ -175,53 +105,21 @@ export function GalleryLightbox(
         [],
     )
 
-    const handlePhotoColumnClick = useCallback(
-        (e: React.MouseEvent<HTMLDivElement>) => {
-            const column = photoColumnRef.current
-            const img = photoImgRef.current
-            if (!column || !img?.naturalWidth || !img.naturalHeight) {
-                return
-            }
-            const painted = getObjectContainPaintedRectViewport(
-                column.getBoundingClientRect(),
-                img.naturalWidth,
-                img.naturalHeight,
+    const handleDownload = useCallback(async () => {
+        if (!current || downloadBusy) {
+            return
+        }
+        setDownloadBusy(true)
+        const result = await downloadGalleryPhotoRequest(current.id)
+        setDownloadBusy(false)
+        if (!result.ok) {
+            toast.error(
+                result.code === 'too_many_requests'
+                    ? tApi('tooManyRequests')
+                    : t('downloadError'),
             )
-            if (isPointInsideRect(e.clientX, e.clientY, painted)) {
-                e.stopPropagation()
-            }
-        },
-        [],
-    )
-
-    const handleSwipePointerUpOrCancel = useCallback(
-        (e: React.PointerEvent<HTMLDivElement>) => {
-            const tracked = swipePointerRef.current
-            if (!multi || !tracked || tracked.id !== e.pointerId) {
-                return
-            }
-            swipePointerRef.current = null
-            try {
-                e.currentTarget.releasePointerCapture(e.pointerId)
-            } catch {
-                /* already released */
-            }
-            const dx = e.clientX - tracked.x
-            const dy = e.clientY - tracked.y
-            if (Math.abs(dx) < LIGHTBOX_SWIPE_THRESHOLD_PX) {
-                return
-            }
-            if (Math.abs(dx) <= Math.abs(dy)) {
-                return
-            }
-            if (dx < 0) {
-                onNext()
-            } else {
-                onPrev()
-            }
-        },
-        [multi, onNext, onPrev],
-    )
+        }
+    }, [current, downloadBusy, t, tApi])
 
     /* useLayoutEffect: sync slide axis and load reset before paint. */
     useLayoutEffect(() => {
@@ -250,9 +148,6 @@ export function GalleryLightbox(
             )
         })
     }, [])
-
-    const slideKey = slideEpoch
-    const dir = slideEnterDir
 
     return (
         <dialog
@@ -285,6 +180,34 @@ export function GalleryLightbox(
                     />
                     <div className="pointer-events-none relative z-10 flex min-h-0 flex-1 flex-col">
                         <div className="flex shrink-0 justify-end gap-2 p-3 sm:gap-3 sm:p-4">
+                            <button
+                                type="button"
+                                data-lightbox-interactive
+                                className="pointer-events-auto inline-flex items-center gap-2 rounded-pill bg-white/10 px-3 py-2 text-small text-white transition-colors hover:bg-white/20 sm:px-4 sm:text-body"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    zoomRef.current?.toggleZoom()
+                                }}
+                                aria-label={t('lightboxZoomToggle')}
+                            >
+                                <GalleryZoomIcon className="size-4 text-white"/>
+                            </button>
+                            <button
+                                type="button"
+                                data-lightbox-interactive
+                                className="pointer-events-auto inline-flex items-center gap-2 rounded-pill bg-white/10 px-3 py-2 text-small text-white transition-colors hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-60 sm:px-4 sm:text-body"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    void handleDownload()
+                                }}
+                                disabled={downloadBusy}
+                                aria-busy={downloadBusy}
+                            >
+                                <GalleryDownloadIcon className="size-4 text-white"/>
+                                <span className="max-sm:sr-only">
+                                    {t('lightboxDownload')}
+                                </span>
+                            </button>
                             {canDeleteCurrent ? (
                                 <button
                                     type="button"
@@ -323,82 +246,25 @@ export function GalleryLightbox(
                                     ‹
                                 </button>
                             ) : null}
-                            <div
-                                ref={photoColumnRef}
-                                className={cn(
-                                    'pointer-events-auto relative min-h-0 min-w-0 max-w-full flex-1 touch-pan-y overflow-hidden',
-                                    multi ? 'select-none' : null,
-                                )}
-                                onClick={handlePhotoColumnClick}
-                                onPointerDown={multi ? handleSwipePointerDown : undefined}
-                                onPointerUp={
-                                    multi ? handleSwipePointerUpOrCancel : undefined
+                            <GalleryZoomablePhoto
+                                ref={zoomRef}
+                                src={current.publicUrl}
+                                alt={
+                                    current.uploaderName
+                                        ? t('lightboxAltWithName', {
+                                            name: current.uploaderName,
+                                        })
+                                        : t('lightboxAlt')
                                 }
-                                onPointerCancel={
-                                    multi ? handleSwipePointerUpOrCancel : undefined
-                                }
-                                role="status"
-                                aria-busy={!slideReady}
-                                aria-label={
-                                    !slideReady
-                                        ? t('lightboxImageLoading')
-                                        : undefined
-                                }
-                            >
-                                {!slideReady ? (
-                                    <div
-                                        className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-black/35"
-                                        aria-hidden
-                                    >
-                                        <div
-                                            className={cn(
-                                                'h-[min(55vw,20rem)] w-[min(88vw,36rem)] max-w-full rounded-lg',
-                                                'bg-white/10 animate-pulse',
-                                            )}
-                                        />
-                                    </div>
-                                ) : null}
-                                <div
-                                    key={slideKey}
-                                    className={cn(
-                                        'absolute inset-0',
-                                        slideReady
-                                            ? cn(
-                                                'opacity-100 translate-x-0',
-                                                'transition-[opacity,transform] duration-300 ease-out',
-                                                'motion-reduce:transition-opacity motion-reduce:duration-200',
-                                            )
-                                            : cn(
-                                                'opacity-0 transition-none',
-                                                slideOffsetClassForDirection(dir),
-                                                'motion-reduce:translate-x-0',
-                                            ),
-                                    )}
-                                >
-                                    <Image
-                                        ref={photoImgRef}
-                                        src={current.publicUrl}
-                                        alt={
-                                            current.uploaderName
-                                                ? t('lightboxAltWithName', {
-                                                    name: current.uploaderName,
-                                                })
-                                                : t('lightboxAlt')
-                                        }
-                                        fill
-                                        sizes="100vw"
-                                        priority
-                                        quality={80}
-                                        className="object-contain object-center"
-                                        onLoadingComplete={() =>
-                                            revealSlideForEpoch(slideKey)
-                                        }
-                                        onError={() =>
-                                            revealSlideForEpoch(slideKey)
-                                        }
-                                    />
-                                </div>
-                            </div>
+                                slideKey={slideEpoch}
+                                dir={slideEnterDir}
+                                slideReady={slideReady}
+                                multi={multi}
+                                onPrev={onPrev}
+                                onNext={onNext}
+                                onReveal={revealSlideForEpoch}
+                                loadingLabel={t('lightboxImageLoading')}
+                            />
                             {multi ? (
                                 <button
                                     type="button"
