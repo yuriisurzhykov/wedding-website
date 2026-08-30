@@ -1091,16 +1091,12 @@ ALTER TABLE rsvp ENABLE ROW LEVEL SECURITY;
 ALTER TABLE photos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE wishes ENABLE ROW LEVEL SECURITY;
 
--- Public read for gallery and wishes
-CREATE
-POLICY "photos_public_read"
-  ON photos FOR
-SELECT USING (true);
-
-CREATE
-POLICY "wishes_public_read"
-  ON wishes FOR
-SELECT USING (true);
+-- No anon/authenticated policies: gallery and wishes reads go through service_role in
+-- API Routes (`/api/gallery/photos`, `/api/wishes`), not direct client reads — a public
+-- `USING (true)` SELECT policy would let anyone query these tables straight through the
+-- Supabase REST API with the public anon key, bypassing app-level rate limiting.
+REVOKE SELECT ON photos FROM anon, authenticated;
+REVOKE SELECT ON wishes FROM anon, authenticated;
 
 -- Writes — only via service_role (our API Routes)
 -- INSERT without an explicit policy = denied for anon/authenticated
@@ -1121,9 +1117,12 @@ CREATE UNIQUE INDEX rsvp_phone_unique ON rsvp (phone) WHERE phone IS NOT NULL;
 
 ### Why RLS matters
 
-`SUPABASE_ANON_KEY` goes to the frontend (it is public by nature). Without RLS anyone could directly delete all data via
-the Supabase REST API. With RLS + service_role key only on the server — the client physically cannot write to the DB
-directly.
+`SUPABASE_ANON_KEY` goes to the frontend (it is public by nature). Without RLS anyone could directly read or delete
+data via the Supabase REST API using that key — including via crafted queries that trip Supabase's
+`plan_filter.statement_cost_limit` (a low cost cap on the `anon` role meant to stop exactly this kind of abuse). With
+RLS + service_role key only on the server, and no anon/authenticated policies on `photos`/`wishes`, the client
+physically cannot read or write to the DB directly — everything goes through our API Routes, which have their own
+rate limiting.
 
 ### `lib/supabase.ts`
 
@@ -1139,8 +1138,9 @@ export function createServerClient() {
     )
 }
 
-// Browser client — uses anon key, respects RLS
-// Read-only (gallery, wishes)
+// Browser client — uses anon key, respects RLS.
+// Not used to read gallery/wishes directly: those tables have no anon/authenticated
+// SELECT grant, so reads go through /api/gallery/photos and /api/wishes instead.
 export function createBrowserClient() {
     return createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,

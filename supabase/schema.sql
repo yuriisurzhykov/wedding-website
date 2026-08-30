@@ -96,13 +96,14 @@ ALTER TABLE wishes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE guest_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE guest_magic_link_tokens ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "photos_public_read"
-  ON photos FOR SELECT USING (true);
-
-CREATE POLICY "wishes_public_read"
-  ON wishes FOR SELECT USING (true);
-
--- Writes: only via service_role in API Routes (no INSERT policies for anon).
+-- No anon/authenticated policies: reads and writes for photos/wishes go only through
+-- service_role in API Routes (@features/gallery-list, @features/wish-list, and admin
+-- features). A public browser client was planned early on but is unused in the current
+-- implementation, so anon/authenticated SELECT is revoked below to avoid exposing these
+-- tables to direct, unthrottled PostgREST access (see migration
+-- 20260830170000_lock_public_read_tables.sql).
+REVOKE SELECT ON photos FROM anon, authenticated;
+REVOKE SELECT ON wishes FROM anon, authenticated;
 
 -- =============================================
 -- Indexes

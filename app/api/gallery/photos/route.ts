@@ -18,7 +18,7 @@ const deleteLimiter = new IpRateLimiter({maxRequests: 10, windowMs: 20 * 60_000}
 
 const querySchema = z.object({
     limit: z.coerce.number().int().min(1).max(100).default(48),
-    offset: z.coerce.number().int().min(0).max(50_000).default(0),
+    offset: z.coerce.number().int().min(0).max(2_000).default(0),
 });
 
 /**
